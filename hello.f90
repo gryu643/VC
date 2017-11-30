@@ -1,3 +1,3 @@
 program hello
-	print *, 'Hello World!'
-end program hello
+write(*,*) "hello,world!"
+end program
