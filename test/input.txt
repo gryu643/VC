@@ -1,0 +1,3 @@
+symbol 5
+path 3
+filename s5p3.txt

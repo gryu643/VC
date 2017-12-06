@@ -56,7 +56,7 @@ D2(:)=0.
 
 
 
-!“`”À˜Hs—ñH‚ðÝ’è
+!“`”À˜Hs—ñH‚ðÝ’è(,ROWB)
 do j=0,U-1
 	do i=1,ROWB
 		H(i+j,i)=cmplx(0.1+0.1*j,0.2+0.1*j)
