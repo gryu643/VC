@@ -7,11 +7,14 @@ program ppl_bulk
 	character(10) OUT_FNAME
 	character(10) TMP
 	complex :: X(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
-	complex :: H(H_ROW,H_COL)=(0.0,0.0) !(SYMBL,SYMBL)
-	complex :: HE(H_ROW+H_PATH,H_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
+	complex :: H(H_ROW+H_PATH,H_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
+	complex :: HE(H_ROW+H_PATH,H_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL+PATH-1)
 	complex :: HH(H_ROW,H_COL+H_PATH)=(0.0,0.0) !(SYMBL,SYMBL+PATH-1)
 	complex :: HHH(H_ROW,H_COL)=(0.0,0.0) !(SYMBL,SYMBL)
-	complex :: HEX(H_ROW+H_PATH,X_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
+	complex :: HX(H_ROW+H_PATH,X_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
+	complex :: HXI(H_ROW+H_PATH,X_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
+	complex :: HEHHXI(H_ROW+H_PATH,X_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
+	complex :: HEHHXIJ(H_ROW+1,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
 
 	!シンボル数、パ数数、出力ファイル名を読み込む
 	read(5,*) TMP,SYMBL
@@ -21,23 +24,22 @@ program ppl_bulk
 	!伝搬路行列Hの設定
 	do i=1, SYMBL
 		do j=1, PATH
-			if((i+j-1).gt.SYMBL) exit
 			H(i+j-1,i) = cmplx(0.1*j, 0.1+0.1*j)
 		end do
 	end do
 
 	!伝搬路行列Hを拡張したHEを設定
-	do i=1, SYMBL
+	do i=1, SYMBL+PATH-1
 		do j=1, PATH
 			HE(i+j-1,i) = cmplx(0.1*j, 0.1+0.1*j)
 		end do
 	end do
 
 	!行列Hの随伴行列HHの設定
-	call CmplxAdjoint(H,HH,SYMBL,SYMBL)
+	call CmplxAdjoint(H,HH,SYMBL+PATH-1,SYMBL)
 
 	!合成チャネル行列HHHの設定
-	call CmplxMultiply(HH,H,HHH,SYMBL,SYMBL,SYMBL,SYMBL)
+	call CmplxMultiply(HH,H,HHH,SYMBL,SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
 
 	do l=1, 200
 		!任意伝送ベクトルの設定
@@ -48,8 +50,17 @@ program ppl_bulk
 		end do
 
 		do m=1, l
-			!伝搬路HE通過
-			call CmplxMultiply(HE,X,HEX,SYMBL+PATH-1,SYMBL,SYMBL,SYMBL)
+			!伝搬路H通過
+			call CmplxMultiply(H,X,HX,SYMBL+PATH-1,SYMBL,SYMBL,SYMBL)
+
+			!処理I
+			call ProcI(HX,HXI,SYMBL+PATH-1,SYMBL)
+
+			!HE通過
+			call CmplxMultiply(HE,HXI,HEHHXI,SYMBL+PATH-1,SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
+
+			!処理J
+			call ProcJ(HEHHXI,HEHHXIJ,SYMBL+PATH-1,SYMBL,PATH)
 
 		end do
 	end do
@@ -110,3 +121,32 @@ subroutine CmplxAdjoint(A,AH,A_ROW,A_COL)
 
 end subroutine
 
+!処理Iを加える
+
+subroutine ProcI(A,AI,A_ROW,A_COL)
+	integer A_ROW,A_COL
+	complex A(A_ROW,A_COL),AI(A_ROW,A_COL)
+
+	do i=1, A_COL
+		do j=1, A_ROW
+			AI(A_ROW-j+1,i) = conjg(A(j,i))
+		end do
+	end do
+
+end subroutine
+
+!処理Jを加える
+
+subroutine ProcJ(A,AJ,A_ROW,A_COL,PATH)
+	integer A_ROW,A_COL,PATH
+	complex A(A_ROW,A_COL),AI(A_ROW,A_COL),AJ(A_ROW-(PATH-1),A_COL)
+
+	call ProcI(A,AI,A_ROW,A_COL)
+
+	do i=1, A_COL
+		do j=1, A_ROW-PATH+1
+			AJ(j,i) = AI(j+(PATH-1),i)
+		end do
+	end do
+
+end subroutine
