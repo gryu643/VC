@@ -16,9 +16,9 @@ INTEGER ROWB,U
 REAL    D2(lrow),M1,M2
 character TMP*(39),FNAME*(30)
 
-read(*,*)TMP,ROWB
-read(*,*)TMP,U
-read(*,*)TMP,FNAME
+read(*,*)TMP,ROWB !シンボル数
+read(*,*)TMP,U !パス数
+read(*,*)TMP,FNAME !出力ファイル名
 OPEN(24,FILE=FNAME,STATUS='UNKNOWN',ACCESS='SEQUENTIAL')
 
 H(:,:)=cmplx(0.,0.)
@@ -88,7 +88,7 @@ do j=1,ROWB
 end do
 
 
-do l=1,200
+do l=1,3
 
 c(:,:)=cmplx(0.,0.)
 
@@ -130,16 +130,17 @@ end do
 		do j=1,ROWB
 	
 			do i=1,ROWB
-				D(i,1)=C(i,j)
-				D1(i,1)=C1(i,j)
-				D2(i)=abs(real(D(i,1))/real(D1(i,1)))
+				D(i,1)=C(i,j) !無線機関往復後の列ベクトルを格納
+				D1(i,1)=C1(i,j) !無線機関往復前の列ベクトルを格納
+				print *,l,j, C(i,j)
+				D2(i)=abs(real(D(i,1))/real(D1(i,1))) !往復後のベクトルを前ので割って、固有値とする
 			end do
 			
 			blamda=D2(1)
 			do i=2,ROWB
-				if(blamda.GT.D2(i)) blamda=D2(i)
+				if(blamda.GT.D2(i)) blamda=D2(i) !上で求めた各行の固有値の中で最小のものをblamdaに格納
 			end do
-			bramda(:,j)=cmplx(blamda,0.)
+			bramda(:,j)=cmplx(blamda,0.) !固有値を複素数形でbramdaの列に一括格納
 		end do
 	
 		
@@ -148,8 +149,8 @@ end do
 		C2(:,:)=cmplx(0.,0.)
 		do j=1,ROWB-1
 			do i=1,ROWB
-				D3(i,1)=C1(i,j)
-				D4(i,1)=C1(i,j+1)
+				D3(i,1)=C1(i,j) !無線機関往復前の固有ベクトル
+				D4(i,1)=C1(i,j+1) !D3の次の列の固有ベクトル
 			end do
 			
 			CALL CADJOINT(D3,E,lrow,1)
@@ -256,7 +257,7 @@ IF(lcar.NE.ldat2)then
 	write(*,*)'error in array multiplication'
 	STOP
 end if
-C(:,:)=cmplx(0.,0.)
+ C(:,:)=cmplx(0.,0.)
 do i=1,ldat
 	do j=1,lcar2
 		do k=1,ldat2
