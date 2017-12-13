@@ -93,8 +93,10 @@ program ppl_bulk
 
 				LAMBDA(:,i) = cmplx(LAMBDA_TMP,0.0)
 			end do
+			!この時点で配列LAMBDAの各列に固有値が入っている。
 
-			!差分導出
+			!減算部分の算出
+			
 
 			
 		end do
