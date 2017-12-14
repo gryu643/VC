@@ -1,14 +1,14 @@
-# Makefile for myppl.f90
+# Makefile for ppl_suc.f90
 
 CC = gfortran
-PROGRAM = myppl
+PROGRAM = ppl_suc
 CFLAGS = -Wall -O3
-OBJS = myppl.o
+OBJS = ppl_suc.o
 
-$(PROGRAM): myppl.o
+$(PROGRAM): ppl_suc.o
 	$(CC) -o $@ $(CFLAGS) $<
 
-myppl.o: myppl.f90
+ppl_suc.o: ppl_suc.f90
 	$(CC) -c $<
 
 .PHONY: clean

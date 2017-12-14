@@ -8,7 +8,7 @@ program ppl_bulk
 	character(10) TMP
 	complex :: Z(H_ROW,H_COL)=(0.0,0.0)
 	complex :: X(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
-	complex :: X_pre(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex :: Xpre(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
 	complex :: H(H_ROW+H_PATH,H_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
 	complex :: HE(H_ROW+H_PATH*2,H_COL)=(0.0,0.0) !(SYMBL+2*PATH-1,SYMBL+PATH-1)
 	complex :: HH(H_ROW,H_COL+H_PATH)=(0.0,0.0) !(SYMBL,SYMBL+PATH-1)
@@ -17,9 +17,20 @@ program ppl_bulk
 	complex :: HXarI(H_ROW+H_PATH,X_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
 	complex :: HHHXbrJ(H_ROW+H_PATH*2,X_COL)=(0.0,0.0) !(SYMBL+2*PATH-1,SYMBL)
 	complex :: HHHX(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
-	complex :: LAMBDA(X_ROW,X_COL) !(SYMBL,SYMBL)
+	complex :: LAMBDA(X_COL,1)=(0.0,0.0) !(SYMBL,1)
+	complex :: Xn(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex :: U(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex :: UH(1,X_ROW)=(0.0,0.0) !(1,SYMBL)
+	complex :: UUH(X_ROW,X_ROW)=(0.0,0.0) !(SYMBL)
+	complex :: UUHXn(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex :: LUUHXn(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex :: SUB_PART(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex :: arSUB(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex :: NORM(X_ROW,1)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex :: UHU(1,1)=(0.0)
 	real :: LAMBDA_TMP=0.0
 	real :: TMP1(X_ROW)=0.0 !(SYMBL,1)
+	real :: IN_PRO=0.0
 
 	!シンボル数、パス数、出力ファイル名を読み込む
 	read(5,*) TMP,SYMBL
@@ -41,12 +52,12 @@ program ppl_bulk
 	end do
 
 	!行列Hの随伴行列HHの設定
-	call CmplxAdjoint(H,HH,SYMBL+PATH-1,SYMBL)
+	call CAdjoint(H,HH,SYMBL+PATH-1,SYMBL)
 
 	!合成チャネル行列HHHの設定
-	call CmplxMultiply(HH,H,HHH,SYMBL,SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
+	call CMultiply(HH,H,HHH,SYMBL,SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
 
-	do l=1, 200
+	do l=1, 4
 		!任意伝送ベクトルの設定
 		do i=1, SYMBL
 			do j=1, SYMBL
@@ -56,31 +67,27 @@ program ppl_bulk
 
 		do m=1, l
 			!次ループでの固有値算出のため、Xを退避
-			call CmplxSubstitute(X_pre,X,SYMBL,SYMBL)
-
-			!2回目以降のX
-			if(m.ne.1) then
-				call CmplxSubstitute(X,HHHX,SYMBL,SYMBL)
-			end if
+			call CSubstitute(Xpre,X,SYMBL,SYMBL)
 
 			!伝搬路H通過
-			call CmplxMultiply(H,X,HX,SYMBL+PATH-1,SYMBL,SYMBL,SYMBL)
+			call CMultiply(H,X,HX,SYMBL+PATH-1,SYMBL,SYMBL,SYMBL)
 
 			!処理I
 			call ProcI(HX,HXarI,SYMBL+PATH-1,SYMBL)
 
 			!HE通過
-			call CmplxMultiply(HE,HXarI,HHHXbrJ,SYMBL+2*(PATH-1),SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
+			call CMultiply(HE,HXarI,HHHXbrJ,SYMBL+2*(PATH-1),SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
 
 			!処理J
 			call ProcJ(HHHXbrJ,HHHX,SYMBL+2*(PATH-1),SYMBL,PATH)
+
+!			call print(HHHX)
 
 			!列ベクトル群の固有値をそれぞれ算出
 			do i=1, SYMBL
 				!列ベクトル内の各行ごとに固有値を算出
 				do j=1, SYMBL
-!					print *, l,i,HHHX(j,i)
-					TMP1(j) = abs(real(HHHX(j,i))/real(X_pre(j,i)))
+					TMP1(j) = abs(real(HHHX(j,i))/real(Xpre(j,i)))
 				end do
 
 				!上で出した固有値のうち最小のものをLAMBDA_TMPに格納
@@ -91,22 +98,96 @@ program ppl_bulk
 					end if
 				end do
 
-				LAMBDA(:,i) = cmplx(LAMBDA_TMP,0.0)
+				LAMBDA(i,1) = cmplx(LAMBDA_TMP,0.0)
 			end do
 			!この時点で配列LAMBDAの各列に固有値が入っている。
 
-			!減算部分の算出
-			
+!			call print(LAMBDA)
 
-			
+			!減算部分の算出
+			do i=1, SYMBL
+				j=1
+				do while(j.lt.i)
+					!収束する固有ベクトル(SYMBL,1)
+					do k=1, SYMBL
+						Xn(k,1) = Xpre(k,i)
+					end do
+
+					!減算する固有ベクトル(SYMBL,1)
+					do k=1, SYMBL
+						U(k,1) = Xpre(k,j)
+					end do
+
+					!固有ベクトルの随伴行列(1,SYMBL)
+					call CAdjoint(U,UH,SYMBL,1)
+
+					!U*UH(SYMBL,SYMBL)
+					call CMultiply(U,UH,UUH,SYMBL,1,1,SYMBL)
+
+					!UUH*Xn(SYMBL,1)
+					call CMultiply(UUH,Xn,UUHXn,SYMBL,SYMBL,SYMBL,1)
+
+					!λ*UUHXn(SYMBL,1)
+					do k=1, SYMBL
+						LUUHXn(k,1) = cmplx(LAMBDA(k,1)*real(UUHXn(k,1)),LAMBDA(k,1)*aimag(UUHXn(k,1)))
+					end do
+
+					!減算部を格納
+					do k=1, SYMBL
+						SUB_PART(k,i) = SUB_PART(k,i) + LUUHXn(k,1)
+					end do
+
+					j = j + 1
+				end do
+			end do
+
+			!減算
+			call CSubtract(HHHX,SUB_PART,arSUB,SYMBL,SYMBL,SYMBL,SYMBL)
+
+			call print(SUB_PART)
+
+			!正規化
+			do i=1, SYMBL
+				!固有ベクトル群を1列のベクトルに格納
+				do j=1, SYMBL
+					NORM(j,1) = arSUB(j,i)
+				end do
+
+				!正規化
+				call CNormalize(NORM,SYMBL,1)
+
+				do j=1, SYMBL
+					X(j,i) = NORM(j,1)
+				end do
+			end do
+		end do
+
+!		call print(X)
+
+		!固有ベクトルか確認(内積=0)
+		do i=1, SYMBL
+			IN_PRO = 0.0
+			!固有ベクトル群を１列のベクトルに格納
+			do j=1, SYMBL
+				U(j,1) = X(j,i)
+			end do
+
+			!随伴行列
+			call CAdjoint(U,UH,SYMBL,1)
+
+			!内積の計算
+			call CMultiply(UH,U,UHU,1,SYMBL,SYMBL,1)
+
+			!計算した内積を足し合わせる
+			IN_PRO = IN_PRO + UHU(1,1)
 		end do
 	end do
 
 contains
 	!行列の掛け算を行う
 
-	subroutine CmplxMultiply(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
-		integer A_ROW,A_COL,B_ROW,B_COL
+	subroutine CMultiply(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
+		integer A_ROW,A_COL,B_ROW,B_COL,i,j,k
 		complex A(:,:), B(:,:),C(:,:)
 
 		if(A_COL.ne.B_ROW) then
@@ -127,8 +208,8 @@ contains
 
 	!行列の和を取る
 
-	subroutine CmplxAdd(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
-		integer A_ROW,A_COL,B_ROW,B_COL
+	subroutine CAdd(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
+		integer A_ROW,A_COL,B_ROW,B_COL,i,j
 		complex A(:,:),B(:,:),C(:,:)
 
 		if((A_ROW.ne.B_ROW).or.(A_COL.ne.B_COL)) then
@@ -144,10 +225,29 @@ contains
 
 	end subroutine
 
+	!行列の差を取る
+
+	subroutine CSubtract(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
+		integer A_ROW,A_COL,B_ROW,B_COL,i,j
+		complex A(:,:),B(:,:),C(:,:)
+
+		if((A_ROW.ne.B_ROW).or.(A_COL.ne.B_COL)) then
+			print *, "can't calculate (Subtract)"
+			stop
+		end if
+
+		do i=1, A_ROW
+			do j=1, A_COL
+				C(i,j) = A(i,j) - B(i,j)
+			end do
+		end do 
+
+	end subroutine
+
 	!随伴行列を取る
 
-	subroutine CmplxAdjoint(A,AH,A_ROW,A_COL)
-		integer A_ROW,A_COL
+	subroutine CAdjoint(A,AH,A_ROW,A_COL)
+		integer A_ROW,A_COL,i,j
 		complex A(:,:),AH(:,:)
 
 		do i=1, A_ROW
@@ -161,7 +261,7 @@ contains
 	!処理Iを加える
 
 	subroutine ProcI(A,AI,A_ROW,A_COL)
-		integer A_ROW,A_COL
+		integer A_ROW,A_COL,i,j
 		complex A(:,:),AI(:,:)
 
 		do i=1, A_COL
@@ -175,7 +275,7 @@ contains
 	!処理Jを加える
 
 	subroutine ProcJ(A,AJ,A_ROW,A_COL,PATH)
-		integer A_ROW,A_COL,PATH
+		integer A_ROW,A_COL,PATH,i,j
 		complex A(:,:),AJ(:,:)
 
 		do i=1, A_COL
@@ -188,8 +288,8 @@ contains
 
 	!配列を代入する
 
-	subroutine cmplxSubstitute(A,B,A_ROW,A_COL)
-		integer A_ROW,A_COL
+	subroutine CSubstitute(A,B,A_ROW,A_COL)
+		integer A_ROW,A_COL,i,j
 		complex A(:,:),B(:,:)
 
 		do i=1, A_ROW
@@ -198,6 +298,44 @@ contains
 			end do
 		end do
 
+	end subroutine
+
+	!正規化する
+
+	subroutine CNormalize(A,A_ROW,A_COL)
+		integer A_ROW,A_COL,i
+		complex A(:,:)
+		real TMP
+
+		if(A_COL.ne.1) then
+			print *, "The number of column isn't zero."
+			stop
+		end if
+
+		!実部と虚部の二乗の和を計算
+		TMP = 0.0
+		do i=1, A_ROW
+			TMP = TMP + (real(A(i,1))**2 + aimag(A(i,1))**2)
+		end do
+
+		TMP = sqrt(TMP)
+
+		!各成分をTMPで割る
+		do i=1, A_ROW
+			A(i,1) = A(i,1) / TMP
+		end do
+
+	end subroutine
+
+	!print
+
+	subroutine print(A)
+		complex A(:,:)
+		integer i
+
+		do i=1, SYMBL
+			print *, l, A(i,2)
+		end do
 	end subroutine
 
 end program 

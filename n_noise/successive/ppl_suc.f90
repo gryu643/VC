@@ -88,7 +88,7 @@ do j=1,ROWB
 end do
 
 
-do l=1,3
+do l=1,4
 
 c(:,:)=cmplx(0.,0.)
 
@@ -102,6 +102,7 @@ end do
 	M1=0
 	M2=0
 	do k=1,l
+		
 		!次ループでの固有値算出のため、C1に前ループの固有ベクトル群を格納
 		C1(:,:)=C(:,:)
 		!ワンループ関数を列ベクトル群に適応させる
@@ -125,14 +126,16 @@ end do
 			end do
 		end do
 
-		
+!		do i=1, ROWB
+!			print *, l, C(i,1)
+!		end do
+
 		!列ベクトル群の固有値をそれぞれ算出
 		do j=1,ROWB
 	
 			do i=1,ROWB
 				D(i,1)=C(i,j) !無線機関往復後の列ベクトルを格納
 				D1(i,1)=C1(i,j) !無線機関往復前の列ベクトルを格納
-				print *,l,j, C(i,j)
 				D2(i)=abs(real(D(i,1))/real(D1(i,1))) !往復後のベクトルを前ので割って、固有値とする
 			end do
 			
@@ -143,12 +146,14 @@ end do
 			bramda(:,j)=cmplx(blamda,0.) !固有値を複素数形でbramdaの列に一括格納
 		end do
 	
-		
+!		do i=1, ROWB
+!			print *, l, bramda(2,i)
+!		end do	
 				
 		!差分導出
 		C2(:,:)=cmplx(0.,0.)
-		do j=1,ROWB-1
-			do i=1,ROWB
+		do j=1,ROWB-1 !j=1~4
+			do i=1,ROWB !i=1~5
 				D3(i,1)=C1(i,j) !無線機関往復前の固有ベクトル
 				D4(i,1)=C1(i,j+1) !D3の次の列の固有ベクトル
 			end do
@@ -177,6 +182,10 @@ end do
 		end do
 		
 		CALL CASUB(C,C5,C,lrow,lrow)
+
+		do i=1, ROWB
+			print *, l, C(i,2)
+		end do
 		
 		!正規化(ここでは列ベクトル群内の列ベクトルを一つずつ正規化している)
 		do j=1,ROWB
@@ -190,9 +199,12 @@ end do
 				C(i,j)=D7(i,1)
 			end do
 		end do
-		
 				
 	END DO
+
+!	do i=1, ROWB
+!		print *, l, C(i,2)
+!	end do
 
 	!固有ベクトルか確認(内積=0)
 	do j=1,ROWB-1
