@@ -13,7 +13,7 @@ COMPLEX H(lrow+lpath,lrow),HE(lrow+2*lpath,lrow+lpath)
 COMPLEX HEC(lrow+2*lpath,lrow),HH(lrow,lrow+lpath),HHH(lrow,lrow)
 COMPLEX N(1,1),CH(lrow,lrow),CTMP(lrow,lrow)
 INTEGER ROWB,U
-REAL    D2(lrow),M1,M2
+REAL    D2(lrow),M1,M2,YYY
 character TMP*(39),FNAME*(30)
 
 read(*,*)TMP,ROWB !シンボル数
@@ -88,7 +88,7 @@ do j=1,ROWB
 end do
 
 
-do l=1,4
+do l=1,5
 
 c(:,:)=cmplx(0.,0.)
 
@@ -147,7 +147,7 @@ end do
 		end do
 	
 !		do i=1, ROWB
-!			print *, l, bramda(2,i)
+!			print *, l, bramda(1,i)
 !		end do	
 				
 		!差分導出
@@ -184,7 +184,7 @@ end do
 		CALL CASUB(C,C5,C,lrow,lrow)
 
 		do i=1, ROWB
-			print *, l, C(i,2)
+			print *, l, C5(i,5)
 		end do
 		
 		!正規化(ここでは列ベクトル群内の列ベクトルを一つずつ正規化している)
@@ -203,18 +203,24 @@ end do
 	END DO
 
 !	do i=1, ROWB
-!		print *, l, C(i,2)
+!		print *, l, C(i,3)
 !	end do
 
 	!固有ベクトルか確認(内積=0)
-	do j=1,ROWB-1
-		do i=1,ROWB
-			D8(i,1)=C(i,j)
-			D9(i,1)=C(i,j+1)
+	G(1,1)=cmplx(0.0,0.0)
+	do i=1,ROWB
+		do j=i+1, ROWB
+			do k=1,ROWB
+				D8(k,1)=C(k,i)
+				D9(k,1)=C(k,j)
+			end do
+			CALL CHN(D8,D9,N,lrow,1)
+			G(1,1)=N(1,1)
 		end do
-		CALL CHN(D8,D9,N,lrow,1)
-		G(j,1)=N(1,1)
 	end do
+
+!	call CNORM(G,YYY,1,1)
+!	print *,l,YYY
 	
 	
 	!検証

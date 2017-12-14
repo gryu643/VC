@@ -27,10 +27,12 @@ program ppl_bulk
 	complex :: SUB_PART(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
 	complex :: arSUB(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
 	complex :: NORM(X_ROW,1)=(0.0,0.0) !(SYMBL,SYMBL)
-	complex :: UHU(1,1)=(0.0)
+	complex :: UHN(1,1)=(0.0)
+	complex :: N(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex :: NAISEKI(1,1)=(0.0,0.0) !(1,1)
 	real :: LAMBDA_TMP=0.0
 	real :: TMP1(X_ROW)=0.0 !(SYMBL,1)
-	real :: IN_PRO=0.0
+	real :: NAISEKI_TMP=0.0
 
 	!シンボル数、パス数、出力ファイル名を読み込む
 	read(5,*) TMP,SYMBL
@@ -57,7 +59,7 @@ program ppl_bulk
 	!合成チャネル行列HHHの設定
 	call CMultiply(HH,H,HHH,SYMBL,SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
 
-	do l=1, 4
+	do l=1, 5
 		!任意伝送ベクトルの設定
 		do i=1, SYMBL
 			do j=1, SYMBL
@@ -100,44 +102,39 @@ program ppl_bulk
 
 				LAMBDA(i,1) = cmplx(LAMBDA_TMP,0.0)
 			end do
-			!この時点で配列LAMBDAの各列に固有値が入っている。
+			!この時点で配列LAMBDAの各行に固有値が入っている。
 
 !			call print(LAMBDA)
 
 			!減算部分の算出
-			do i=1, SYMBL
-				j=1
-				do while(j.lt.i)
-					!収束する固有ベクトル(SYMBL,1)
-					do k=1, SYMBL
-						Xn(k,1) = Xpre(k,i)
-					end do
+			do i=2, SYMBL
+				!収束する固有ベクトル(SYMBL,1)
+				do k=1, SYMBL
+					Xn(k,1) = Xpre(k,i)
+				end do
 
-					!減算する固有ベクトル(SYMBL,1)
-					do k=1, SYMBL
-						U(k,1) = Xpre(k,j)
-					end do
+				!減算する固有ベクトル(SYMBL,1)
+				do k=1, SYMBL
+					U(k,1) = Xpre(k,i-1)
+				end do
 
-					!固有ベクトルの随伴行列(1,SYMBL)
-					call CAdjoint(U,UH,SYMBL,1)
+				!固有ベクトルの随伴行列(1,SYMBL)
+				call CAdjoint(U,UH,SYMBL,1)
 
-					!U*UH(SYMBL,SYMBL)
-					call CMultiply(U,UH,UUH,SYMBL,1,1,SYMBL)
+				!U*UH(SYMBL,SYMBL)
+				call CMultiply(U,UH,UUH,SYMBL,1,1,SYMBL)
 
-					!UUH*Xn(SYMBL,1)
-					call CMultiply(UUH,Xn,UUHXn,SYMBL,SYMBL,SYMBL,1)
+				!UUH*Xn(SYMBL,1)
+				call CMultiply(UUH,Xn,UUHXn,SYMBL,SYMBL,SYMBL,1)
 
-					!λ*UUHXn(SYMBL,1)
-					do k=1, SYMBL
-						LUUHXn(k,1) = cmplx(LAMBDA(k,1)*real(UUHXn(k,1)),LAMBDA(k,1)*aimag(UUHXn(k,1)))
-					end do
+				!λ*UUHXn(SYMBL,1)
+				do k=1, SYMBL
+					LUUHXn(k,1) = LAMBDA(i-1,1)*UUHXn(k,1)
+				end do
 
-					!減算部を格納
-					do k=1, SYMBL
-						SUB_PART(k,i) = SUB_PART(k,i) + LUUHXn(k,1)
-					end do
-
-					j = j + 1
+				!減算部を格納
+				do k=1, SYMBL
+					SUB_PART(k,i) = SUB_PART(k,i-1) + LUUHXn(k,1)
 				end do
 			end do
 
@@ -156,6 +153,7 @@ program ppl_bulk
 				!正規化
 				call CNormalize(NORM,SYMBL,1)
 
+				!正規化したベクトルをXに格納
 				do j=1, SYMBL
 					X(j,i) = NORM(j,1)
 				end do
@@ -165,22 +163,32 @@ program ppl_bulk
 !		call print(X)
 
 		!固有ベクトルか確認(内積=0)
+		NAISEKI(1,1) = cmplx(0.0,0.0)
 		do i=1, SYMBL
-			IN_PRO = 0.0
-			!固有ベクトル群を１列のベクトルに格納
-			do j=1, SYMBL
-				U(j,1) = X(j,i)
+			do j=i+1, SYMBL
+				!固有ベクトル群を１列のベクトルに格納
+				do k=1, SYMBL
+					U(k,1) = X(k,i)
+				end do
+				!内積を取る固有ベクトルを格納
+				do k=1, SYMBL
+					N(k,1) = X(k,j)
+				end do
+
+				!随伴行列
+				call CAdjoint(U,UH,SYMBL,1)
+
+				!内積の計算
+				call CMultiply(UH,N,UHN,1,SYMBL,SYMBL,1)
+
+				!計算した内積を足し合わせる
+				call CAdd(NAISEKI,UHN,NAISEKI,1,1,1,1)
 			end do
-
-			!随伴行列
-			call CAdjoint(U,UH,SYMBL,1)
-
-			!内積の計算
-			call CMultiply(UH,U,UHU,1,SYMBL,SYMBL,1)
-
-			!計算した内積を足し合わせる
-			IN_PRO = IN_PRO + UHU(1,1)
 		end do
+
+		!内積の絶対値を出力
+!		call CAbs(NAISEKI(1,1),NAISEKI_TMP)
+!		print *, l,",",NAISEKI_TMP
 	end do
 
 contains
@@ -308,7 +316,7 @@ contains
 		real TMP
 
 		if(A_COL.ne.1) then
-			print *, "The number of column isn't zero."
+			print *, "The number of column isn't one."
 			stop
 		end if
 
@@ -334,9 +342,23 @@ contains
 		integer i
 
 		do i=1, SYMBL
-			print *, l, A(i,2)
+			print *, l, A(i,5)
 		end do
 	end subroutine
+
+	!複素数の絶対値をとる
+
+	subroutine CAbs(A,TMP)
+		integer i
+		complex A
+		real TMP
+
+		!実部と虚部の二乗の和を計算
+		TMP = 0.0
+		TMP = real(A)**2 + aimag(A)**2
+		TMP = sqrt(TMP)
+	end subroutine
+
 
 end program 
 
