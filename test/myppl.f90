@@ -26,7 +26,7 @@ program ppl_bulk
 	complex :: LUUHXn(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
 	complex :: SUB_PART(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
 	complex :: arSUB(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
-	complex :: NORM(X_ROW,1)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex :: NORM(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
 	complex :: UHN(1,1)=(0.0)
 	complex :: N(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
 	complex :: NAISEKI(1,1)=(0.0,0.0) !(1,1)
@@ -59,7 +59,7 @@ program ppl_bulk
 	!合成チャネル行列HHHの設定
 	call CMultiply(HH,H,HHH,SYMBL,SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
 
-	do l=1, 5
+	do l=1, 2
 		!任意伝送ベクトルの設定
 		do i=1, SYMBL
 			do j=1, SYMBL
@@ -158,9 +158,9 @@ program ppl_bulk
 					X(j,i) = NORM(j,1)
 				end do
 			end do
-		end do
+!			call print(X)
 
-!		call print(X)
+		end do
 
 		!固有ベクトルか確認(内積=0)
 		NAISEKI(1,1) = cmplx(0.0,0.0)
@@ -323,7 +323,7 @@ contains
 		!実部と虚部の二乗の和を計算
 		TMP = 0.0
 		do i=1, A_ROW
-			TMP = TMP + (real(A(i,1))**2 + aimag(A(i,1))**2)
+			TMP = TMP + real(A(i,1))**2 + aimag(A(i,1))**2
 		end do
 
 		TMP = sqrt(TMP)
@@ -342,7 +342,7 @@ contains
 		integer i
 
 		do i=1, SYMBL
-			print *, l, A(i,5)
+			print *, l, A(i,2)
 		end do
 	end subroutine
 
