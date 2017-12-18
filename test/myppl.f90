@@ -2,6 +2,7 @@ program ppl_bulk
 	implicit none
 
 	integer,parameter :: H_ROW=1024,H_COL=1024,X_ROW=1024,X_COL=1024,H_PATH=64
+	integer,parameter :: NLOOP=200
 	integer i,j,k,l,m
 	integer SYMBL,PATH
 	character(10) OUT_FNAME
@@ -21,8 +22,9 @@ program ppl_bulk
 	complex :: Xn(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
 	complex :: U(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
 	complex :: UH(1,X_ROW)=(0.0,0.0) !(1,SYMBL)
-	complex :: UUH(X_ROW,X_ROW)=(0.0,0.0) !(SYMBL)
-	complex :: UUHXn(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex :: LUUH(X_ROW,X_ROW)=(0.0,0.0) !(SYMBL)
+	complex :: LUUH_SET(X_ROW,X_ROW)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex :: LU(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
 	complex :: LUUHXn(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
 	complex :: SUB_PART(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
 	complex :: arSUB(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
@@ -30,14 +32,21 @@ program ppl_bulk
 	complex :: UHN(1,1)=(0.0)
 	complex :: N(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
 	complex :: NAISEKI(1,1)=(0.0,0.0) !(1,1)
+	complex :: LAMBDA_MATRIX(X_ROW,X_COL) !(SYMBL,SYMBL)
+	complex :: XH(X_ROW,X_COL) !(SYMBL,SYMBL)
+	complex :: XLM(X_ROW,X_COL) !(SYMBL,SYMBL)
+	complex :: XLMXH(X_ROW,X_COL) !(SYMBL,SYMBL)
+	complex :: S(X_ROW,X_COL) !(SYMBL,SYMBL)
 	real :: LAMBDA_TMP=0.0
 	real :: TMP1(X_ROW)=0.0 !(SYMBL,1)
 	real :: NAISEKI_TMP=0.0
+	real :: M1=0.0
+	real :: M2=0.0
+	real :: Q(NLOOP,1) !(NLOOP,1)
 
-	!シンボル数、パス数、出力ファイル名を読み込む
+	!シンボル数、パス数を読み込む
 	read(5,*) TMP,SYMBL
 	read(5,*) TMP,PATH
-	read(5,*) TMP,OUT_FNAME
 
 	!伝搬路行列Hの設定
 	do i=1, SYMBL
@@ -59,7 +68,7 @@ program ppl_bulk
 	!合成チャネル行列HHHの設定
 	call CMultiply(HH,H,HHH,SYMBL,SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
 
-	do l=1, 2
+	do l=1, NLOOP
 		!任意伝送ベクトルの設定
 		do i=1, SYMBL
 			do j=1, SYMBL
@@ -107,6 +116,7 @@ program ppl_bulk
 !			call print(LAMBDA)
 
 			!減算部分の算出
+			call CSubstitute(LUUH_SET,Z,SYMBL,SYMBL)
 			do i=2, SYMBL
 				!収束する固有ベクトル(SYMBL,1)
 				do k=1, SYMBL
@@ -121,27 +131,35 @@ program ppl_bulk
 				!固有ベクトルの随伴行列(1,SYMBL)
 				call CAdjoint(U,UH,SYMBL,1)
 
-				!U*UH(SYMBL,SYMBL)
-				call CMultiply(U,UH,UUH,SYMBL,1,1,SYMBL)
-
-				!UUH*Xn(SYMBL,1)
-				call CMultiply(UUH,Xn,UUHXn,SYMBL,SYMBL,SYMBL,1)
-
-				!λ*UUHXn(SYMBL,1)
+				!λ*U(SYMBL,1)
 				do k=1, SYMBL
-					LUUHXn(k,1) = LAMBDA(i-1,1)*UUHXn(k,1)
+					LU(k,1) = LAMBDA(i-1,1)*U(k,1)
 				end do
 
-				!減算部を格納
-				do k=1, SYMBL
-					SUB_PART(k,i) = SUB_PART(k,i-1) + LUUHXn(k,1)
+				!LU*UH(SYMBL,SYMBL)
+				call CMultiply(LU,UH,LUUH,SYMBL,1,1,SYMBL)
+
+				!λUUHの集合を格納
+				do j=1, SYMBL
+					do k=1, SYMBL
+						LUUH_SET(j,k) = LUUH_SET(j,k) + LUUH(j,k)
+					end do
 				end do
+
+				!LUUH_SET*Xn(SYMBL,1) iの次ループで足し合わせる
+				call CMultiply(LUUH_SET,Xn,LUUHXn,SYMBL,SYMBL,SYMBL,1)
+
+				!減算部の格納
+				do k=1, SYMBL
+					SUB_PART(k,i) = LUUHXn(k,1)
+				end do
+
 			end do
 
 			!減算
 			call CSubtract(HHHX,SUB_PART,arSUB,SYMBL,SYMBL,SYMBL,SYMBL)
 
-			call print(SUB_PART)
+!			call print(SUB_PART)
 
 			!正規化
 			do i=1, SYMBL
@@ -161,6 +179,8 @@ program ppl_bulk
 !			call print(X)
 
 		end do
+
+!		call print(X)
 
 		!固有ベクトルか確認(内積=0)
 		NAISEKI(1,1) = cmplx(0.0,0.0)
@@ -189,6 +209,36 @@ program ppl_bulk
 		!内積の絶対値を出力
 !		call CAbs(NAISEKI(1,1),NAISEKI_TMP)
 !		print *, l,",",NAISEKI_TMP
+
+
+		!検証
+		!スペクトル定理
+		do i=1, SYMBL
+			LAMBDA_MATRIX(i,i) = LAMBDA(i,1)
+		end do
+		!スペクトル定理よりシミュレーションで求めた合成チャネル行列を計算
+		call CMultiply(X,LAMBDA_MATRIX,XLM,SYMBL,SYMBL,SYMBL,SYMBL)
+		call Cadjoint(X,XH,SYMBL,SYMBL)
+		call CMultiply(XLM,XH,XLMXH,SYMBL,SYMBL,SYMBL,SYMBL)
+		!理論値とシミュレーション結果の差をとる
+		call CSubtract(HHH,XLMXH,S,SYMBL,SYMBL,SYMBL,SYMBL)
+
+		!上で計算した差の絶対値の2乗を理論値の絶対値の2乗で正規化する
+		M1=0.0
+		M2=0.0
+		do i=1, SYMBL
+			do j=1,SYMBL
+				M1 = M1 + real(S(i,j))**2 + aimag(S(i,j))**2
+				M2 = M2 + real(HHH(i,j))**2 + aimag(HHH(i,j))**2
+			end do
+		end do
+		Q(l,1) = M1 / M2
+
+	end do
+
+	!結果の出力
+	do i=1, NLOOP
+		print *, i, ",", Q(i,1)
 	end do
 
 contains
@@ -342,7 +392,7 @@ contains
 		integer i
 
 		do i=1, SYMBL
-			print *, l, A(i,2)
+			print *, l, A(i,1)
 		end do
 	end subroutine
 
