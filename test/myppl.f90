@@ -5,7 +5,6 @@ program ppl_bulk
 	integer,parameter :: NLOOP=200
 	integer i,j,k,l,m
 	integer SYMBL,PATH
-	character(10) OUT_FNAME
 	character(10) TMP
 	complex :: Z(H_ROW,H_COL)=(0.0,0.0)
 	complex :: X(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
