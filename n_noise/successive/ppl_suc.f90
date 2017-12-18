@@ -1,351 +1,413 @@
+program ppl_bulk
+	implicit none
 
-! Free form main program
+	integer,parameter :: H_ROW=1024,H_COL=1024,X_ROW=1024,X_COL=1024,H_PATH=64
+	integer,parameter :: NLOOP=200
+	integer i,j,k,l,m
+	integer SYMBL,PATH
+	character(10) TMP
+	complex :: Z(H_ROW,H_COL)=(0.0,0.0)
+	complex :: X(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex :: Xpre(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex :: H(H_ROW+H_PATH,H_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
+	complex :: HE(H_ROW+H_PATH*2,H_COL)=(0.0,0.0) !(SYMBL+2*PATH-1,SYMBL+PATH-1)
+	complex :: HH(H_ROW,H_COL+H_PATH)=(0.0,0.0) !(SYMBL,SYMBL+PATH-1)
+	complex :: HHH(H_ROW,H_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex :: HX(H_ROW+H_PATH,X_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
+	complex :: HXarI(H_ROW+H_PATH,X_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
+	complex :: HHHXbrJ(H_ROW+H_PATH*2,X_COL)=(0.0,0.0) !(SYMBL+2*PATH-1,SYMBL)
+	complex :: HHHX(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex :: LAMBDA(X_COL,1)=(0.0,0.0) !(SYMBL,1)
+	complex :: Xn(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex :: U(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex :: UH(1,X_ROW)=(0.0,0.0) !(1,SYMBL)
+	complex :: LUUH(X_ROW,X_ROW)=(0.0,0.0) !(SYMBL)
+	complex :: LUUH_SET(X_ROW,X_ROW)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex :: LU(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex :: LUUHXn(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex :: SUB_PART(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex :: arSUB(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex :: NORM(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex :: UHN(1,1)=(0.0)
+	complex :: N(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex :: NAISEKI(1,1)=(0.0,0.0) !(1,1)
+	complex :: LAMBDA_MATRIX(X_ROW,X_COL) !(SYMBL,SYMBL)
+	complex :: XH(X_ROW,X_COL) !(SYMBL,SYMBL)
+	complex :: XLM(X_ROW,X_COL) !(SYMBL,SYMBL)
+	complex :: XLMXH(X_ROW,X_COL) !(SYMBL,SYMBL)
+	complex :: S(X_ROW,X_COL) !(SYMBL,SYMBL)
+	real :: LAMBDA_TMP=0.0
+	real :: TMP1(X_ROW)=0.0 !(SYMBL,1)
+	real :: NAISEKI_TMP=0.0
+	real :: M1=0.0
+	real :: M2=0.0
+	real :: Q(NLOOP,1) !(NLOOP,1)
 
-program PPL_Soturon
-PARAMETER(lcar=1024,lbit=512,lsym=128,ldat=8192,lndr=512,lpath=12,lrow=30)
-COMPLEX C(lrow,lrow),BRAMDA(lrow,lrow),C1(lrow,lrow),C2(lrow,lrow)
-COMPLEX C3(lrow,lrow),C4(lrow,lrow),C5(lrow,lrow)
-COMPLEX D(lrow,1),D1(lrow,1),D3(lrow,1),D4(lrow,1),D5(lrow,1)
-COMPLEX D6(lrow,1),D7(lrow,1),D8(lrow,1),D9(lrow,1),E(1,lrow),G(lrow-1,1)
-COMPLEX CLAMDA(lrow,lrow),P(lrow,lrow),S(lrow,lrow),Q(500,1)
-COMPLEX F(lrow+lpath,1),HC(lrow+lpath,lrow),HC2(lrow+lpath,lrow)
-COMPLEX H(lrow+lpath,lrow),HE(lrow+2*lpath,lrow+lpath)
-COMPLEX HEC(lrow+2*lpath,lrow),HH(lrow,lrow+lpath),HHH(lrow,lrow)
-COMPLEX N(1,1),CH(lrow,lrow),CTMP(lrow,lrow)
-INTEGER ROWB,U
-REAL    D2(lrow),M1,M2,YYY
-character TMP*(39),FNAME*(30)
+	!シンボル数、パス数を読み込む
+	read(5,*) TMP,SYMBL
+	read(5,*) TMP,PATH
 
-read(*,*)TMP,ROWB !ƒVƒ“ƒ{ƒ‹”
-read(*,*)TMP,U !ƒpƒX”
-read(*,*)TMP,FNAME !o—Íƒtƒ@ƒCƒ‹–¼
-OPEN(24,FILE=FNAME,STATUS='UNKNOWN',ACCESS='SEQUENTIAL')
-
-H(:,:)=cmplx(0.,0.)
-HE(:,:)=cmplx(0.,0.)
-HHH(:,:)=cmplx(0.,0.)
-HC(:,:)=cmplx(0.,0.)
-HC2(:,:)=cmplx(0.,0.)
-HEC(:,:)=cmplx(0.,0.)
-BRAMDA(:,:)=cmplx(0.,0.)
-CLAMDA(:,:)=cmplx(0.,0.)
-P(:,:)=cmplx(0.,0.)
-S(:,:)=cmplx(0.,0.)
-Q(:,:)=cmplx(0.,0.)
-CH(:,:)=cmplx(0.,0.)
-N(:,:)=cmplx(0.,0.)
-C(:,:)=cmplx(0.,0.)
-C1(:,:)=cmplx(0.,0.)
-C2(:,:)=cmplx(0.,0.)
-C3(:,:)=cmplx(0.,0.)
-C4(:,:)=cmplx(0.,0.)
-C5(:,:)=cmplx(0.,0.)
-D(:,:)=cmplx(0.,0.)
-D1(:,:)=cmplx(0.,0.)
-D3(:,:)=cmplx(0.,0.)
-D4(:,:)=cmplx(0.,0.)
-D5(:,:)=cmplx(0.,0.)
-D6(:,:)=cmplx(0.,0.)
-D7(:,:)=cmplx(0.,0.)
-D8(:,:)=cmplx(0.,0.)
-D9(:,:)=cmplx(0.,0.)
-E(:,:)=cmplx(0.,0.)
-G(:,:)=cmplx(0.,0.)
-D2(:)=0.
-
-
-
-
-!“`”À˜Hs—ñH‚ðÝ’è(,ROWB)
-do j=0,U-1
-	do i=1,ROWB
-		H(i+j,i)=cmplx(0.1+0.1*j,0.2+0.1*j)
-	end do
-end do
-
-
-!“`”À˜Hs—ñH‚ðŠg’£‚µ‚½HE‚ðl‚¦‚é
-do j=0,U-1
-	DO i=1,ROWB+U-1
-		HE(i+j,i)=cmplx(0.1+0.1*j,0.2+0.1*j)
-	end do
-end do
-
-
-!”º“`”À˜Hs—ñHH‚ðÝ’è
-CALL CADJOINT(H,HH,lrow+lpath,lrow)
-!HH~H
-CALL CAMULTIPLY(HH,H,HHH,lrow,lrow+lpath,lrow+lpath,lrow)
-
-
-!”CˆÓ“`‘—ƒxƒNƒgƒ‹‚ðÝ’è
-c(:,:)=cmplx(0.,0.)
-
-do j=1,ROWB
-	do i=1,ROWB
-		c(i,j)=cmplx(1.,0.)
-	end do
-end do
-
-
-do l=1,200
-
-c(:,:)=cmplx(0.,0.)
-
-do j=1,ROWB
-	do i=1,ROWB
-		c(i,j)=cmplx(1.,0.)
-	end do
-end do
-
-
-	M1=0
-	M2=0
-	do k=1,l
-		
-		!ŽŸƒ‹[ƒv‚Å‚ÌŒÅ—L’lŽZo‚Ì‚½‚ßAC1‚É‘Oƒ‹[ƒv‚ÌŒÅ—LƒxƒNƒgƒ‹ŒQ‚ðŠi”[
-		C1(:,:)=C(:,:)
-		!ƒƒ“ƒ‹[ƒvŠÖ”‚ð—ñƒxƒNƒgƒ‹ŒQ‚É“K‰ž‚³‚¹‚é
-		CALL CAMULTIPLY(H,C,HC,lrow+lpath,lrow,lrow,lrow)
-	
-		
-		!HC‚Éˆ—I‚ð‰Á‚¦‚é
-		do j=1,ROWB
-			do i=1,ROWB+U-1
-				HC2(i,j)=conjg(HC(ROWB+U-i,j))
-			end do
-		end do
-		
-		!HE’Ê‰ß
-		CALL CAMULTIPLY(HE,HC2,HEC,lrow+2*lpath,lrow+lpath,lrow+lpath,lrow)
-				
-		!HEC‚Éˆ—J‚ð‰Á‚¦‚é
-		do j=1,ROWB
-			do i=1,ROWB
-				C(i,j)=conjg(HEC(ROWB+U-i,j))
-			end do
-		end do
-
-!		do i=1, ROWB
-!			print *, l, C(i,2)
-!		end do
-
-		!—ñƒxƒNƒgƒ‹ŒQ‚ÌŒÅ—L’l‚ð‚»‚ê‚¼‚êŽZo
-		do j=1,ROWB
-	
-			do i=1,ROWB
-				D(i,1)=C(i,j) !–³ü‹@ŠÖ‰•œŒã‚Ì—ñƒxƒNƒgƒ‹‚ðŠi”[
-				D1(i,1)=C1(i,j) !–³ü‹@ŠÖ‰•œ‘O‚Ì—ñƒxƒNƒgƒ‹‚ðŠi”[
-				D2(i)=abs(real(D(i,1))/real(D1(i,1))) !‰•œŒã‚ÌƒxƒNƒgƒ‹‚ð‘O‚Ì‚ÅŠ„‚Á‚ÄAŒÅ—L’l‚Æ‚·‚é
-			end do
-			
-			blamda=D2(1)
-			do i=2,ROWB
-				if(blamda.GT.D2(i)) blamda=D2(i) !ã‚Å‹‚ß‚½Šes‚ÌŒÅ—L’l‚Ì’†‚ÅÅ¬‚Ì‚à‚Ì‚ðblamda‚ÉŠi”[
-			end do
-			bramda(:,j)=cmplx(blamda,0.) !ŒÅ—L’l‚ð•¡‘f”Œ`‚Åbramda‚Ì—ñ‚ÉˆêŠ‡Ši”[
-		end do
-	
-!		do i=1, ROWB
-!			print *, l, bramda(1,i)
-!		end do	
-				
-		!·•ª“±o
-		C2(:,:)=cmplx(0.,0.)
-		do j=1,ROWB-1 !j=1~4
-			do i=1,ROWB !i=1~5
-				D3(i,1)=C1(i,j) !–³ü‹@ŠÖ‰•œ‘O‚ÌŒÅ—LƒxƒNƒgƒ‹
-				D4(i,1)=C1(i,j+1) !D3‚ÌŽŸ‚Ì—ñ‚ÌŒÅ—LƒxƒNƒgƒ‹
-			end do
-			
-			CALL CADJOINT(D3,E,lrow,1)
-			
-			do i=1,ROWB
-				D5(i,1)=cmplx(real(bramda(i,j))*real(D3(i,1)),real(bramda(i,j))*aimag(D3(i,1)))
-			end do
-			
-			CALL CAMULTIPLY(D5,E,C3,lrow,1,1,lrow)
-			
-			CALL CASUM(C2,C3,C2,lrow,lrow)
-			
-			CALL CAMULTIPLY(C2,D4,D6,lrow,lrow,lrow,1)
-			
-			do i=1,ROWB
-				C4(i,j)=D6(i,1)
-			end do
-		end do
-		
-		do j=1,ROWB-1
-			do i=1,ROWB
-				C5(i,j+1)=C4(i,j)
-			end do
-		end do
-		
-		CALL CASUB(C,C5,C,lrow,lrow)
-
-!		do i=1, ROWB
-!			print *, l, C5(i,4)
-!		end do
-		
-		!³‹K‰»(‚±‚±‚Å‚Í—ñƒxƒNƒgƒ‹ŒQ“à‚Ì—ñƒxƒNƒgƒ‹‚ðˆê‚Â‚¸‚Â³‹K‰»‚µ‚Ä‚¢‚é)
-		do j=1,ROWB
-			do i=1,ROWB
-				D7(i,1)=C(i,j)
-			end do
-
-			CALL CNOM(D7,lrow,1)
-		
-			do i=1,ROWB
-				C(i,j)=D7(i,1)
-			end do
-		end do
-
-!		do i=1, ROWB
-!			print *, l, C(i,4)
-!		end do		
-
-	END DO
-
-!	do i=1, ROWB
-!		print *, l, C(i,1)
-!	end do
-
-	!ŒÅ—LƒxƒNƒgƒ‹‚©Šm”F(“àÏ=0)
-	G(1,1)=cmplx(0.0,0.0)
-	do i=1,ROWB
-		do j=i+1, ROWB
-			do k=1,ROWB
-				D8(k,1)=C(k,i)
-				D9(k,1)=C(k,j)
-			end do
-			CALL CHN(D8,D9,N,lrow,1)
-			G(1,1)=N(1,1)
+	!伝搬路行列Hの設定
+	do i=1, SYMBL
+		do j=1, PATH
+			H(i+j-1,i) = cmplx(0.1*j, 0.1+0.1*j)
 		end do
 	end do
 
-	call CNORM(G,YYY,1,1)
-	print *,l,",",YYY
-	
-	
-	!ŒŸØ
-	!ƒXƒyƒNƒgƒ‹’è—
-	do i=1,ROWB
-		CLAMDA(i,i)=bramda(1,i)
-	end do
-	CALL CAMULTIPLY(C,CLAMDA,CTMP,lrow,lrow,lrow,lrow)
-	CALL CADJOINT(C,CH,lrow,lrow)
-	CALL CAMULTIPLY(CTMP,CH,P,lrow,lrow,lrow,lrow)
-	
-	do j=1,ROWB
-		do i=1,ROWB
-			P(i,j)=cmplx(abs(real(P(i,j))),aimag(P(i,j)))
+	!伝搬路行列Hを拡張したHEを設定
+	do i=1, SYMBL+PATH-1
+		do j=1, PATH
+			HE(i+j-1,i) = cmplx(0.1*j, 0.1+0.1*j)
 		end do
 	end do
-	
-	!s—ñ‚Ì·‚Ì“ñæ˜a
-	CALL CASUB(HHH,P,S,lrow,lrow)
 
-	do j=1,ROWB
-		do i=1,ROWB
-			M1=M1+real(S(i,j))**2+aimag(S(i,j))**2
-			M2=M2+real(HHH(i,j))**2+aimag(HHH(i,j))**2
+	!行列Hの随伴行列HHの設定
+	call CAdjoint(H,HH,SYMBL+PATH-1,SYMBL)
+
+	!合成チャネル行列HHHの設定
+	call CMultiply(HH,H,HHH,SYMBL,SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
+
+	do l=1, NLOOP
+		!任意伝送ベクトルの設定
+		do i=1, SYMBL
+			do j=1, SYMBL
+				X(i,j) = cmplx(1.0, 0.0)
+			end do
 		end do
-	end do
-	Q(l,1)=M1/M2
-	
-END DO
 
-do i=1,200
-	write(24,*)i,real(Q(i,1))
-end do
+		do m=1, l
+			!次ループでの固有値算出のため、Xを退避
+			call CSubstitute(Xpre,X,SYMBL,SYMBL)
 
+			!伝搬路H通過
+			call CMultiply(H,X,HX,SYMBL+PATH-1,SYMBL,SYMBL,SYMBL)
 
+			!処理I
+			call ProcI(HX,HXarI,SYMBL+PATH-1,SYMBL)
 
-end program
+			!HE通過
+			call CMultiply(HE,HXarI,HHHXbrJ,SYMBL+2*(PATH-1),SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
 
-SUBROUTINE CADJOINT(A,AH,ldat,lcar)
-COMPLEX A(ldat,lcar),AH(lcar,ldat)
+			!処理J
+			call ProcJ(HHHXbrJ,HHHX,SYMBL+2*(PATH-1),SYMBL,PATH)
 
-do i=1,ldat
-	do j=1,lcar
-	AH(j,i)=conjg(A(i,j))
-	end do
-end do
-END
+!			call print(HHHX)
 
-SUBROUTINE CAMULTIPLY(A,B,C,ldat,lcar,ldat2,lcar2)
-COMPLEX A(ldat,lcar),B(ldat2,lcar2),C(ldat,lcar2)
-IF(lcar.NE.ldat2)then
-	write(*,*)'error in array multiplication'
-	STOP
-end if
- C(:,:)=cmplx(0.,0.)
-do i=1,ldat
-	do j=1,lcar2
-		do k=1,ldat2
-			C(i,j)=C(i,j)+A(i,k)*B(k,j)
+			!列ベクトル群の固有値をそれぞれ算出
+			do i=1, SYMBL
+				!列ベクトル内の各行ごとに固有値を算出
+				do j=1, SYMBL
+					TMP1(j) = abs(real(HHHX(j,i))/real(Xpre(j,i)))
+				end do
+
+				!上で出した固有値のうち最小のものをLAMBDA_TMPに格納
+				LAMBDA_TMP = TMP1(1)
+				do j=2, SYMBL
+					if (LAMBDA_TMP.gt.TMP1(j)) then
+						LAMBDA_TMP=TMP1(j)
+					end if
+				end do
+
+				LAMBDA(i,1) = cmplx(LAMBDA_TMP,0.0)
+			end do
+			!この時点で配列LAMBDAの各行に固有値が入っている。
+
+!			call print(LAMBDA)
+
+			!減算部分の算出
+			call CSubstitute(LUUH_SET,Z,SYMBL,SYMBL)
+			do i=2, SYMBL
+				!収束する固有ベクトル(SYMBL,1)
+				do k=1, SYMBL
+					Xn(k,1) = Xpre(k,i)
+				end do
+
+				!減算する固有ベクトル(SYMBL,1)
+				do k=1, SYMBL
+					U(k,1) = Xpre(k,i-1)
+				end do
+
+				!固有ベクトルの随伴行列(1,SYMBL)
+				call CAdjoint(U,UH,SYMBL,1)
+
+				!λ*U(SYMBL,1)
+				do k=1, SYMBL
+					LU(k,1) = LAMBDA(i-1,1)*U(k,1)
+				end do
+
+				!LU*UH(SYMBL,SYMBL)
+				call CMultiply(LU,UH,LUUH,SYMBL,1,1,SYMBL)
+
+				!λUUHの集合を格納
+				do j=1, SYMBL
+					do k=1, SYMBL
+						LUUH_SET(j,k) = LUUH_SET(j,k) + LUUH(j,k)
+					end do
+				end do
+
+				!LUUH_SET*Xn(SYMBL,1) iの次ループで足し合わせる
+				call CMultiply(LUUH_SET,Xn,LUUHXn,SYMBL,SYMBL,SYMBL,1)
+
+				!減算部の格納
+				do k=1, SYMBL
+					SUB_PART(k,i) = LUUHXn(k,1)
+				end do
+
+			end do
+
+			!減算
+			call CSubtract(HHHX,SUB_PART,arSUB,SYMBL,SYMBL,SYMBL,SYMBL)
+
+!			call print(SUB_PART)
+
+			!正規化
+			do i=1, SYMBL
+				!固有ベクトル群を1列のベクトルに格納
+				do j=1, SYMBL
+					NORM(j,1) = arSUB(j,i)
+				end do
+
+				!正規化
+				call CNormalize(NORM,SYMBL,1)
+
+				!正規化したベクトルをXに格納
+				do j=1, SYMBL
+					X(j,i) = NORM(j,1)
+				end do
+			end do
+!			call print(X)
+
 		end do
+
+!		call print(X)
+
+		!固有ベクトルか確認(内積=0)
+		NAISEKI(1,1) = cmplx(0.0,0.0)
+		do i=1, SYMBL
+			do j=i+1, SYMBL
+				!固有ベクトル群を１列のベクトルに格納
+				do k=1, SYMBL
+					U(k,1) = X(k,i)
+				end do
+				!内積を取る固有ベクトルを格納
+				do k=1, SYMBL
+					N(k,1) = X(k,j)
+				end do
+
+				!随伴行列
+				call CAdjoint(U,UH,SYMBL,1)
+
+				!内積の計算
+				call CMultiply(UH,N,UHN,1,SYMBL,SYMBL,1)
+
+				!計算した内積を足し合わせる
+				call CAdd(NAISEKI,UHN,NAISEKI,1,1,1,1)
+			end do
+		end do
+
+		!内積の絶対値を出力
+!		call CAbs(NAISEKI(1,1),NAISEKI_TMP)
+!		print *, l,",",NAISEKI_TMP
+
+
+		!検証
+		!スペクトル定理
+		do i=1, SYMBL
+			LAMBDA_MATRIX(i,i) = LAMBDA(i,1)
+		end do
+		!スペクトル定理よりシミュレーションで求めた合成チャネル行列を計算
+		call CMultiply(X,LAMBDA_MATRIX,XLM,SYMBL,SYMBL,SYMBL,SYMBL)
+		call Cadjoint(X,XH,SYMBL,SYMBL)
+		call CMultiply(XLM,XH,XLMXH,SYMBL,SYMBL,SYMBL,SYMBL)
+		!理論値とシミュレーション結果の差をとる
+		call CSubtract(HHH,XLMXH,S,SYMBL,SYMBL,SYMBL,SYMBL)
+
+		!上で計算した差の絶対値の2乗を理論値の絶対値の2乗で正規化する
+		M1=0.0
+		M2=0.0
+		do i=1, SYMBL
+			do j=1,SYMBL
+				M1 = M1 + real(S(i,j))**2 + aimag(S(i,j))**2
+				M2 = M2 + real(HHH(i,j))**2 + aimag(HHH(i,j))**2
+			end do
+		end do
+		Q(l,1) = M1 / M2
+
 	end do
-end do
 
-END
-
-SUBROUTINE CASUM(A,B,C,ldat,lcar)
-complex A(ldat,lcar),B(ldat,lcar),C(ldat,lcar)
-
-do i=1,ldat
-	do j=1,lcar
-		C(i,j)=A(i,j)+B(i,j)
+	!結果の出力
+	do i=1, NLOOP
+		print *, i, ",", Q(i,1)
 	end do
-end do
 
-END 
+contains
+	!行列の掛け算を行う
 
-SUBROUTINE CASUB(A,B,C,ldat,lcar)
-complex A(ldat,lcar),B(ldat,lcar),C(ldat,lcar)
+	subroutine CMultiply(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
+		integer A_ROW,A_COL,B_ROW,B_COL,i,j,k
+		complex A(:,:), B(:,:),C(:,:)
 
-do i=1,ldat
-	do j=1,lcar
-		C(i,j)=A(i,j)-B(i,j)
-	end do
-end do
+		if(A_COL.ne.B_ROW) then
+			print *, "can't calculate (Multiply)"
+			stop
+		end if
 
-END
-	
-		
-SUBROUTINE CNORM(A,XOUT,ldat,lcar)
-complex A(ldat,lcar)
-real XOUT
+		do i=1, A_ROW
+			do j=1, B_COL
+				C(i,j) = cmplx(0.0,0.0)
+				do k=1, A_COL
+					C(i,j) = C(i,j)+A(i,k)*B(k,j)
+				end do
+			end do
+		end do
 
-XOUT=0.
-do i=1,ldat
-	XOUT=XOUT+real(A(i,1))**2+aimag(A(i,1))**2
-end do
+	end subroutine
 
-XOUT=sqrt(XOUT)
+	!行列の和を取る
 
-END
+	subroutine CAdd(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
+		integer A_ROW,A_COL,B_ROW,B_COL,i,j
+		complex A(:,:),B(:,:),C(:,:)
 
-SUBROUTINE CNOM(A,ldat,lcar)
-complex A(ldat,lcar)
-real XIN
+		if((A_ROW.ne.B_ROW).or.(A_COL.ne.B_COL)) then
+			print *, "can't calculate (Add)"
+			stop
+		end if
 
-CALL CNORM(A,XIN,ldat,lcar)
+		do i=1, A_ROW
+			do j=1, A_COL
+				C(i,j) = A(i,j) + B(i,j)
+			end do
+		end do 
+
+	end subroutine
+
+	!行列の差を取る
+
+	subroutine CSubtract(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
+		integer A_ROW,A_COL,B_ROW,B_COL,i,j
+		complex A(:,:),B(:,:),C(:,:)
+
+		if((A_ROW.ne.B_ROW).or.(A_COL.ne.B_COL)) then
+			print *, "can't calculate (Subtract)"
+			stop
+		end if
+
+		do i=1, A_ROW
+			do j=1, A_COL
+				C(i,j) = A(i,j) - B(i,j)
+			end do
+		end do 
+
+	end subroutine
+
+	!随伴行列を取る
+
+	subroutine CAdjoint(A,AH,A_ROW,A_COL)
+		integer A_ROW,A_COL,i,j
+		complex A(:,:),AH(:,:)
+
+		do i=1, A_ROW
+			do j=1, A_COL
+				AH(j,i) = conjg(A(i,j))
+			end do
+		end do
+
+	end subroutine
+
+	!処理Iを加える
+
+	subroutine ProcI(A,AI,A_ROW,A_COL)
+		integer A_ROW,A_COL,i,j
+		complex A(:,:),AI(:,:)
+
+		do i=1, A_COL
+			do j=1, A_ROW
+				AI(A_ROW-j+1,i) = conjg(A(j,i))
+			end do
+		end do
+
+	end subroutine
+
+	!処理Jを加える
+
+	subroutine ProcJ(A,AJ,A_ROW,A_COL,PATH)
+		integer A_ROW,A_COL,PATH,i,j
+		complex A(:,:),AJ(:,:)
+
+		do i=1, A_COL
+			do j=PATH, A_ROW-(PATH-1)
+				AJ(A_ROW-(PATH-1)-j+1,i) = conjg(A(j,i))
+			end do
+		end do
+
+	end subroutine
+
+	!配列を代入する
+
+	subroutine CSubstitute(A,B,A_ROW,A_COL)
+		integer A_ROW,A_COL,i,j
+		complex A(:,:),B(:,:)
+
+		do i=1, A_ROW
+			do j=1, A_COL
+				A(i,j) = B(i,j)
+			end do
+		end do
+
+	end subroutine
+
+	!正規化する
+
+	subroutine CNormalize(A,A_ROW,A_COL)
+		integer A_ROW,A_COL,i
+		complex A(:,:)
+		real TMP
+
+		if(A_COL.ne.1) then
+			print *, "The number of column isn't one."
+			stop
+		end if
+
+		!実部と虚部の二乗の和を計算
+		TMP = 0.0
+		do i=1, A_ROW
+			TMP = TMP + real(A(i,1))**2 + aimag(A(i,1))**2
+		end do
+
+		TMP = sqrt(TMP)
+
+		!各成分をTMPで割る
+		do i=1, A_ROW
+			A(i,1) = A(i,1) / TMP
+		end do
+
+	end subroutine
+
+	!print
+
+	subroutine print(A)
+		complex A(:,:)
+		integer i
+
+		do i=1, SYMBL
+			print *, l, A(i,1)
+		end do
+	end subroutine
+
+	!複素数の絶対値をとる
+
+	subroutine CAbs(A,TMP)
+		integer i
+		complex A
+		real TMP
+
+		!実部と虚部の二乗の和を計算
+		TMP = 0.0
+		TMP = real(A)**2 + aimag(A)**2
+		TMP = sqrt(TMP)
+	end subroutine
 
 
-do i=1,ldat
-	A(i,1)=A(i,1)/XIN
-end do
+end program 
 
-END
-
-SUBROUTINE CHN(A,B,C,ldat,lcar)
-COMPLEX A(ldat,lcar),B(ldat,lcar),C(lcar,lcar),X(lcar,ldat)
-
-do i=1,ldat
-	X(1,i)=conjg(A(i,1))
-end do
-
-CALL CAMULTIPLY(X,B,C,lcar,ldat,ldat,lcar)
-
-END
