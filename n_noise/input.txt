@@ -1,3 +1,0 @@
-sybl 5
-path 3
-fname r5-3.txt

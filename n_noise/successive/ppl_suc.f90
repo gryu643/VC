@@ -16,9 +16,9 @@ INTEGER ROWB,U
 REAL    D2(lrow),M1,M2,YYY
 character TMP*(39),FNAME*(30)
 
-read(*,*)TMP,ROWB !�V���{����
-read(*,*)TMP,U !�p�X��
-read(*,*)TMP,FNAME !�o�̓t�@�C����
+read(*,*)TMP,ROWB !ƒVƒ“ƒ{ƒ‹”
+read(*,*)TMP,U !ƒpƒX”
+read(*,*)TMP,FNAME !o—Íƒtƒ@ƒCƒ‹–¼
 OPEN(24,FILE=FNAME,STATUS='UNKNOWN',ACCESS='SEQUENTIAL')
 
 H(:,:)=cmplx(0.,0.)
@@ -56,7 +56,7 @@ D2(:)=0.
 
 
 
-!�`���H�s��H��ݒ�(,ROWB)
+!“`”À˜Hs—ñH‚ðÝ’è(,ROWB)
 do j=0,U-1
 	do i=1,ROWB
 		H(i+j,i)=cmplx(0.1+0.1*j,0.2+0.1*j)
@@ -64,7 +64,7 @@ do j=0,U-1
 end do
 
 
-!�`���H�s��H���g������HE���l����
+!“`”À˜Hs—ñH‚ðŠg’£‚µ‚½HE‚ðl‚¦‚é
 do j=0,U-1
 	DO i=1,ROWB+U-1
 		HE(i+j,i)=cmplx(0.1+0.1*j,0.2+0.1*j)
@@ -72,13 +72,13 @@ do j=0,U-1
 end do
 
 
-!�����`���H�s��HH��ݒ�
+!”º“`”À˜Hs—ñHH‚ðÝ’è
 CALL CADJOINT(H,HH,lrow+lpath,lrow)
-!HH�~H
+!HH~H
 CALL CAMULTIPLY(HH,H,HHH,lrow,lrow+lpath,lrow+lpath,lrow)
 
 
-!�C�ӓ`���x�N�g����ݒ�
+!”CˆÓ“`‘—ƒxƒNƒgƒ‹‚ðÝ’è
 c(:,:)=cmplx(0.,0.)
 
 do j=1,ROWB
@@ -88,7 +88,7 @@ do j=1,ROWB
 end do
 
 
-do l=1,5
+do l=1,200
 
 c(:,:)=cmplx(0.,0.)
 
@@ -103,23 +103,23 @@ end do
 	M2=0
 	do k=1,l
 		
-		!�����[�v�ł̌ŗL�l�Z�o�̂��߁AC1�ɑO���[�v�̌ŗL�x�N�g���Q���i�[
+		!ŽŸƒ‹[ƒv‚Å‚ÌŒÅ—L’lŽZo‚Ì‚½‚ßAC1‚É‘Oƒ‹[ƒv‚ÌŒÅ—LƒxƒNƒgƒ‹ŒQ‚ðŠi”[
 		C1(:,:)=C(:,:)
-		!�������[�v�֐����x�N�g���Q�ɓK��������
+		!ƒƒ“ƒ‹[ƒvŠÖ”‚ð—ñƒxƒNƒgƒ‹ŒQ‚É“K‰ž‚³‚¹‚é
 		CALL CAMULTIPLY(H,C,HC,lrow+lpath,lrow,lrow,lrow)
 	
 		
-		!HC�ɏ���I��������
+		!HC‚Éˆ—I‚ð‰Á‚¦‚é
 		do j=1,ROWB
 			do i=1,ROWB+U-1
 				HC2(i,j)=conjg(HC(ROWB+U-i,j))
 			end do
 		end do
 		
-		!HE�ʉ�
+		!HE’Ê‰ß
 		CALL CAMULTIPLY(HE,HC2,HEC,lrow+2*lpath,lrow+lpath,lrow+lpath,lrow)
 				
-		!HEC�ɏ���J��������
+		!HEC‚Éˆ—J‚ð‰Á‚¦‚é
 		do j=1,ROWB
 			do i=1,ROWB
 				C(i,j)=conjg(HEC(ROWB+U-i,j))
@@ -127,35 +127,35 @@ end do
 		end do
 
 !		do i=1, ROWB
-!			print *, l, C(i,1)
+!			print *, l, C(i,2)
 !		end do
 
-		!��x�N�g���Q�̌ŗL�l�����ꂼ��Z�o
+		!—ñƒxƒNƒgƒ‹ŒQ‚ÌŒÅ—L’l‚ð‚»‚ê‚¼‚êŽZo
 		do j=1,ROWB
 	
 			do i=1,ROWB
-				D(i,1)=C(i,j) !�����@�։�����̗�x�N�g�����i�[
-				D1(i,1)=C1(i,j) !�����@�։����O�̗�x�N�g�����i�[
-				D2(i)=abs(real(D(i,1))/real(D1(i,1))) !������̃x�N�g����O�̂Ŋ����āA�ŗL�l�Ƃ���
+				D(i,1)=C(i,j) !–³ü‹@ŠÖ‰•œŒã‚Ì—ñƒxƒNƒgƒ‹‚ðŠi”[
+				D1(i,1)=C1(i,j) !–³ü‹@ŠÖ‰•œ‘O‚Ì—ñƒxƒNƒgƒ‹‚ðŠi”[
+				D2(i)=abs(real(D(i,1))/real(D1(i,1))) !‰•œŒã‚ÌƒxƒNƒgƒ‹‚ð‘O‚Ì‚ÅŠ„‚Á‚ÄAŒÅ—L’l‚Æ‚·‚é
 			end do
 			
 			blamda=D2(1)
 			do i=2,ROWB
-				if(blamda.GT.D2(i)) blamda=D2(i) !��ŋ��߂��e�s�̌ŗL�l�̒��ōŏ��̂��̂�blamda�Ɋi�[
+				if(blamda.GT.D2(i)) blamda=D2(i) !ã‚Å‹‚ß‚½Šes‚ÌŒÅ—L’l‚Ì’†‚ÅÅ¬‚Ì‚à‚Ì‚ðblamda‚ÉŠi”[
 			end do
-			bramda(:,j)=cmplx(blamda,0.) !�ŗL�l�𕡑f���`��bramda�̗�Ɉꊇ�i�[
+			bramda(:,j)=cmplx(blamda,0.) !ŒÅ—L’l‚ð•¡‘f”Œ`‚Åbramda‚Ì—ñ‚ÉˆêŠ‡Ši”[
 		end do
 	
 !		do i=1, ROWB
 !			print *, l, bramda(1,i)
 !		end do	
 				
-		!�������o
+		!·•ª“±o
 		C2(:,:)=cmplx(0.,0.)
 		do j=1,ROWB-1 !j=1~4
 			do i=1,ROWB !i=1~5
-				D3(i,1)=C1(i,j) !�����@�։����O�̌ŗL�x�N�g��
-				D4(i,1)=C1(i,j+1) !D3�̎��̗�̌ŗL�x�N�g��
+				D3(i,1)=C1(i,j) !–³ü‹@ŠÖ‰•œ‘O‚ÌŒÅ—LƒxƒNƒgƒ‹
+				D4(i,1)=C1(i,j+1) !D3‚ÌŽŸ‚Ì—ñ‚ÌŒÅ—LƒxƒNƒgƒ‹
 			end do
 			
 			CALL CADJOINT(D3,E,lrow,1)
@@ -183,30 +183,34 @@ end do
 		
 		CALL CASUB(C,C5,C,lrow,lrow)
 
-		do i=1, ROWB
-			print *, l, C5(i,5)
-		end do
+!		do i=1, ROWB
+!			print *, l, C5(i,4)
+!		end do
 		
-		!���K��(�����ł͗�x�N�g���Q���̗�x�N�g����������K�����Ă���)
+		!³‹K‰»(‚±‚±‚Å‚Í—ñƒxƒNƒgƒ‹ŒQ“à‚Ì—ñƒxƒNƒgƒ‹‚ðˆê‚Â‚¸‚Â³‹K‰»‚µ‚Ä‚¢‚é)
 		do j=1,ROWB
 			do i=1,ROWB
 				D7(i,1)=C(i,j)
 			end do
-			
+
 			CALL CNOM(D7,lrow,1)
 		
 			do i=1,ROWB
 				C(i,j)=D7(i,1)
 			end do
 		end do
-				
+
+!		do i=1, ROWB
+!			print *, l, C(i,4)
+!		end do		
+
 	END DO
 
 !	do i=1, ROWB
-!		print *, l, C(i,3)
+!		print *, l, C(i,1)
 !	end do
 
-	!�ŗL�x�N�g�����m�F(����=0)
+	!ŒÅ—LƒxƒNƒgƒ‹‚©Šm”F(“àÏ=0)
 	G(1,1)=cmplx(0.0,0.0)
 	do i=1,ROWB
 		do j=i+1, ROWB
@@ -219,12 +223,12 @@ end do
 		end do
 	end do
 
-!	call CNORM(G,YYY,1,1)
-!	print *,l,YYY
+	call CNORM(G,YYY,1,1)
+	print *,l,",",YYY
 	
 	
-	!����
-	!�X�y�N�g���藝
+	!ŒŸØ
+	!ƒXƒyƒNƒgƒ‹’è—
 	do i=1,ROWB
 		CLAMDA(i,i)=bramda(1,i)
 	end do
@@ -238,7 +242,7 @@ end do
 		end do
 	end do
 	
-	!�s��̍��̓��a
+	!s—ñ‚Ì·‚Ì“ñæ˜a
 	CALL CASUB(HHH,P,S,lrow,lrow)
 
 	do j=1,ROWB
@@ -317,6 +321,7 @@ XOUT=0.
 do i=1,ldat
 	XOUT=XOUT+real(A(i,1))**2+aimag(A(i,1))**2
 end do
+
 XOUT=sqrt(XOUT)
 
 END

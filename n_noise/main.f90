@@ -207,24 +207,24 @@ end do
 	!検証
 	!スペクトル定理
 	do i=1,ROWB
-		CLAMDA(i,i)=bramda(1,i)
+		CLAMDA(i,i)=bramda(1,i)!固有値対角行列
 	end do
-	CALL CAMULTIPLY(C,CLAMDA,CTMP,lrow,lrow,lrow,lrow)
-	CALL CADJOINT(C,CH,lrow,lrow)
-	CALL CAMULTIPLY(CTMP,CH,P,lrow,lrow,lrow,lrow)
+	CALL CAMULTIPLY(C,CLAMDA,CTMP,lrow,lrow,lrow,lrow)!固有符号群行列と固有値対角行列の積を計算
+	CALL CADJOINT(C,CH,lrow,lrow)!固有符号群行列の随伴行列をとる
+	CALL CAMULTIPLY(CTMP,CH,P,lrow,lrow,lrow,lrow)!固有符号群行列、固有値対角行列、固有符号群行列の随伴行列の積
 	
 	do j=1,ROWB
 		do i=1,ROWB
-			P(i,j)=cmplx(abs(real(P(i,j))),aimag(P(i,j)))
+			P(i,j)=cmplx(abs(real(P(i,j))),aimag(P(i,j)))!行列の各成分の実部の絶対値をとって格納しなおす
 		end do
 	end do
 	
 	!行列の差の二乗和
-	CALL CASUB(HHH,P,S,lrow,lrow)
+	CALL CASUB(HHH,P,S,lrow,lrow)!理論値HHHとの差を計算
 
 	do j=1,ROWB
 		do i=1,ROWB
-			M1=M1+real(S(i,j))**2+aimag(S(i,j))**2
+			M1=M1+real(S(i,j))**2+aimag(S(i,j))**2!
 			M2=M2+real(HHH(i,j))**2+aimag(HHH(i,j))**2
 		end do
 	end do
