@@ -39,9 +39,11 @@ program ppl_bulk
 	real :: LAMBDA_TMP=0.0
 	real :: TMP1(X_ROW)=0.0 !(SYMBL,1)
 	real :: NAISEKI_TMP=0.0
+	real :: sC2=0.0
 	real :: M1=0.0
 	real :: M2=0.0
 	real :: Q(NLOOP,1) !(NLOOP,1)
+	real :: AVGOTH(NLOOP,1) !(NLOOP,1)
 
 	!シンボル数、パス数を読み込む
 	read(5,*) TMP,SYMBL
@@ -206,8 +208,9 @@ program ppl_bulk
 		end do
 
 		!内積の絶対値を出力
-!		call CAbs(NAISEKI(1,1),NAISEKI_TMP)
-!		print *, l,",",NAISEKI_TMP
+		call CAbs(NAISEKI(1,1),NAISEKI_TMP)
+		sC2 = SYMBL*(SYMBL-1.0)/2.0
+		AVGOTH(l,1) = NAISEKI_TMP / sC2
 
 
 		!検証
@@ -237,7 +240,7 @@ program ppl_bulk
 
 	!結果の出力
 	do i=1, NLOOP
-		print *, i, ",", Q(i,1)
+		print *, i, ",", Q(i,1), ",", AVGOTH(i,1)
 	end do
 
 contains
@@ -398,7 +401,6 @@ contains
 	!複素数の絶対値をとる
 
 	subroutine CAbs(A,TMP)
-		integer i
 		complex A
 		real TMP
 

@@ -6,10 +6,10 @@ CFLAGS = -Wall -O3
 OBJS = ppl_bulk.o
 
 $(PROGRAM): ppl_bulk.o
-	$(CC) -o $@ $(CFLAGS) $<
+	$(CC) -o $@ $<
 
 ppl_bulk.o: ppl_bulk.f90
-	$(CC) -c $<
+	$(CC) -c $< 
 
 .PHONY: clean
 clean:

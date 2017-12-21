@@ -7,7 +7,7 @@ program ppl_bulk
 	integer SYMBL,PATH
 	character(10) TMP
 	complex :: Z(H_ROW,H_COL)=(0.0,0.0)
-	complex :: X(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex :: XG(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
 	complex :: Xpre(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
 	complex :: H(H_ROW+H_PATH,H_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
 	complex :: HE(H_ROW+H_PATH*2,H_COL)=(0.0,0.0) !(SYMBL+2*PATH-1,SYMBL+PATH-1)
@@ -39,9 +39,11 @@ program ppl_bulk
 	real :: LAMBDA_TMP=0.0
 	real :: TMP1(X_ROW)=0.0 !(SYMBL,1)
 	real :: NAISEKI_TMP=0.0
+	real :: sC2=0.0
 	real :: M1=0.0
 	real :: M2=0.0
 	real :: Q(NLOOP,1) !(NLOOP,1)
+	real :: AVGOTH(NLOOP,1) !(NLOOP,1)
 
 	!シンボル数、パス数を読み込む
 	read(5,*) TMP,SYMBL
@@ -71,7 +73,7 @@ program ppl_bulk
 		!任意伝送ベクトルの設定
 		do i=1, SYMBL
 			do j=1, SYMBL
-				X(i,j) = cmplx(1.0, 0.0)
+				XG(i,j) = cmplx(1.0, 0.0)
 			end do
 		end do
 
@@ -206,8 +208,9 @@ program ppl_bulk
 		end do
 
 		!内積の絶対値を出力
-!		call CAbs(NAISEKI(1,1),NAISEKI_TMP)
-!		print *, l,",",NAISEKI_TMP
+		call CAbs(NAISEKI(1,1),NAISEKI_TMP)
+		sC2 = SYMBL*(SYMBL-1.0)/2.0
+		AVGOTH(l,1) = NAISEKI_TMP / sC2
 
 
 		!検証
@@ -237,7 +240,7 @@ program ppl_bulk
 
 	!結果の出力
 	do i=1, NLOOP
-		print *, i, ",", Q(i,1)
+		print *, i, ",", Q(i,1), ",", AVGOTH(i,1)
 	end do
 
 contains
@@ -398,7 +401,6 @@ contains
 	!複素数の絶対値をとる
 
 	subroutine CAbs(A,TMP)
-		integer i
 		complex A
 		real TMP
 
