@@ -2,14 +2,14 @@
 
 CC = gfortran
 PROGRAM = myppl
-CFLAGS = -Wall -O3
+CFLAGS = -O3 -ffree-form
 OBJS = myppl.o
 
 $(PROGRAM): myppl.o
 	$(CC) -o $@ $(CFLAGS) $<
 
 myppl.o: myppl.f90
-	$(CC) -c $<
+	$(CC) -c $< $(CFLAGS)
 
 .PHONY: clean
 clean:
