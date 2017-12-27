@@ -406,10 +406,10 @@ contains
 		complex A(:,:)
 		real TMP
 
+		TMP = 0.0
 		do i=1, A_ROW
 			!実部と虚部の二乗の和を計算
-			TMP = 0.0
-			TMP = real(A(i,A_COL))**2 + aimag(A(i,A_COL))**2
+			TMP = TMP + real(A(i,A_COL))**2 + aimag(A(i,A_COL))**2
 		end do
 		TMP = sqrt(TMP)
 	end subroutine
