@@ -93,7 +93,6 @@ program ppl_bulk
 			!処理J
 			call ProcJ(HHHXbrJ,HHHX,SYMBL+2*(PATH-1),SYMBL,PATH)
 
-!			call print(HHHX)
 
 			!列ベクトル群の固有値をそれぞれ算出
 			do i=1, SYMBL
@@ -114,7 +113,6 @@ program ppl_bulk
 			end do
 			!この時点で配列LAMBDAの各行に固有値が入っている。
 
-!			call print(LAMBDA)
 
 			!減算部分の算出
 			call CSubstitute(LUUH_SET,Z,SYMBL,SYMBL)
@@ -160,7 +158,6 @@ program ppl_bulk
 			!減算
 			call CSubtract(HHHX,SUB_PART,arSUB,SYMBL,SYMBL,SYMBL,SYMBL)
 
-!			call print(SUB_PART)
 
 			!正規化
 			do i=1, SYMBL
@@ -177,11 +174,9 @@ program ppl_bulk
 					X(j,i) = NORM(j,1)
 				end do
 			end do
-!			call print(X)
 
 		end do
 
-!		call print(X)
 
 		!固有ベクトルか確認(内積=0)
 		NAISEKI(1,1) = cmplx(0.0,0.0)
