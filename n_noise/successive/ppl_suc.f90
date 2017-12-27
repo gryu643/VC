@@ -22,15 +22,14 @@ program ppl_bulk
 	complex :: Xn(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
 	complex :: U(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
 	complex :: UH(1,X_ROW)=(0.0,0.0) !(1,SYMBL)
-	complex :: LUUH(X_ROW,X_ROW)=(0.0,0.0) !(SYMBL)
+	complex :: LUUH(X_ROW,X_ROW)=(0.0,0.0) !(SYMBL,SYMBL)
 	complex :: LUUH_SET(X_ROW,X_ROW)=(0.0,0.0) !(SYMBL,SYMBL)
 	complex :: LU(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
 	complex :: LUUHXn(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
-	complex :: SUB_PART(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
-	complex :: arSUB(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex :: arSUB(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
 	complex :: NORM(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
 	complex :: UHN(1,1)=(0.0)
-	complex :: N(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex :: N1(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
 	complex :: NAISEKI(1,1)=(0.0,0.0) !(1,1)
 	complex :: LAMBDA_MATRIX(X_ROW,X_COL) !(SYMBL,SYMBL)
 	complex :: XH(X_ROW,X_COL) !(SYMBL,SYMBL)
@@ -79,6 +78,9 @@ program ppl_bulk
 			end do
 		end do
 
+		!減算部のLUUH_SETを初期化
+		call CSubstitute(LUUH_SET,Z,SYMBL,SYMBL)
+
 		!固有符号を第1固有符号から順番に収束させる
 		do m=1, SYMBL
 			do i=1, SYMBL
@@ -87,7 +89,6 @@ program ppl_bulk
 
 			!各固有符号をl回往復
 			do n=1, l
-
 				!固有値算出のため、Xを退避
 				call CSubstitute(Xpre,X,SYMBL,1)
 
@@ -98,98 +99,86 @@ program ppl_bulk
 				call ProcI(HX,HXarI,SYMBL+PATH-1,1) !HXarI(SYMBL+PATH-1,1)
 
 				!HE通過
-				call CMultiply(HE,HXarI,HHHXbrJ,SYMBL+2*(PATH-1),SYMBL+PATH-1,SYMBL+PATH-1,SYMBL) !HHHXbrJ(SYMBL+2*(PATH-1), 1)
+				call CMultiply(HE,HXarI,HHHXbrJ,SYMBL+2*(PATH-1),SYMBL+PATH-1,SYMBL+PATH-1,1) !HHHXbrJ(SYMBL+2*(PATH-1), 1)
 
 				!処理J
-				call ProcJ(HHHXbrJ,HHHX,SYMBL+2*(PATH-1),SYMBL,PATH) !HHHX(SYMBL,1)
+				call ProcJ(HHHXbrJ,HHHX,SYMBL+2*(PATH-1),1,PATH) !HHHX(SYMBL,1)
 
-	!			call print(HHHX)
 
-				!列ベクトルの固有値を算出
-				do j=1, SYMBL
-					TMP1(j) = abs(real(HHHX(j,1))/real(Xpre(j,1)))
-				end do
+				!減算処理
+				if(m.gt.1) then
+					!往復前の固有ベクトルをXnに格納
+					call CSubstitute(Xn,Xpre,SYMBL,1)
 
-				!!上で出した固有値のうち最小のものをLAMBDA_TMPに格納
-				LAMBDA_TMP = TMP1(1)
-				do j=2, SYMBL
-					if (LAMBDA_TMP.gt.TMP1(j)) then
-						LAMBDA_TMP=TMP1(j)
-					end if
-				end do
+					!LUUH_SET*Xn(SYMBL,1)
+					call CMultiply(LUUH_SET,Xn,LUUHXn,SYMBL,SYMBL,SYMBL,1)
 
-				LAMBDA(m,1) = cmplx(LAMBDA_TMP,0.0)
-				!!この時点で配列LAMBDAの各行に固有値が入っている。
+					!減算
+					call CSubtract(HHHX,LUUHXn,arSUB,SYMBL,SYMBL,SYMBL,SYMBL)
+				else if(m.eq.1) then
+					call CSubstitute(arSUB,HHHX,SYMBL,1)
+				end if
 
-	!			call print(LAMBDA)
-
-!				!減算部分の算出
-!				call CSubstitute(LUUH_SET,Z,SYMBL,SYMBL)
-!				do i=2, SYMBL
-!					!収束する固有ベクトル(SYMBL,1)
-!					do k=1, SYMBL
-!						Xn(k,1) = Xpre(k,i)
-!					end do
-!
-!					!減算する固有ベクトル(SYMBL,1)
-!					do k=1, SYMBL
-!						U(k,1) = Xpre(k,i-1)
-!					end do
-!
-!					!固有ベクトルの随伴行列(1,SYMBL)
-!					call CAdjoint(U,UH,SYMBL,1)
-!
-!					!λ*U(SYMBL,1)
-!					do k=1, SYMBL
-!						LU(k,1) = LAMBDA(i-1,1)*U(k,1)
-!					end do
-!
-!					!LU*UH(SYMBL,SYMBL)
-!					call CMultiply(LU,UH,LUUH,SYMBL,1,1,SYMBL)
-!
-!					!λUUHの集合を格納
-!					do j=1, SYMBL
-!						do k=1, SYMBL
-!							LUUH_SET(j,k) = LUUH_SET(j,k) + LUUH(j,k)
-!						end do
-!					end do
-!
-!					!LUUH_SET*Xn(SYMBL,1) iの次ループで足し合わせる
-!					call CMultiply(LUUH_SET,Xn,LUUHXn,SYMBL,SYMBL,SYMBL,1)
-!
-!					!減算部の格納
-!					do k=1, SYMBL
-!						SUB_PART(k,i) = LUUHXn(k,1)
-!					end do
-!
-!				end do
-
-				!減算
-				call CSubtract(HHHX,SUB_PART,arSUB,SYMBL,SYMBL,SYMBL,SYMBL)
-
-	!			call print(SUB_PART)
 
 				!正規化
-				do i=1, SYMBL
-					!固有ベクトル群を1列のベクトルに格納
-					do j=1, SYMBL
-						NORM(j,1) = arSUB(j,i)
-					end do
+				!固有ベクトル群を1列のベクトルに格納
+				call CSubstitute(NORM,arSUB,SYMBL,1)
 
-					!正規化
-					call CNormalize(NORM,SYMBL,1)
+				!正規化
+				call CNormalize(NORM,SYMBL,1)
 
-					!正規化したベクトルをXに格納
-					do j=1, SYMBL
-						X(j,i) = NORM(j,1)
-					end do
+				!正規化したベクトルをXに格納
+				call CSubstitute(X,NORM,SYMBL,1)
+			end do
+
+
+			!固有符号群行列に求めた固有符号を格納
+			do i=1, SYMBL
+				XG(i,m) = Xpre(i,1)
+			end do
+
+
+			!固有値の導出
+			!列ベクトルの固有値を算出　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
+			do j=1, SYMBL
+				TMP1(j) = abs(real(HHHX(j,1))/real(Xpre(j,1)))
+			end do
+
+			!上で出した固有値のうち最小のものをLAMBDA_TMPに格納
+			LAMBDA_TMP = TMP1(1)
+			do j=2, SYMBL
+				if (LAMBDA_TMP.gt.TMP1(j)) then
+					LAMBDA_TMP=TMP1(j)
+				end if
+			end do
+			!導出した固有値を格納
+			LAMBDA(m,1) = cmplx(LAMBDA_TMP,0.0)
+
+
+			!減算部分の算出
+			!減算する固有ベクトル U(SYMBL,1)
+			call CSubstitute(U,Xpre,SYMBL,1)
+
+			!固有ベクトルの随伴行列 UH(1,SYMBL)
+			call CAdjoint(U,UH,SYMBL,1)
+
+			!λ*U(SYMBL,1)
+			do k=1, SYMBL
+				LU(k,1) = LAMBDA(m,1)*U(k,1)
+			end do
+
+			!LU*UH(SYMBL,SYMBL)
+			call CMultiply(LU,UH,LUUH,SYMBL,1,1,SYMBL)
+
+			!λUUHの集合を格納
+			do j=1, SYMBL
+				do k=1, SYMBL
+					LUUH_SET(j,k) = LUUH_SET(j,k) + LUUH(j,k)
 				end do
-	!			call print(X)
 			end do
 
 		end do
 
-!		call print(X)
 
 		!固有ベクトルか確認(内積=0)
 		NAISEKI(1,1) = cmplx(0.0,0.0)
@@ -197,25 +186,26 @@ program ppl_bulk
 			do j=i+1, SYMBL
 				!固有ベクトル群を１列のベクトルに格納
 				do k=1, SYMBL
-					U(k,1) = X(k,i)
+					U(k,1) = XG(k,i)
 				end do
 				!内積を取る固有ベクトルを格納
 				do k=1, SYMBL
-					N(k,1) = X(k,j)
+					N1(k,1) = XG(k,j)
 				end do
 
 				!随伴行列
 				call CAdjoint(U,UH,SYMBL,1)
 
 				!内積の計算
-				call CMultiply(UH,N,UHN,1,SYMBL,SYMBL,1)
+				call CMultiply(UH,N1,UHN,1,SYMBL,SYMBL,1)
 
 				!計算した内積を足し合わせる
 				call CAdd(NAISEKI,UHN,NAISEKI,1,1,1,1)
 			end do
 		end do
 
-		!内積の絶対値を出力
+
+		!平均直交度を出力
 		call CAbs(NAISEKI(1,1),NAISEKI_TMP)
 		sC2 = SYMBL*(SYMBL-1.0)/2.0
 		AVGOTH(l,1) = NAISEKI_TMP / sC2
@@ -227,8 +217,8 @@ program ppl_bulk
 			LAMBDA_MATRIX(i,i) = LAMBDA(i,1)
 		end do
 		!スペクトル定理よりシミュレーションで求めた合成チャネル行列を計算
-		call CMultiply(X,LAMBDA_MATRIX,XLM,SYMBL,SYMBL,SYMBL,SYMBL)
-		call Cadjoint(X,XH,SYMBL,SYMBL)
+		call CMultiply(XG,LAMBDA_MATRIX,XLM,SYMBL,SYMBL,SYMBL,SYMBL)
+		call Cadjoint(XG,XH,SYMBL,SYMBL)
 		call CMultiply(XLM,XH,XLMXH,SYMBL,SYMBL,SYMBL,SYMBL)
 		!理論値とシミュレーション結果の差をとる
 		call CSubtract(HHH,XLMXH,S,SYMBL,SYMBL,SYMBL,SYMBL)
@@ -420,4 +410,3 @@ contains
 
 
 end program 
-
