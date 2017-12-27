@@ -144,10 +144,8 @@ program ppl_bulk
 
 			!固有値の導出
 			!列ベクトルの固有値を算出　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
-			do i=1, SYMBL
-				D(i,1) = XG(i,m)
-				D1(i,1) = HHHX(i,1)
-			end do
+			call CSubstitute(D,Xpre,SYMBL,1)
+			call CSubstitute(D1,HHHX,SYMBL,1)
 
 			call CAbs(D,D_ABS,SYMBL,1)
 			call CAbs(D1,D1_ABS,SYMBL,1)
@@ -403,10 +401,10 @@ contains
 		complex A(:,:)
 		real TMP
 
+		TMP = 0.0
 		do i=1, A_ROW
 			!実部と虚部の二乗の和を計算
-			TMP = 0.0
-			TMP = real(A(i,A_COL))**2 + aimag(A(i,A_COL))**2
+			TMP = TMP + real(A(i,A_COL))**2 + aimag(A(i,A_COL))**2
 		end do
 		TMP = sqrt(TMP)
 	end subroutine
