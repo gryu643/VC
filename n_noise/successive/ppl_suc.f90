@@ -68,7 +68,7 @@ program ppl_bulk
 
 	!合成チャネル行列HHHの設定
 	call CMultiply(HH,H,HHH,SYMBL,SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
-!
+
 	!固有符号ひとつ当たりの往復回数
 	do l=1, NLOOP
 		!任意伝送ベクトルの設定
