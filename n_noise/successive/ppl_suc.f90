@@ -32,9 +32,9 @@ program ppl_bulk
 	complex :: N1(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
 	complex :: NAISEKI(1,1)=(0.0,0.0) !(1,1)
 	complex :: LAMBDA_MATRIX(X_ROW,X_COL) !(SYMBL,SYMBL)
-	complex :: XH(X_ROW,X_COL) !(SYMBL,SYMBL)
+	complex :: XGH(X_ROW,X_COL) !(SYMBL,SYMBL)
 	complex :: XLM(X_ROW,X_COL) !(SYMBL,SYMBL)
-	complex :: XLMXH(X_ROW,X_COL) !(SYMBL,SYMBL)
+	complex :: XLMXGH(X_ROW,X_COL) !(SYMBL,SYMBL)
 	complex :: S(X_ROW,X_COL) !(SYMBL,SYMBL)
 	real :: LAMBDA_TMP=0.0
 	real :: TMP1(X_ROW)=0.0 !(SYMBL,1)
@@ -50,16 +50,16 @@ program ppl_bulk
 	read(5,*) TMP,PATH
 
 	!伝搬路行列Hの設定
-	do i=1, SYMBL
-		do j=1, PATH
-			H(i+j-1,i) = cmplx(0.1*j, 0.1+0.1*j)
+	do j=0, PATH-1
+		do i=1, SYMBL
+			H(i+j,i) = cmplx(0.1+0.1*j, 0.2+0.1*j)
 		end do
 	end do
 
 	!伝搬路行列Hを拡張したHEを設定
-	do i=1, SYMBL+PATH-1
-		do j=1, PATH
-			HE(i+j-1,i) = cmplx(0.1*j, 0.1+0.1*j)
+	do j=0, PATH-1
+		do i=1, SYMBL+PATH-1
+			HE(i+j,i) = cmplx(0.1+0.1*j, 0.2+0.1*j)
 		end do
 	end do
 
@@ -71,12 +71,15 @@ program ppl_bulk
 
 	!固有符号ひとつ当たりの往復回数
 	do l=1, NLOOP
-		!任意伝送ベクトルの設定
+		!任意伝送ベクトルの設定・初期化
 		do i=1, SYMBL
 			do j=1, SYMBL
 				XG(i,j) = cmplx(1.0, 0.0)
 			end do
 		end do
+
+		!固有値行列を初期化
+		call CSubstitute(LAMBDA,Z,SYMBL,1)
 
 		!減算部のLUUH_SETを初期化
 		call CSubstitute(LUUH_SET,Z,SYMBL,SYMBL)
@@ -218,10 +221,10 @@ program ppl_bulk
 		end do
 		!スペクトル定理よりシミュレーションで求めた合成チャネル行列を計算
 		call CMultiply(XG,LAMBDA_MATRIX,XLM,SYMBL,SYMBL,SYMBL,SYMBL)
-		call Cadjoint(XG,XH,SYMBL,SYMBL)
-		call CMultiply(XLM,XH,XLMXH,SYMBL,SYMBL,SYMBL,SYMBL)
+		call Cadjoint(XG,XGH,SYMBL,SYMBL)
+		call CMultiply(XLM,XGH,XLMXGH,SYMBL,SYMBL,SYMBL,SYMBL)
 		!理論値とシミュレーション結果の差をとる
-		call CSubtract(HHH,XLMXH,S,SYMBL,SYMBL,SYMBL,SYMBL)
+		call CSubtract(HHH,XLMXGH,S,SYMBL,SYMBL,SYMBL,SYMBL)
 
 		!上で計算した差の絶対値の2乗を理論値の絶対値の2乗で正規化する
 		M1=0.0
@@ -392,7 +395,7 @@ contains
 		integer i
 
 		do i=1, SYMBL
-			print *, l, A(i,1)
+			print *, l, A(i,i)
 		end do
 	end subroutine
 

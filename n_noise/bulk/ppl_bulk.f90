@@ -50,16 +50,16 @@ program ppl_bulk
 	read(5,*) TMP,PATH
 
 	!伝搬路行列Hの設定
-	do i=1, SYMBL
-		do j=1, PATH
-			H(i+j-1,i) = cmplx(0.1*j, 0.1+0.1*j)
+	do j=0, PATH-1
+		do i=1, SYMBL
+			H(i+j,i) = cmplx(0.1+0.1*j, 0.2+0.1*j)
 		end do
 	end do
 
 	!伝搬路行列Hを拡張したHEを設定
-	do i=1, SYMBL+PATH-1
-		do j=1, PATH
-			HE(i+j-1,i) = cmplx(0.1*j, 0.1+0.1*j)
+	do j=0, PATH-1
+		do i=1, SYMBL+PATH-1
+			HE(i+j,i) = cmplx(0.1+0.1*j, 0.2+0.1*j)
 		end do
 	end do
 
@@ -85,14 +85,13 @@ program ppl_bulk
 			call CMultiply(H,X,HX,SYMBL+PATH-1,SYMBL,SYMBL,SYMBL)
 
 			!処理I
-			call ProcI(HX,HXarI,SYMBL+PATH-1,SYMBL)
+			call ProcI(HX,HXarI,SYMBL+PATH-1,SYMBL)	
 
 			!HE通過
 			call CMultiply(HE,HXarI,HHHXbrJ,SYMBL+2*(PATH-1),SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
 
 			!処理J
 			call ProcJ(HHHXbrJ,HHHX,SYMBL+2*(PATH-1),SYMBL,PATH)
-
 
 			!列ベクトル群の固有値をそれぞれ算出
 			do i=1, SYMBL
@@ -176,8 +175,7 @@ program ppl_bulk
 			end do
 
 		end do
-
-
+		
 		!固有ベクトルか確認(内積=0)
 		NAISEKI(1,1) = cmplx(0.0,0.0)
 		do i=1, SYMBL
@@ -380,17 +378,6 @@ contains
 			A(i,1) = A(i,1) / TMP
 		end do
 
-	end subroutine
-
-	!print
-
-	subroutine print(A)
-		complex A(:,:)
-		integer i
-
-		do i=1, SYMBL
-			print *, l, A(i,5)
-		end do
 	end subroutine
 
 	!複素数の絶対値をとる

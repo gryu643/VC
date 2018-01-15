@@ -54,16 +54,16 @@ program ppl_bulk
 	read(5,*) TMP,PATH
 
 	!伝搬路行列Hの設定
-	do i=1, SYMBL
-		do j=1, PATH
-			H(i+j-1,i) = cmplx(0.1*j, 0.1+0.1*j)
+	do j=0, PATH-1
+		do i=1, SYMBL
+			H(i+j,i) = cmplx(0.1+0.1*j, 0.2+0.1*j)
 		end do
 	end do
 
 	!伝搬路行列Hを拡張したHEを設定
-	do i=1, SYMBL+PATH-1
-		do j=1, PATH
-			HE(i+j-1,i) = cmplx(0.1*j, 0.1+0.1*j)
+	do j=0, PATH-1
+		do i=1, SYMBL+PATH-1
+			HE(i+j,i) = cmplx(0.1+0.1*j, 0.2+0.1*j)
 		end do
 	end do
 
