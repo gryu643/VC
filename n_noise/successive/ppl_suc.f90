@@ -395,7 +395,7 @@ contains
 		integer i
 
 		do i=1, SYMBL
-			print *, l, A(i,i)
+			print *, l, A(i,2)
 		end do
 	end subroutine
 

@@ -1,15 +1,15 @@
-# Makefile for ppl_suc.f90
+# Makefile for myppl.f90
 
 CC = gfortran
-PROGRAM = ppl_suc
+PROGRAM = ppl_suc ppl_abs_suc
 CFLAGS = -Wall -O3
-OBJS = ppl_suc.o
+OBJS = ppl_suc.o ppl_abs_suc.o
 
-$(PROGRAM): ppl_suc.o
-	$(CC) -o $@ $(CFLAGS) $<
+all: $(PROGRAM)
 
-ppl_suc.o: ppl_suc.f90
-	$(CC) -c $<
+.SUFFIXES: .f90 .o
+.f90.o:
+	$(CC) -c $< 
 
 .PHONY: clean
 clean:
@@ -17,4 +17,4 @@ clean:
 
 .PHONY: exe
 exe:
-	./$(PROGRAM) < input.txt
+	./ppl_suc < input.txt

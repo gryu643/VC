@@ -1,4 +1,4 @@
-program ppl_bulk
+program ppl_asb_suc
 	implicit none
 
 	integer,parameter :: H_ROW=1024,H_COL=1024,X_ROW=1024,X_COL=1024,H_PATH=64
@@ -393,7 +393,7 @@ contains
 		integer i
 
 		do i=1, SYMBL
-			print *, l, A(i,1)
+			print *, l, A(i,2)
 		end do
 	end subroutine
 
