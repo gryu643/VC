@@ -1,9 +1,9 @@
 # Makefile for myppl.f90
 
 CC = gfortran
-PROGRAM = ppl_suc ppl_abs_suc
+PROGRAM = seqReal seqMat
 CFLAGS = -Wall -O3
-OBJS = ppl_suc.o ppl_abs_suc.o
+OBJS = seqReal.o seqMat.o
 
 all: $(PROGRAM)
 
@@ -17,8 +17,8 @@ clean:
 
 .PHONY: real
 real:
-	./ppl_suc < input.txt
+	./seqReal < input.txt
 
 .PHONY: mat
 mat:
-	./ppl_abs_suc < input.txt
+	./seqMat < input.txt

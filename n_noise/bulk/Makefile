@@ -1,9 +1,9 @@
 # Makefile for myppl.f90
 
 CC = gfortran
-PROGRAM = ppl_bulk ppl_abs_bulk
+PROGRAM = colReal colMat
 CFLAGS = -Wall -O3
-OBJS = ppl_bulk.o ppl_abs_bulk.o
+OBJS = colReal.o colMat.o
 
 all: $(PROGRAM)
 
@@ -17,8 +17,8 @@ clean:
 
 .PHONY: real
 real:
-	./ppl_bulk < input.txt
+	./colReal < input.txt
 
 .PHONY: mat
 mat:
-	./ppl_abs_bulk < input.txt
+	./colMat < input.txt
