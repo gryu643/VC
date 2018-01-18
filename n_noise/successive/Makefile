@@ -15,6 +15,10 @@ all: $(PROGRAM)
 clean:
 	rm -f $(OBJS) $(PROGRAM)
 
-.PHONY: exe
-exe:
+.PHONY: real
+real:
 	./ppl_suc < input.txt
+
+.PHONY: mat
+mat:
+	./ppl_abs_suc < input.txt
