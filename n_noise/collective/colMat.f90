@@ -1,4 +1,4 @@
-program colMat
+program colMat_noiseNone
 	implicit none
 
 	integer,parameter :: H_ROW=1024,H_COL=1024,X_ROW=1024,X_COL=1024,H_PATH=64
