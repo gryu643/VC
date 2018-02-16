@@ -388,17 +388,6 @@ contains
 
 	end subroutine
 
-	!print
-
-	subroutine print(A)
-		complex A(:,:)
-		integer i
-
-		do i=1, SYMBL
-			print *, l, A(i,1)
-		end do
-	end subroutine
-
 	!複素数の絶対値をとる
 
 	subroutine CAbs(A,TMP,A_ROW,A_COL)
@@ -416,5 +405,3 @@ contains
 
 
 end program 
-
-a
