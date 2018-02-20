@@ -245,8 +245,8 @@ program colMat_noiseExist
 		!上で計算した差の絶対値の2乗を理論値の絶対値の2乗で正規化する
 		M1=0.0
 		M2=0.0
-		do i=1, SYMBL
-			do j=1,SYMBL
+		do j=1, SYMBL
+			do i=1,SYMBL
 				M1 = M1 + real(S(i,j))**2 + aimag(S(i,j))**2
 				M2 = M2 + real(HHH(i,j))**2 + aimag(HHH(i,j))**2
 			end do
