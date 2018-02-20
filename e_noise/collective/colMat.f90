@@ -3,7 +3,9 @@ program colMat_noiseExist
 
 	integer,parameter :: H_ROW=1024,H_COL=1024,X_ROW=1024,X_COL=1024,H_PATH=64
 	integer,parameter :: NLOOP=200
-	integer i,j,k,l,m
+	integer i,j,k,l,m,seedsize
+	integer,allocatable :: seed1(:)
+	integer,allocatable :: seed2(:)
 	integer SYMBL,PATH
 	character(10) TMP
 	complex :: Z(H_ROW,H_COL)=(0.0,0.0)
@@ -52,6 +54,20 @@ program colMat_noiseExist
 	!シンボル数、パス数を読み込む
 	read(5,*) TMP,SYMBL
 	read(5,*) TMP,PATH
+
+	!seedサイズの取得・動的配列の再宣言
+	call random_seed(size=seedsize)
+	allocate(seed1(seedsize))
+	allocate(seed2(seedsize))
+
+	!初期シード設定（Normal関数の中の一様乱数が互いに独立になるため）
+	do i=1, seedsize
+		seed1(i) = 1
+	end do
+
+	do i=1, seedsize
+		seed2(i) = 1000000
+	end do
 
 	!伝搬路行列Hの設定
 	do j=0, PATH-1
@@ -403,5 +419,34 @@ contains
 		TMP = sqrt(TMP)
 	end subroutine
 
+	!正規乱数を返す
+	function Normal()
+		double precision :: m=0.0
+		double precision :: var=1.0
+		double precision :: x=0.0
+		double precision :: y=0.0
+		double precision :: pi=dacos(dble(-1))
+		double precision :: r1=0.0
+		double precision :: r2=0.0
+		double precision normal
+		double precision :: r=0.0
+
+		!一つ目の一様乱数の生成
+		call random_seed(put=seed1)
+		call random_number(r1)
+		call random_seed(get=seed1)
+
+		!2つ目の一様乱数の生成
+		call random_seed(put=seed2)
+		call random_number(r2)
+		call random_seed(get=seed2)
+
+		!ボックス・ミュラー法による正規乱数生成
+		x = sqrt(-2.0*dlog(r1)*var)*dcos(2.0*pi*r2)+m !正規乱数１
+		y = sqrt(-2.0*dlog(r1)*var)*dsin(2.0*pi*r2)+m !正規乱数２
+		r = sqrt(x**2 + y**2) !レイリー分布
+
+		normal = x
+	end function
 
 end program 
