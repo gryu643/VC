@@ -7,6 +7,7 @@ program seikibunpu
 	integer,allocatable :: seed2(:)
 	double precision :: out=0.0
 	double precision :: result(100)=0.0
+	double precision :: max=0.0
 
 	!seedサイズの取得・動的配列の再宣言
 	call random_seed(size=seedsize)
@@ -31,10 +32,16 @@ program seikibunpu
 		end do
 	end do
 
+	max = result(1)
+
+	do i=1, 100
+		if(max.lt.result(i)) max=result(i)
+	end do
+
 	do i=1, 100
 		write(*, fmt='(F6.2)', advance='no') -5.0+stride*i
 		write(*, fmt='(a)', advance='no') ": "
-		do j=1, int(result(i)/result(50)*50)
+		do j=1, int(result(i)/max*50)
 			write(*, fmt='(a)', advance='no') "*"
 		end do
 		print *, " "
@@ -79,6 +86,7 @@ contains
 		double precision :: r1=0.0
 		double precision :: r2=0.0
 		double precision normal
+		double precision :: r=0.0
 
 		call random_seed(put=seed1)
 		call random_number(r1)
@@ -89,10 +97,11 @@ contains
 		call random_seed(get=seed2)
 
 
-		x = sqrt(-2.0*dlog(r1))*dcos(2.0*pi*r2)
-		y = sqrt(-2.0*dlog(r1))*dsin(2.0*pi*r2)
+		x = sqrt(-2.0*dlog(r1)*var)*dcos(2.0*pi*r2)+m
+		y = sqrt(-2.0*dlog(r1)*var)*dsin(2.0*pi*r2)+m
+		r = sqrt(x**2 + y**2)
 
-		normal = x
+		normal = r
 	end function
 
 end program
