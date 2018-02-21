@@ -8,48 +8,48 @@ program colMat_noiseExist
 	integer,allocatable :: seed2(:)
 	integer SYMBL,PATH
 	character(10) TMP
-	complex :: Z(H_ROW,H_COL)=(0.0,0.0)
-	complex :: X(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
-	complex :: Xpre(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
-	complex :: H(H_ROW+H_PATH,H_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
-	complex :: HE(H_ROW+H_PATH*2,H_COL)=(0.0,0.0) !(SYMBL+2*PATH-1,SYMBL+PATH-1)
-	complex :: HH(H_ROW,H_COL+H_PATH)=(0.0,0.0) !(SYMBL,SYMBL+PATH-1)
-	complex :: HHH(H_ROW,H_COL)=(0.0,0.0) !(SYMBL,SYMBL)
-	complex :: HX(H_ROW+H_PATH,X_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
-	complex :: HXarI(H_ROW+H_PATH,X_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
-	complex :: HHHXbrJ(H_ROW+H_PATH*2,X_COL)=(0.0,0.0) !(SYMBL+2*PATH-1,SYMBL)
-	complex :: HHHX(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
-	complex :: LAMBDA(X_COL,1)=(0.0,0.0) !(SYMBL,1)
-	complex :: Xn(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
-	complex :: U(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
-	complex :: UH(1,X_ROW)=(0.0,0.0) !(1,SYMBL)
-	complex :: LUUH(X_ROW,X_ROW)=(0.0,0.0) !(SYMBL)
-	complex :: LUUH_SET(X_ROW,X_ROW)=(0.0,0.0) !(SYMBL,SYMBL)
-	complex :: LU(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
-	complex :: LUUHXn(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
-	complex :: SUB_PART(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
-	complex :: arSUB(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
-	complex :: NORM(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
-	complex :: UHN(1,1)=(0.0)
-	complex :: N(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
-	complex :: NAISEKI(1,1)=(0.0,0.0) !(1,1)
-	complex :: LAMBDA_MATRIX(X_ROW,X_COL) !(SYMBL,SYMBL)
-	complex :: XH(X_ROW,X_COL) !(SYMBL,SYMBL)
-	complex :: XLM(X_ROW,X_COL) !(SYMBL,SYMBL)
-	complex :: XLMXH(X_ROW,X_COL) !(SYMBL,SYMBL)
-	complex :: S(X_ROW,X_COL) !(SYMBL,SYMBL)
-	real :: LAMBDA_TMP=0.0
-	real :: TMP1(X_ROW)=0.0 !(SYMBL,1)
-	real :: NAISEKI_TMP=0.0
-	real :: sC2=0.0
-	real :: M1=0.0
-	real :: M2=0.0
-	real :: Q(NLOOP,1) !(NLOOP,1)
-	real :: AVGOTH(NLOOP,1) !(NLOOP,1)
-	complex :: D(X_COL,1)=(0.0,0.0)
-	complex :: D1(X_COL,1)=(0.0,0.0)
-	real :: D_ABS=0.0
-	real :: D1_ABS=0.0
+	complex(kind(0d0)) :: Z(H_ROW,H_COL)=(0.0,0.0)
+	complex(kind(0d0)) :: X(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex(kind(0d0)) :: Xpre(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex(kind(0d0)) :: H(H_ROW+H_PATH,H_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
+	complex(kind(0d0)) :: HE(H_ROW+H_PATH*2,H_COL)=(0.0,0.0) !(SYMBL+2*PATH-1,SYMBL+PATH-1)
+	complex(kind(0d0)) :: HH(H_ROW,H_COL+H_PATH)=(0.0,0.0) !(SYMBL,SYMBL+PATH-1)
+	complex(kind(0d0)) :: HHH(H_ROW,H_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex(kind(0d0)) :: HX(H_ROW+H_PATH,X_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
+	complex(kind(0d0)) :: HXarI(H_ROW+H_PATH,X_COL)=(0.0,0.0) !(SYMBL+PATH-1,SYMBL)
+	complex(kind(0d0)) :: HHHXbrJ(H_ROW+H_PATH*2,X_COL)=(0.0,0.0) !(SYMBL+2*PATH-1,SYMBL)
+	complex(kind(0d0)) :: HHHX(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex(kind(0d0)) :: LAMBDA(X_COL,1)=(0.0,0.0) !(SYMBL,1)
+	complex(kind(0d0)) :: Xn(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex(kind(0d0)) :: U(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex(kind(0d0)) :: UH(1,X_ROW)=(0.0,0.0) !(1,SYMBL)
+	complex(kind(0d0)) :: LUUH(X_ROW,X_ROW)=(0.0,0.0) !(SYMBL)
+	complex(kind(0d0)) :: LUUH_SET(X_ROW,X_ROW)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex(kind(0d0)) :: LU(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex(kind(0d0)) :: LUUHXn(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex(kind(0d0)) :: SUB_PART(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex(kind(0d0)) :: arSUB(X_ROW,X_COL)=(0.0,0.0) !(SYMBL,SYMBL)
+	complex(kind(0d0)) :: NORM(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex(kind(0d0)) :: UHN(1,1)=(0.0)
+	complex(kind(0d0)) :: N(X_ROW,1)=(0.0,0.0) !(SYMBL,1)
+	complex(kind(0d0)) :: NAISEKI(1,1)=(0.0,0.0) !(1,1)
+	complex(kind(0d0)) :: LAMBDA_MATRIX(X_ROW,X_COL) !(SYMBL,SYMBL)
+	complex(kind(0d0)) :: XH(X_ROW,X_COL) !(SYMBL,SYMBL)
+	complex(kind(0d0)) :: XLM(X_ROW,X_COL) !(SYMBL,SYMBL)
+	complex(kind(0d0)) :: XLMXH(X_ROW,X_COL) !(SYMBL,SYMBL)
+	complex(kind(0d0)) :: S(X_ROW,X_COL) !(SYMBL,SYMBL)
+	double precision :: LAMBDA_TMP=0.0
+	double precision :: TMP1(X_ROW)=0.0 !(SYMBL,1)
+	double precision :: NAISEKI_TMP=0.0
+	double precision :: sC2=0.0
+	double precision :: M1=0.0
+	double precision :: M2=0.0
+	double precision :: Q(NLOOP,1) !(NLOOP,1)
+	double precision :: AVGOTH(NLOOP,1) !(NLOOP,1)
+	complex(kind(0d0)) :: D(X_COL,1)=(0.0,0.0)
+	complex(kind(0d0)) :: D1(X_COL,1)=(0.0,0.0)
+	double precision :: D_ABS=0.0
+	double precision :: D1_ABS=0.0
 
 	!シンボル数、パス数を読み込む
 	read(5,*) TMP,SYMBL
@@ -72,14 +72,14 @@ program colMat_noiseExist
 	!伝搬路行列Hの設定
 	do j=0, PATH-1
 		do i=1, SYMBL
-			H(i+j,i) = cmplx(0.1+0.1*j, 0.2+0.1*j)
+			H(i+j,i) = cmplx(0.1+0.1*j, 0.2+0.1*j, kind(0d0))
 		end do
 	end do
 
 	!伝搬路行列Hを拡張したHEを設定
 	do j=0, PATH-1
 		do i=1, SYMBL+PATH-1
-			HE(i+j,i) = cmplx(0.1+0.1*j, 0.2+0.1*j)
+			HE(i+j,i) = cmplx(0.1+0.1*j, 0.2+0.1*j, kind(0d0))
 		end do
 	end do
 
@@ -93,7 +93,7 @@ program colMat_noiseExist
 		!任意伝送ベクトルの設定
 		do i=1, SYMBL
 			do j=1, SYMBL
-				X(i,j) = cmplx(1.0, 0.0)
+				X(i,j) = cmplx(1.0, 0.0, kind(0d0))
 			end do
 		end do
 
@@ -127,7 +127,7 @@ program colMat_noiseExist
 				call CAbs(D1,D1_ABS,SYMBL,1)
 
 				LAMBDA_TMP = D1_ABS / D_ABS
-				LAMBDA(i,1) = cmplx(LAMBDA_TMP,0.0)
+				LAMBDA(i,1) = cmplx(LAMBDA_TMP,0.0,kind(0d0))
 			end do
 			!この時点で配列LAMBDAの各行に固有値が入っている。
 
@@ -201,7 +201,7 @@ program colMat_noiseExist
 !		call print(X)
 
 		!固有ベクトルか確認(内積=0)
-		NAISEKI(1,1) = cmplx(0.0,0.0)
+		NAISEKI(1,1) = cmplx(0.0,0.0,kind(0d0))
 		do i=1, SYMBL
 			do j=i+1, SYMBL
 				!固有ベクトル群を１列のベクトルに格納
@@ -265,7 +265,7 @@ contains
 
 	subroutine CMultiply(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
 		integer A_ROW,A_COL,B_ROW,B_COL,i,j,k
-		complex A(:,:), B(:,:),C(:,:)
+		complex(kind(0d0)) A(:,:), B(:,:),C(:,:)
 
 		if(A_COL.ne.B_ROW) then
 			print *, "can't calculate (Multiply)"
@@ -274,7 +274,7 @@ contains
 
 		do i=1, A_ROW
 			do j=1, B_COL
-				C(i,j) = cmplx(0.0,0.0)
+				C(i,j) = cmplx(0.0,0.0,kind(0d0))
 				do k=1, A_COL
 					C(i,j) = C(i,j)+A(i,k)*B(k,j)
 				end do
@@ -287,7 +287,7 @@ contains
 
 	subroutine CAdd(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
 		integer A_ROW,A_COL,B_ROW,B_COL,i,j
-		complex A(:,:),B(:,:),C(:,:)
+		complex(kind(0d0)) A(:,:),B(:,:),C(:,:)
 
 		if((A_ROW.ne.B_ROW).or.(A_COL.ne.B_COL)) then
 			print *, "can't calculate (Add)"
@@ -306,7 +306,7 @@ contains
 
 	subroutine CSubtract(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
 		integer A_ROW,A_COL,B_ROW,B_COL,i,j
-		complex A(:,:),B(:,:),C(:,:)
+		complex(kind(0d0)) A(:,:),B(:,:),C(:,:)
 
 		if((A_ROW.ne.B_ROW).or.(A_COL.ne.B_COL)) then
 			print *, "can't calculate (Subtract)"
@@ -325,7 +325,7 @@ contains
 
 	subroutine CAdjoint(A,AH,A_ROW,A_COL)
 		integer A_ROW,A_COL,i,j
-		complex A(:,:),AH(:,:)
+		complex(kind(0d0)) A(:,:),AH(:,:)
 
 		do i=1, A_ROW
 			do j=1, A_COL
@@ -339,7 +339,7 @@ contains
 
 	subroutine ProcI(A,AI,A_ROW,A_COL)
 		integer A_ROW,A_COL,i,j
-		complex A(:,:),AI(:,:)
+		complex(kind(0d0)) A(:,:),AI(:,:)
 
 		do i=1, A_COL
 			do j=1, A_ROW
@@ -353,7 +353,7 @@ contains
 
 	subroutine ProcJ(A,AJ,A_ROW,A_COL,PATH)
 		integer A_ROW,A_COL,PATH,i,j
-		complex A(:,:),AJ(:,:)
+		complex(kind(0d0)) A(:,:),AJ(:,:)
 
 		do i=1, A_COL
 			do j=PATH, A_ROW-(PATH-1)
@@ -367,7 +367,7 @@ contains
 
 	subroutine CSubstitute(A,B,A_ROW,A_COL)
 		integer A_ROW,A_COL,i,j
-		complex A(:,:),B(:,:)
+		complex(kind(0d0)) A(:,:),B(:,:)
 
 		do i=1, A_ROW
 			do j=1, A_COL
@@ -381,8 +381,8 @@ contains
 
 	subroutine CNormalize(A,A_ROW,A_COL)
 		integer A_ROW,A_COL,i
-		complex A(:,:)
-		real TMP
+		complex(kind(0d0)) A(:,:)
+		double precision TMP
 
 		if(A_COL.ne.1) then
 			print *, "The number of column isn't one."
@@ -408,8 +408,8 @@ contains
 
 	subroutine CAbs(A,TMP,A_ROW,A_COL)
 		integer i,A_ROW,A_COL
-		complex A(:,:)
-		real TMP
+		complex(kind(0d0)) A(:,:)
+		double precision TMP
 
 		TMP = 0.0
 		do i=1, A_ROW
