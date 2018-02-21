@@ -1,9 +1,9 @@
 # Makefile for myppl.f90
 
 CC = gfortran
-PROGRAM = colReal colMat
+PROGRAM = nNoiseColReal nNoiseColMat
 CFLAGS = -Wall -O3
-OBJS = colReal.o colMat.o
+OBJS = nNoiseColReal.o nNoiseColMat.o
 
 all: $(PROGRAM)
 
@@ -17,8 +17,8 @@ clean:
 
 .PHONY: real
 real:
-	./colReal < input.txt
+	./nNoiseColReal < input.txt
 
 .PHONY: mat
 mat:
-	./colMat < input.txt
+	./nNoiseColMat < input.txt

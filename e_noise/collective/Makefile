@@ -1,9 +1,9 @@
 # Makefile for colMat.f90 noiseExist
 
 CC = gfortran
-PROGRAM = colMat
+PROGRAM = eNoiseColMat
 CFLAGS = -Wall -O3
-OBJS = colMat.o
+OBJS = eNoiseColMat.o
 
 all: $(PROGRAM)
 
@@ -17,4 +17,4 @@ clean:
 
 .PHONY: mat
 mat:
-	./colMat < input.txt
+	./eNoiseColMat < input.txt
