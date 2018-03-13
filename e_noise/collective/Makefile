@@ -15,6 +15,6 @@ all: $(PROGRAM)
 clean:
 	rm -f $(OBJS) $(PROGRAM)
 
-.PHONY: mat
-mat:
+.PHONY: run
+run:
 	./eNoiseColMat < input.txt
