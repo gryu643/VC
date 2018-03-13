@@ -1,8 +1,9 @@
 program colMat_noiseExist
 	implicit none
 
-	integer,parameter :: NLOOP=200
-	integer i,j,k,l,m,seedsize
+	integer,parameter :: NLOOP=10
+	integer,parameter :: TRIALS=100
+	integer i,j,k,l,m,w,ll,seedsize
 	integer,allocatable :: seed1(:)
 	integer,allocatable :: seed2(:)
 	integer SYMBL,PATH
@@ -37,22 +38,39 @@ program colMat_noiseExist
 	complex(kind(0d0)),allocatable :: XLM(:,:) !(SYMBL,SYMBL)
 	complex(kind(0d0)),allocatable :: XLMXH(:,:) !(SYMBL,SYMBL)
 	complex(kind(0d0)),allocatable :: S(:,:) !(SYMBL,SYMBL)
+	complex(kind(0d0)),allocatable :: Xbefore(:,:) !(SYMBL,SYMBL)
 	double precision :: LAMBDA_TMP=0.0
 	double precision,allocatable :: TMP1(:) !(SYMBL)
 	double precision :: NAISEKI_TMP=0.0
 	double precision :: sC2=0.0
 	double precision :: M1=0.0
 	double precision :: M2=0.0
-	double precision :: Q(NLOOP,1) !(NLOOP,1)
-	double precision :: AVGOTH(NLOOP,1) !(NLOOP,1)
+	double precision :: Q(NLOOP,TRIALS)=0.0 !(NLOOP,TRIALS)
+	double precision :: AVGOTH(NLOOP,TRIALS)=0.0 !(NLOOP,TRIALS)
 	complex(kind(0d0)),allocatable :: D(:,:) !(SYMBL,1)
 	complex(kind(0d0)),allocatable :: D1(:,:) !(SYMBL,1)
 	double precision :: D_ABS=0.0
 	double precision :: D1_ABS=0.0
+	double precision :: EbN0=dble(10.0)
+	double precision :: ALPHA=0.0
+	complex(kind(0d0)),allocatable :: NOISE2(:,:) !(SYMBL+2*(PATH-1),SYMBL)
+	complex(kind(0d0)),allocatable :: NOISE5(:,:) !(SYMBL+PATH-1,SYMBL)
+	complex(kind(0d0)),allocatable :: NOISE6(:,:) !(SYMBL+PATH-1,SYMBL)
+	complex(kind(0d0)),allocatable :: NOISE7(:,:) !(SYMBL+2*(PATH-1),SYMBL)
+	complex(kind(0d0)),allocatable :: NOISE8(:,:) !(SYMBL+2*(PATH-1),SYMBL)
+	double precision :: N0=(0.0,0.0)
+	complex(kind(0d0)),allocatable :: Bpre(:,:) !(SYMBL+PATH-1,SYMBL)
+	complex(kind(0d0)),allocatable :: Bnew(:,:) !(SYMBL+PATH-1,SYMBL)
+	double precision :: Qave(NLOOP,1)=0.0
+	double precision :: AVGOTHave(NLOOP,1)=0.0
+	double precision :: EB=dble(0.0)
+	double precision :: EBS=dble(0.0)
+	double precision :: Z2=dble(0.0)
 
 	!シンボル数、パス数を読み込む
 	read(5,*) TMP,SYMBL
 	read(5,*) TMP,PATH
+	read(5,*) TMP,ALPHA
 
 	!配列の動的割り付け
 	allocate(TMP1(SYMBL))
@@ -85,38 +103,49 @@ program colMat_noiseExist
 	allocate(XLM(SYMBL,SYMBL))
  	allocate(XLMXH(SYMBL,SYMBL))
 	allocate(S(SYMBL,SYMBL))
+	allocate(Xbefore(SYMBL,SYMBL))
+	allocate(NOISE2(SYMBL+2*(PATH-1),SYMBL))
+	allocate(NOISE5(SYMBL+PATH-1,SYMBL))
+	allocate(NOISE6(SYMBL+PATH-1,SYMBL))
+	allocate(NOISE7(SYMBL+2*(PATH-1),SYMBL))
+	allocate(NOISE8(SYMBL+2*(PATH-1),SYMBL))
+	allocate(Bpre(SYMBL+PATH-1,SYMBL))
+	allocate(Bnew(SYMBL+PATH-1,SYMBL))
 
 	!配列初期化
 	TMP1=dble(0.0)
-	D=dble(0.0)
-	D1=dble(0.0)
-	X=dble(0.0)
-	Xpre=dble(0.0)
-	H=dble(0.0)
-	HE=dble(0.0)
-	HH=dble(0.0)
-	HHH=dble(0.0)
-	HX=dble(0.0)
-	HXarI=dble(0.0)
-	HHHXbrJ=dble(0.0)
-	HHHX=dble(0.0)
-	LAMBDA=dble(0.0)
-	Xn=dble(0.0)
-	U=dble(0.0)
-	UH=dble(0.0)
-	LUUH=dble(0.0)
-	LUUH_SET=dble(0.0)
-	LU=dble(0.0)
-	LUUHXn=dble(0.0)
-	SUB_PART=dble(0.0)
-	arSUB=dble(0.0)
-	NORM=dble(0.0)
-	N=dble(0.0)
-	LAMBDA_MATRIX=dble(0.0)
-	XH=dble(0.0)
-	XLM=dble(0.0)
- 	XLMXH=dble(0.0)
-	S=dble(0.0)
+	D=cmplx(0.0,0.0,kind(0d0))
+	D1=cmplx(0.0,0.0,kind(0d0))
+	X=cmplx(0.0,0.0,kind(0d0))
+	Xpre=cmplx(0.0,0.0,kind(0d0))
+	H=cmplx(0.0,0.0,kind(0d0))
+	HE=cmplx(0.0,0.0,kind(0d0))
+	HH=cmplx(0.0,0.0,kind(0d0))
+	HHH=cmplx(0.0,0.0,kind(0d0))
+	HX=cmplx(0.0,0.0,kind(0d0))
+	HXarI=cmplx(0.0,0.0,kind(0d0))
+	HHHXbrJ=cmplx(0.0,0.0,kind(0d0))
+	HHHX=cmplx(0.0,0.0,kind(0d0))
+	LAMBDA=cmplx(0.0,0.0,kind(0d0))
+	Xn=cmplx(0.0,0.0,kind(0d0))
+	U=cmplx(0.0,0.0,kind(0d0))
+	UH=cmplx(0.0,0.0,kind(0d0))
+	LUUH=cmplx(0.0,0.0,kind(0d0))
+	LUUH_SET=cmplx(0.0,0.0,kind(0d0))
+	LU=cmplx(0.0,0.0,kind(0d0))
+	LUUHXn=cmplx(0.0,0.0,kind(0d0))
+	SUB_PART=cmplx(0.0,0.0,kind(0d0))
+	arSUB=cmplx(0.0,0.0,kind(0d0))
+	NORM=cmplx(0.0,0.0,kind(0d0))
+	N=cmplx(0.0,0.0,kind(0d0))
+	LAMBDA_MATRIX=cmplx(0.0,0.0,kind(0d0))
+	XH=cmplx(0.0,0.0,kind(0d0))
+	XLM=cmplx(0.0,0.0,kind(0d0))
+ 	XLMXH=cmplx(0.0,0.0,kind(0d0))
+	S=cmplx(0.0,0.0,kind(0d0))
+	Xbefore=cmplx(0.0,0.0,kind(0d0))
+	Bpre=cmplx(0.0,0.0,kind(0d0))
+	Bnew=cmplx(0.0,0.0,kind(0d0))
 
 	!seedサイズの取得・動的配列の再宣言
 	call random_seed(size=seedsize)
@@ -132,195 +161,270 @@ program colMat_noiseExist
 		seed2(i) = 1000000
 	end do
 
-	!伝搬路行列Hの設定
-	do j=0, PATH-1
-		do i=1, SYMBL
-			H(i+j,i) = cmplx(0.1+0.1*j, 0.2+0.1*j, kind(0d0))
-		end do
-	end do
+	do w=1, TRIALS
+		!雑音の設定
+		call Setnoise(NOISE2,SYMBL+2*(PATH-1),SYMBL)
+		call Setnoise(NOISE5,SYMBL+PATH-1,SYMBL)
+		call Setnoise(NOISE6,SYMBL+PATH-1,SYMBL)
+		call Setnoise(NOISE7,SYMBL+2*(PATH-1),SYMBL)
+		call Setnoise(NOISE8,SYMBL+2*(PATH-1),SYMBL)
 
-	!伝搬路行列Hを拡張したHEを設定
-	do j=0, PATH-1
-		do i=1, SYMBL+PATH-1
-			HE(i+j,i) = cmplx(0.1+0.1*j, 0.2+0.1*j, kind(0d0))
-		end do
-	end do
-
-	!行列Hの随伴行列HHの設定
-	call CAdjoint(H,HH,SYMBL+PATH-1,SYMBL)
-
-	!合成チャネル行列HHHの設定
-	call CMultiply(HH,H,HHH,SYMBL,SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
-
-	do l=1, NLOOP
-		!任意伝送ベクトルの設定
-		do i=1, SYMBL
-			do j=1, SYMBL
-				X(i,j) = cmplx(1.0, 0.0, kind(0d0))
-			end do
-		end do
-
-		do m=1, l
-			!次ループでの固有値算出のため、Xを退避
-			call CSubstitute(Xpre,X,SYMBL,SYMBL)
-
-			!伝搬路H通過
-			call CMultiply(H,X,HX,SYMBL+PATH-1,SYMBL,SYMBL,SYMBL)
-
-			!処理I
-			call ProcI(HX,HXarI,SYMBL+PATH-1,SYMBL)
-
-			!HE通過
-			call CMultiply(HE,HXarI,HHHXbrJ,SYMBL+2*(PATH-1),SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
-
-			!処理J
-			call ProcJ(HHHXbrJ,HHHX,SYMBL+2*(PATH-1),SYMBL,PATH)
-
-!			call print(HHHX)
-
-			!列ベクトル群の固有値をそれぞれ算出
+		!伝搬路行列Hの設定
+		do j=0, PATH-1
 			do i=1, SYMBL
-				!列ベクトル内の各行ごとに固有値を算出
-				do j=1,SYMBL
-					D(j,1) = Xpre(j,i)
-					D1(j,1) = HHHX(j,i)
-				end do
-
-				call CAbs(D,D_ABS,SYMBL,1)
-				call CAbs(D1,D1_ABS,SYMBL,1)
-
-				LAMBDA_TMP = D1_ABS / D_ABS
-				LAMBDA(i,1) = cmplx(LAMBDA_TMP,0.0,kind(0d0))
+				H(i+j,i) = cmplx(0.1+0.1*j, 0.2+0.1*j, kind(0d0))
 			end do
-			!この時点で配列LAMBDAの各行に固有値が入っている。
+		end do
 
-!			call print(LAMBDA)
+		!伝搬路行列Hを拡張したHEを設定
+		do j=0, PATH-1
+			do i=1, SYMBL+PATH-1
+				HE(i+j,i) = cmplx(0.1+0.1*j, 0.2+0.1*j, kind(0d0))
+			end do
+		end do
 
-			!減算部分の算出
-			call CSubstitute(LUUH_SET,Z,SYMBL,SYMBL)
-			do i=2, SYMBL
-				!収束する固有ベクトル(SYMBL,1)
-				do k=1, SYMBL
-					Xn(k,1) = Xpre(k,i)
-				end do
+		!行列Hの随伴行列HHの設定
+		call CAdjoint(H,HH,SYMBL+PATH-1,SYMBL)
 
-				!減算する固有ベクトル(SYMBL,1)
-				do k=1, SYMBL
-					U(k,1) = Xpre(k,i-1)
-				end do
+		!合成チャネル行列HHHの設定
+		call CMultiply(HH,H,HHH,SYMBL,SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
 
-				!固有ベクトルの随伴行列(1,SYMBL)
-				call CAdjoint(U,UH,SYMBL,1)
+		ll=1
+		do l=1, NLOOP
+			if(l.eq.1)then
+				ll = 1
+			else
+				ll = 50*(l-1)
+			end if
 
-				!λ*U(SYMBL,1)
-				do k=1, SYMBL
-					LU(k,1) = LAMBDA(i-1,1)*U(k,1)
-				end do
-
-				!LU*UH(SYMBL,SYMBL)
-				call CMultiply(LU,UH,LUUH,SYMBL,1,1,SYMBL)
-
-				!λUUHの集合を格納
+			!任意伝送ベクトルの設定
+			do i=1, SYMBL
 				do j=1, SYMBL
-					do k=1, SYMBL
-						LUUH_SET(j,k) = LUUH_SET(j,k) + LUUH(j,k)
+					X(i,j) = cmplx(1.0, 0.0, kind(0d0))
+				end do
+			end do
+
+			do m=1, ll
+				!忘却係数適用して固有符号群更新
+				do j=1, SYMBL
+					do i=1, SYMBL
+						X(i,j) = ALPHA*Xbefore(i,j)+(1-ALPHA)*X(i,j)
 					end do
 				end do
 
-				!LUUH_SET*Xn(SYMBL,1) iの次ループで足し合わせる
-				call CMultiply(LUUH_SET,Xn,LUUHXn,SYMBL,SYMBL,SYMBL,1)
+				!次ループでの忘却係数適用のため固有符号群を保持
+				call CSubstitute(Xbefore,X,SYMBL,SYMBL)
 
-				!減算部の格納
-				do k=1, SYMBL
-					SUB_PART(k,i) = LUUHXn(k,1)
-				end do
+				!次ループでの固有値算出のため、Xを退避
+				call CSubstitute(Xpre,X,SYMBL,SYMBL)
 
-			end do
-
-			!減算
-			call CSubtract(HHHX,SUB_PART,arSUB,SYMBL,SYMBL,SYMBL,SYMBL)
-
-!			call print(SUB_PART)
-
-			!正規化
-			do i=1, SYMBL
-				!固有ベクトル群を1列のベクトルに格納
+				!増幅値計算
+				N0 = dble(0.0)
 				do j=1, SYMBL
-					NORM(j,1) = arSUB(j,i)
+					do i=1,SYMBL+PATH-1
+						N0 = N0 + real(NOISE2(i,j))**2
+					end do
 				end do
+				N0 = N0 / SYMBL
+
+				EB = N0*(10**(EbN0/10))
+
+				EBS = dble(0.0)
+				do i=1, SYMBL
+					EBS = EBS + real(Xpre(i,1))**2
+				end do
+
+				Z2 = sqrt(EB / EBS)
+
+				!雑音の影響を抑えるため増幅
+				X = Z2 * X
+
+				!伝搬路H通過
+				call CMultiply(H,X,HX,SYMBL+PATH-1,SYMBL,SYMBL,SYMBL)
+
+				!雑音加算
+				call Setnoise(NOISE6,SYMBL+PATH-1,SYMBL)
+				call CAdd(HX,NOISE6,HX,SYMBL+PATH-1,SYMBL,SYMBL+PATH-1,SYMBL)
+
+				!忘却係数適用
+				!今回のループのHXをBnewに格納
+				call CSubstitute(Bnew,HX,SYMBL+PATH-1,SYMBL)
+				if(m.ne.1) then
+					do i=1, SYMBL
+						do j=1, SYMBL+PATH-1
+							HX(j,i) = ALPHA*Bpre(j,i) + (1-ALPHA)*Bnew(j,i)
+						end do
+					end do
+				end if
+				!次ループでの忘却係数適用のため今回のループのHXを格納
+				call CSubstitute(Bpre,Bnew,SYMBL+PATH-1,SYMBL)
+
+				!処理I
+				call ProcI(HX,HXarI,SYMBL+PATH-1,SYMBL)
+
+				!HE通過
+				call CMultiply(HE,HXarI,HHHXbrJ,SYMBL+2*(PATH-1),SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
+
+				!雑音加算
+				call Setnoise(NOISE7,SYMBL+2*(PATH-1),SYMBL)
+				call CAdd(HHHXbrJ,NOISE7,HHHXbrJ,SYMBL+2*(PATH-1),SYMBL,SYMBL+2*(PATH-1),SYMBL)
+				
+				!処理J
+				call ProcJ(HHHXbrJ,HHHX,SYMBL+2*(PATH-1),SYMBL,PATH)
+
+
+				!列ベクトル群の固有値をそれぞれ算出
+				do i=1, SYMBL
+					!列ベクトル内の各行ごとに固有値を算出
+					do j=1,SYMBL
+						D(j,1) = Xpre(j,i)
+						D1(j,1) = HHHX(j,i)
+					end do
+
+					call CAbs(D,D_ABS,SYMBL,1)
+					call CAbs(D1,D1_ABS,SYMBL,1)
+
+					LAMBDA_TMP = D1_ABS / D_ABS
+					LAMBDA(i,1) = cmplx(LAMBDA_TMP,0.0,kind(0d0))
+				end do
+
+
+				!減算部分の算出
+				call CSubstitute(LUUH_SET,Z,SYMBL,SYMBL)
+				do i=2, SYMBL
+					!収束する固有ベクトル(SYMBL,1)
+					do k=1, SYMBL
+						Xn(k,1) = Xpre(k,i)
+					end do
+
+					!減算する固有ベクトル(SYMBL,1)
+					do k=1, SYMBL
+						U(k,1) = Xpre(k,i-1)
+					end do
+
+					!固有ベクトルの随伴行列(1,SYMBL)
+					call CAdjoint(U,UH,SYMBL,1)
+
+					!λ*U(SYMBL,1)
+					do k=1, SYMBL
+						LU(k,1) = LAMBDA(i-1,1)*U(k,1)
+					end do
+
+					!LU*UH(SYMBL,SYMBL)
+					call CMultiply(LU,UH,LUUH,SYMBL,1,1,SYMBL)
+
+					!λUUHの集合を格納
+					do j=1, SYMBL
+						do k=1, SYMBL
+							LUUH_SET(j,k) = LUUH_SET(j,k) + LUUH(j,k)
+						end do
+					end do
+
+					!LUUH_SET*Xn(SYMBL,1) iの次ループで足し合わせる
+					call CMultiply(LUUH_SET,Xn,LUUHXn,SYMBL,SYMBL,SYMBL,1)
+
+					!減算部の格納
+					do k=1, SYMBL
+						SUB_PART(k,i) = LUUHXn(k,1)
+					end do
+
+				end do
+
+				!減算
+				call CSubtract(HHHX,SUB_PART,arSUB,SYMBL,SYMBL,SYMBL,SYMBL)
+
 
 				!正規化
-				call CNormalize(NORM,SYMBL,1)
+				do i=1, SYMBL
+					!固有ベクトル群を1列のベクトルに格納
+					do j=1, SYMBL
+						NORM(j,1) = arSUB(j,i)
+					end do
 
-				!正規化したベクトルをXに格納
-				do j=1, SYMBL
-					X(j,i) = NORM(j,1)
+					!正規化
+					call CNormalize(NORM,SYMBL,1)
+
+					!正規化したベクトルをXに格納
+					do j=1, SYMBL
+						X(j,i) = NORM(j,1)
+					end do
 				end do
 			end do
-!			call print(X)
 
-		end do
 
-!		call print(X)
+			!固有ベクトルか確認(内積=0)
+			NAISEKI(1,1) = cmplx(0.0,0.0,kind(0d0))
+			do i=1, SYMBL
+				do j=i+1, SYMBL
+					!固有ベクトル群を１列のベクトルに格納
+					do k=1, SYMBL
+						U(k,1) = X(k,i)
+					end do
+					!内積を取る固有ベクトルを格納
+					do k=1, SYMBL
+						N(k,1) = X(k,j)
+					end do
 
-		!固有ベクトルか確認(内積=0)
-		NAISEKI(1,1) = cmplx(0.0,0.0,kind(0d0))
-		do i=1, SYMBL
-			do j=i+1, SYMBL
-				!固有ベクトル群を１列のベクトルに格納
-				do k=1, SYMBL
-					U(k,1) = X(k,i)
+					!随伴行列
+					call CAdjoint(U,UH,SYMBL,1)
+
+					!内積の計算
+					call CMultiply(UH,N,UHN,1,SYMBL,SYMBL,1)
+
+					!計算した内積を足し合わせる
+					call CAdd(NAISEKI,UHN,NAISEKI,1,1,1,1)
 				end do
-				!内積を取る固有ベクトルを格納
-				do k=1, SYMBL
-					N(k,1) = X(k,j)
+			end do
+
+			!内積の絶対値を出力
+			call CAbs(NAISEKI,NAISEKI_TMP,1,1)
+			sC2 = SYMBL*(SYMBL-1.0)/2.0
+			AVGOTH(l,w) = NAISEKI_TMP / sC2
+
+
+			!検証
+			!スペクトル定理
+			do i=1, SYMBL
+				LAMBDA_MATRIX(i,i) = LAMBDA(i,1)
+			end do
+			!スペクトル定理よりシミュレーションで求めた合成チャネル行列を計算
+			call CMultiply(X,LAMBDA_MATRIX,XLM,SYMBL,SYMBL,SYMBL,SYMBL)
+			call Cadjoint(X,XH,SYMBL,SYMBL)
+			call CMultiply(XLM,XH,XLMXH,SYMBL,SYMBL,SYMBL,SYMBL)
+			!理論値とシミュレーション結果の差をとる
+			call CSubtract(HHH,XLMXH,S,SYMBL,SYMBL,SYMBL,SYMBL)
+
+			!上で計算した差の絶対値の2乗を理論値の絶対値の2乗で正規化する
+			M1=0.0
+			M2=0.0
+			do j=1, SYMBL
+				do i=1,SYMBL
+					M1 = M1 + real(S(i,j))**2 + aimag(S(i,j))**2
+					M2 = M2 + real(HHH(i,j))**2 + aimag(HHH(i,j))**2
 				end do
-
-				!随伴行列
-				call CAdjoint(U,UH,SYMBL,1)
-
-				!内積の計算
-				call CMultiply(UH,N,UHN,1,SYMBL,SYMBL,1)
-
-				!計算した内積を足し合わせる
-				call CAdd(NAISEKI,UHN,NAISEKI,1,1,1,1)
 			end do
+			Q(l,w) = M1 / M2
+
 		end do
-
-		!内積の絶対値を出力
-		call CAbs(NAISEKI,NAISEKI_TMP,1,1)
-		sC2 = SYMBL*(SYMBL-1.0)/2.0
-		AVGOTH(l,1) = NAISEKI_TMP / sC2
+	end do
 
 
-		!検証
-		!スペクトル定理
-		do i=1, SYMBL
-			LAMBDA_MATRIX(i,i) = LAMBDA(i,1)
+	!試行回数分(w=TRIALS)の平均値を計算
+	do i=1, TRIALS
+		do j=1, NLOOP
+			Qave(j,1) = Qave(j,1) + Q(j,i)
+			AVGOTHave(j,1) = AVGOTHave(j,1) + AVGOTH(j,i)
 		end do
-		!スペクトル定理よりシミュレーションで求めた合成チャネル行列を計算
-		call CMultiply(X,LAMBDA_MATRIX,XLM,SYMBL,SYMBL,SYMBL,SYMBL)
-		call Cadjoint(X,XH,SYMBL,SYMBL)
-		call CMultiply(XLM,XH,XLMXH,SYMBL,SYMBL,SYMBL,SYMBL)
-		!理論値とシミュレーション結果の差をとる
-		call CSubtract(HHH,XLMXH,S,SYMBL,SYMBL,SYMBL,SYMBL)
+	end do
 
-		!上で計算した差の絶対値の2乗を理論値の絶対値の2乗で正規化する
-		M1=0.0
-		M2=0.0
-		do j=1, SYMBL
-			do i=1,SYMBL
-				M1 = M1 + real(S(i,j))**2 + aimag(S(i,j))**2
-				M2 = M2 + real(HHH(i,j))**2 + aimag(HHH(i,j))**2
-			end do
-		end do
-		Q(l,1) = M1 / M2
-
+	do i=1, NLOOP
+		Qave(i,1) = Qave(i,1)/dble(TRIALS)
+		AVGOTHave(i,1) = AVGOTHave(i,1)/dble(TRIALS)
 	end do
 
 	!結果の出力
 	do i=1, NLOOP
-		print *, i, ",", Q(i,1), ",", AVGOTH(i,1)
+		print *, i, ",", Qave(i,1), ",", AVGOTHave(i,1)
 	end do
 
 contains
@@ -480,6 +584,22 @@ contains
 			TMP = TMP + real(A(i,A_COL))**2 + aimag(A(i,A_COL))**2
 		end do
 		TMP = sqrt(TMP)
+	end subroutine
+
+	!正規乱数を配列に設定する
+
+	subroutine Setnoise(A,A_ROW,A_COL)
+		integer A_ROW,A_COL,i,j
+		complex(kind(0d0)) A(:,:),CNV
+
+		do i=1, A_ROW
+			CNV=cmplx(Normal(),Normal(),kind(0d0))
+
+			do j=1, A_COL
+				A(i,j) = CNV
+			end do
+		end do
+
 	end subroutine
 
 	!正規乱数を返す
