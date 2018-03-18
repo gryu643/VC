@@ -234,7 +234,8 @@ program colMat_noiseNone
 
 	!結果の出力
 	do i=1, NLOOP
-		print *, i, ",", Q(i,1), ",", AVGOTH(i,1)
+		write(20,*) i, Q(i,1)
+		write(21,*) i, AVGOTH(i,1)
 	end do
 
 contains
