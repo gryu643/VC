@@ -2,14 +2,14 @@
 
 CC = gfortran
 PROGRAM = eNoiseColMat
-CFLAGS = -Wall -O3
+CFLAGS = -O3
 OBJS = eNoiseColMat.o
 
 all: $(PROGRAM)
 
 .SUFFIXES: .f90 .o
 .f90.o:
-	$(CC) -c $<
+	$(CC) -c $< $(CFLAGS)
 
 .PHONY: clean
 clean:
