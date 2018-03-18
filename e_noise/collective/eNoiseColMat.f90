@@ -1,8 +1,8 @@
 program colMat_noiseExist
 	implicit none
 
-	integer,parameter :: NLOOP=10
-	integer,parameter :: TRIALS=100
+	integer,parameter :: NLOOP=500
+	integer,parameter :: TRIALS=1
 	integer i,j,k,l,m,w,ll,seedsize
 	integer,allocatable :: seed1(:)
 	integer,allocatable :: seed2(:)
@@ -38,7 +38,7 @@ program colMat_noiseExist
 	complex(kind(0d0)),allocatable :: XLM(:,:) !(SYMBL,SYMBL)
 	complex(kind(0d0)),allocatable :: XLMXH(:,:) !(SYMBL,SYMBL)
 	complex(kind(0d0)),allocatable :: S(:,:) !(SYMBL,SYMBL)
-	complex(kind(0d0)),allocatable :: Xbefore(:,:) !(SYMBL,SYMBL)
+	complex(kind(0d0)),allocatable :: Xold(:,:) !(SYMBL,SYMBL)
 	double precision :: LAMBDA_TMP=0.0
 	double precision,allocatable :: TMP1(:) !(SYMBL)
 	double precision :: NAISEKI_TMP=0.0
@@ -51,21 +51,24 @@ program colMat_noiseExist
 	complex(kind(0d0)),allocatable :: D1(:,:) !(SYMBL,1)
 	double precision :: D_ABS=0.0
 	double precision :: D1_ABS=0.0
-	double precision :: EbN0=dble(10.0)
+	double precision :: EbN0=0.0
 	double precision :: ALPHA=0.0
-	complex(kind(0d0)),allocatable :: NOISE2(:,:) !(SYMBL+2*(PATH-1),SYMBL)
-	complex(kind(0d0)),allocatable :: NOISE5(:,:) !(SYMBL+PATH-1,SYMBL)
-	complex(kind(0d0)),allocatable :: NOISE6(:,:) !(SYMBL+PATH-1,SYMBL)
-	complex(kind(0d0)),allocatable :: NOISE7(:,:) !(SYMBL+2*(PATH-1),SYMBL)
-	complex(kind(0d0)),allocatable :: NOISE8(:,:) !(SYMBL+2*(PATH-1),SYMBL)
+	complex(kind(0d0)),allocatable :: NOISE_EbN0(:,:) !(SYMBL+2*(PATH-1),SYMBL)
+	complex(kind(0d0)),allocatable :: NOISE_H(:,:) !(SYMBL+PATH-1,SYMBL)
+	complex(kind(0d0)),allocatable :: NOISE_H2(:,:) !(SYMBL+PATH-1,SYMBL)
+	complex(kind(0d0)),allocatable :: NOISE_HE(:,:) !(SYMBL+2*(PATH-1),SYMBL)
+	complex(kind(0d0)),allocatable :: NOISE_HE2(:,:) !(SYMBL+2*(PATH-1),SYMBL)
 	double precision :: N0=(0.0,0.0)
-	complex(kind(0d0)),allocatable :: Bpre(:,:) !(SYMBL+PATH-1,SYMBL)
+	complex(kind(0d0)),allocatable :: Bold(:,:) !(SYMBL+PATH-1,SYMBL)
 	complex(kind(0d0)),allocatable :: Bnew(:,:) !(SYMBL+PATH-1,SYMBL)
 	double precision :: Qave(NLOOP,1)=0.0
 	double precision :: AVGOTHave(NLOOP,1)=0.0
 	double precision :: EB=dble(0.0)
 	double precision :: EBS=dble(0.0)
 	double precision :: Z2=dble(0.0)
+
+	!SN比を設定
+	EbN0 = dble(100.0)
 
 	!シンボル数、パス数を読み込む
 	read(5,*) TMP,SYMBL
@@ -103,13 +106,13 @@ program colMat_noiseExist
 	allocate(XLM(SYMBL,SYMBL))
  	allocate(XLMXH(SYMBL,SYMBL))
 	allocate(S(SYMBL,SYMBL))
-	allocate(Xbefore(SYMBL,SYMBL))
-	allocate(NOISE2(SYMBL+2*(PATH-1),SYMBL))
-	allocate(NOISE5(SYMBL+PATH-1,SYMBL))
-	allocate(NOISE6(SYMBL+PATH-1,SYMBL))
-	allocate(NOISE7(SYMBL+2*(PATH-1),SYMBL))
-	allocate(NOISE8(SYMBL+2*(PATH-1),SYMBL))
-	allocate(Bpre(SYMBL+PATH-1,SYMBL))
+	allocate(Xold(SYMBL,SYMBL))
+	allocate(NOISE_EbN0(SYMBL+2*(PATH-1),SYMBL))
+	allocate(NOISE_H(SYMBL+PATH-1,SYMBL))
+	allocate(NOISE_H2(SYMBL+PATH-1,SYMBL))
+	allocate(NOISE_HE(SYMBL+2*(PATH-1),SYMBL))
+	allocate(NOISE_HE2(SYMBL+2*(PATH-1),SYMBL))
+	allocate(Bold(SYMBL+PATH-1,SYMBL))
 	allocate(Bnew(SYMBL+PATH-1,SYMBL))
 
 	!配列初期化
@@ -143,8 +146,8 @@ program colMat_noiseExist
 	XLM=cmplx(0.0,0.0,kind(0d0))
  	XLMXH=cmplx(0.0,0.0,kind(0d0))
 	S=cmplx(0.0,0.0,kind(0d0))
-	Xbefore=cmplx(0.0,0.0,kind(0d0))
-	Bpre=cmplx(0.0,0.0,kind(0d0))
+	Xold=cmplx(0.0,0.0,kind(0d0))
+	Bold=cmplx(0.0,0.0,kind(0d0))
 	Bnew=cmplx(0.0,0.0,kind(0d0))
 
 	!seedサイズの取得・動的配列の再宣言
@@ -154,7 +157,7 @@ program colMat_noiseExist
 
 	!初期シード設定（Normal関数の中の一様乱数が互いに独立になるため）
 	do i=1, seedsize
-		seed1(i) = 1
+		seed1(i) = -1000000
 	end do
 
 	do i=1, seedsize
@@ -163,11 +166,11 @@ program colMat_noiseExist
 
 	do w=1, TRIALS
 		!雑音の設定
-		call Setnoise(NOISE2,SYMBL+2*(PATH-1),SYMBL)
-		call Setnoise(NOISE5,SYMBL+PATH-1,SYMBL)
-		call Setnoise(NOISE6,SYMBL+PATH-1,SYMBL)
-		call Setnoise(NOISE7,SYMBL+2*(PATH-1),SYMBL)
-		call Setnoise(NOISE8,SYMBL+2*(PATH-1),SYMBL)
+		call Setnoise(NOISE_EbN0,SYMBL+2*(PATH-1),SYMBL+PATH-1)
+		call Setnoise(NOISE_H,SYMBL+PATH-1,SYMBL)
+		call Setnoise(NOISE_H2,SYMBL+PATH-1,SYMBL)
+		call Setnoise(NOISE_HE,SYMBL+2*(PATH-1),SYMBL)
+		call Setnoise(NOISE_HE2,SYMBL+2*(PATH-1),SYMBL)
 
 		!伝搬路行列Hの設定
 		do j=0, PATH-1
@@ -189,14 +192,7 @@ program colMat_noiseExist
 		!合成チャネル行列HHHの設定
 		call CMultiply(HH,H,HHH,SYMBL,SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
 
-		ll=1
 		do l=1, NLOOP
-			if(l.eq.1)then
-				ll = 1
-			else
-				ll = 50*(l-1)
-			end if
-
 			!任意伝送ベクトルの設定
 			do i=1, SYMBL
 				do j=1, SYMBL
@@ -204,36 +200,45 @@ program colMat_noiseExist
 				end do
 			end do
 
-			do m=1, ll
+			do m=1, l
 				!忘却係数適用して固有符号群更新
-				do j=1, SYMBL
-					do i=1, SYMBL
-						X(i,j) = ALPHA*Xbefore(i,j)+(1-ALPHA)*X(i,j)
+				if(m.gt.2) then
+					do j=1, SYMBL
+						do i=1, SYMBL
+!							X(i,j) = ALPHA*Xold(i,j)+(1.0-ALPHA)*X(i,j)
+						end do
 					end do
-				end do
+				end if
 
 				!次ループでの忘却係数適用のため固有符号群を保持
-				call CSubstitute(Xbefore,X,SYMBL,SYMBL)
+				call CSubstitute(Xold,X,SYMBL,SYMBL)
 
 				!次ループでの固有値算出のため、Xを退避
 				call CSubstitute(Xpre,X,SYMBL,SYMBL)
 
 				!増幅値計算
+				!雑音電力計算
 				N0 = dble(0.0)
-				do j=1, SYMBL
-					do i=1,SYMBL+PATH-1
-						N0 = N0 + real(NOISE2(i,j))**2
+				do j=1, SYMBL+PATH-1
+					do i=1,SYMBL+2*(PATH-1)
+						N0 = N0 + real(NOISE_EbN0(i,j))**2
 					end do
 				end do
-				N0 = N0 / SYMBL
+				N0 = N0 / (SYMBL+PATH-1)
 
+				!雑音電力にSN比を掛けたもの
 				EB = N0*(10**(EbN0/10))
 
+				!実際の信号Xの信号電力計算
 				EBS = dble(0.0)
-				do i=1, SYMBL
-					EBS = EBS + real(Xpre(i,1))**2
+				do j=1, SYMBL
+					do i=1, SYMBL
+						EBS = EBS + real(X(i,j))**2
+					end do
 				end do
+				EBS = EBS / SYMBL
 
+				!SN比による信号電力と実際の信号電力から増幅値計算
 				Z2 = sqrt(EB / EBS)
 
 				!雑音の影響を抑えるため増幅
@@ -243,35 +248,59 @@ program colMat_noiseExist
 				call CMultiply(H,X,HX,SYMBL+PATH-1,SYMBL,SYMBL,SYMBL)
 
 				!雑音加算
-				call Setnoise(NOISE6,SYMBL+PATH-1,SYMBL)
-				call CAdd(HX,NOISE6,HX,SYMBL+PATH-1,SYMBL,SYMBL+PATH-1,SYMBL)
+				call Setnoise(NOISE_H,SYMBL+PATH-1,SYMBL)
+
+				do j=1,SYMBL
+					do i=1,SYMBL+PATH-1
+!						NOISE_H(i,j)=ALPHA*NOISE_H2(i,j)+(1-ALPHA)*NOISE_H(i,j)
+					end do
+				end do
+
+				do i=1, SYMBL
+					do j=1, SYMBL+PATH-1
+!						NOISE_H(j,i) = NOISE_H(j,i) / dble(l)
+					end do
+				end do
+
+				call CAdd(HX,NOISE_H,HX,SYMBL+PATH-1,SYMBL,SYMBL+PATH-1,SYMBL)
 
 				!忘却係数適用
 				!今回のループのHXをBnewに格納
 				call CSubstitute(Bnew,HX,SYMBL+PATH-1,SYMBL)
-				if(m.ne.1) then
+				if(m.gt.1) then
 					do i=1, SYMBL
 						do j=1, SYMBL+PATH-1
-							HX(j,i) = ALPHA*Bpre(j,i) + (1-ALPHA)*Bnew(j,i)
+!							HX(j,i) = ALPHA*Bold(j,i) + (1.0-ALPHA)*Bnew(j,i)
 						end do
 					end do
 				end if
 				!次ループでの忘却係数適用のため今回のループのHXを格納
-				call CSubstitute(Bpre,Bnew,SYMBL+PATH-1,SYMBL)
+				call CSubstitute(Bold,HX,SYMBL+PATH-1,SYMBL)
 
 				!処理I
-				call ProcI(HX,HXarI,SYMBL+PATH-1,SYMBL)
+				call ProcI(HX,HXarI,SYMBL+PATH-1,SYMBL)	
 
 				!HE通過
-				call CMultiply(HE,HXarI,HHHXbrJ,SYMBL+2*(PATH-1),SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
+				call CMultiply(HE,HXarI,HHHXbrJ,SYMBL+2*(PATH-1),SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)	
 
 				!雑音加算
-				call Setnoise(NOISE7,SYMBL+2*(PATH-1),SYMBL)
-				call CAdd(HHHXbrJ,NOISE7,HHHXbrJ,SYMBL+2*(PATH-1),SYMBL,SYMBL+2*(PATH-1),SYMBL)
+				call Setnoise(NOISE_HE,SYMBL+2*(PATH-1),SYMBL)
+
+				do j=1,SYMBL
+					do i=1,SYMBL+2*(PATH-1)
+!						NOISE_HE(i,j)=ALPHA*NOISE_HE2(i,j)+(1-ALPHA)*NOISE_HE(i,j)
+					end do
+				end do
+
+				do i=1, SYMBL
+					do j=1, SYMBL+2*(PATH-1)
+!						NOISE_HE(j,i) = NOISE_HE(j,i) / dble(l)
+					end do
+				end do
+				call CAdd(HHHXbrJ,NOISE_HE,HHHXbrJ,SYMBL+2*(PATH-1),SYMBL,SYMBL+2*(PATH-1),SYMBL)
 				
 				!処理J
 				call ProcJ(HHHXbrJ,HHHX,SYMBL+2*(PATH-1),SYMBL,PATH)
-
 
 				!列ベクトル群の固有値をそれぞれ算出
 				do i=1, SYMBL
@@ -288,9 +317,8 @@ program colMat_noiseExist
 					LAMBDA(i,1) = cmplx(LAMBDA_TMP,0.0,kind(0d0))
 				end do
 
-
 				!減算部分の算出
-				call CSubstitute(LUUH_SET,Z,SYMBL,SYMBL)
+				LUUH_SET = cmplx(0.0,0.0,kind(0d0))
 				do i=2, SYMBL
 					!収束する固有ベクトル(SYMBL,1)
 					do k=1, SYMBL
@@ -327,12 +355,10 @@ program colMat_noiseExist
 					do k=1, SYMBL
 						SUB_PART(k,i) = LUUHXn(k,1)
 					end do
-
 				end do
 
 				!減算
 				call CSubtract(HHHX,SUB_PART,arSUB,SYMBL,SYMBL,SYMBL,SYMBL)
-
 
 				!正規化
 				do i=1, SYMBL
@@ -351,10 +377,9 @@ program colMat_noiseExist
 				end do
 			end do
 
-
 			!固有ベクトルか確認(内積=0)
 			NAISEKI(1,1) = cmplx(0.0,0.0,kind(0d0))
-			do i=1, SYMBL
+			do i=1, SYMBL-1
 				do j=i+1, SYMBL
 					!固有ベクトル群を１列のベクトルに格納
 					do k=1, SYMBL
@@ -380,9 +405,11 @@ program colMat_noiseExist
 			call CAbs(NAISEKI,NAISEKI_TMP,1,1)
 			sC2 = SYMBL*(SYMBL-1.0)/2.0
 			AVGOTH(l,w) = NAISEKI_TMP / sC2
-
+			print *, l, ",", AVGOTH(l,w)
 
 			!検証
+			!固有符号の増幅によって固有値もZ2倍されているのでZ2で除算
+			LAMBDA = LAMBDA / Z2
 			!スペクトル定理
 			do i=1, SYMBL
 				LAMBDA_MATRIX(i,i) = LAMBDA(i,1)
@@ -391,6 +418,7 @@ program colMat_noiseExist
 			call CMultiply(X,LAMBDA_MATRIX,XLM,SYMBL,SYMBL,SYMBL,SYMBL)
 			call Cadjoint(X,XH,SYMBL,SYMBL)
 			call CMultiply(XLM,XH,XLMXH,SYMBL,SYMBL,SYMBL,SYMBL)
+
 			!理論値とシミュレーション結果の差をとる
 			call CSubtract(HHH,XLMXH,S,SYMBL,SYMBL,SYMBL,SYMBL)
 
@@ -404,7 +432,6 @@ program colMat_noiseExist
 				end do
 			end do
 			Q(l,w) = M1 / M2
-
 		end do
 	end do
 
@@ -417,14 +444,14 @@ program colMat_noiseExist
 		end do
 	end do
 
-	do i=1, NLOOP
-		Qave(i,1) = Qave(i,1)/dble(TRIALS)
-		AVGOTHave(i,1) = AVGOTHave(i,1)/dble(TRIALS)
-	end do
+	Qave = Qave / dble(TRIALS)
+	AVGOTHave = AVGOTHave / dble(TRIALS)
 
 	!結果の出力
 	do i=1, NLOOP
-		print *, i, ",", Qave(i,1), ",", AVGOTHave(i,1)
+!		print *, i, ",", Qave(i,1), ",", AVGOTHave(i,1)
+		write(20,*) i, Qave(i,1)
+		write(21,*) i, AVGOTHave(i,1)
 	end do
 
 contains
