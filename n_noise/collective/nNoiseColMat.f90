@@ -3,6 +3,7 @@ program colMat_noiseNone
 
 	integer,parameter :: H_ROW=1024,H_COL=1024,X_ROW=1024,X_COL=1024,H_PATH=64
 	integer,parameter :: NLOOP=200
+	logical :: PRINT_RSLT=.TRUE.
 	integer i,j,k,l,m
 	integer SYMBL,PATH
 	character(10) TMP
@@ -73,109 +74,107 @@ program colMat_noiseNone
 	!合成チャネル行列HHHの設定
 	call CMultiply(HH,H,HHH,SYMBL,SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
 
+	!任意伝送ベクトルの設定
+	do i=1, SYMBL
+		do j=1, SYMBL
+			X(i,j) = cmplx(1.0, 0.0, kind(0d0))
+		end do
+	end do
+
+
 	do l=1, NLOOP
-		!任意伝送ベクトルの設定
+		!次ループでの固有値算出のため、Xを退避
+		call CSubstitute(Xpre,X,SYMBL,SYMBL)
+
+		!伝搬路H通過
+		call CMultiply(H,X,HX,SYMBL+PATH-1,SYMBL,SYMBL,SYMBL)
+
+		!処理I
+		call ProcI(HX,HXarI,SYMBL+PATH-1,SYMBL)
+
+		!HE通過
+		call CMultiply(HE,HXarI,HHHXbrJ,SYMBL+2*(PATH-1),SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
+
+		!処理J
+		call ProcJ(HHHXbrJ,HHHX,SYMBL+2*(PATH-1),SYMBL,PATH)
+
+		!列ベクトル群の固有値をそれぞれ算出
 		do i=1, SYMBL
-			do j=1, SYMBL
-				X(i,j) = cmplx(1.0, 0.0, kind(0d0))
+			!列ベクトル内の各行ごとに固有値を算出
+			do j=1,SYMBL
+				D(j,1) = Xpre(j,i)
+				D1(j,1) = HHHX(j,i)
 			end do
+
+			call CAbs(D,D_ABS,SYMBL,1)
+			call CAbs(D1,D1_ABS,SYMBL,1)
+
+			LAMBDA_TMP = D1_ABS / D_ABS
+			LAMBDA(i,1) = cmplx(LAMBDA_TMP,0.0, kind(0d0))
+		end do
+		!この時点で配列LAMBDAの各行に固有値が入っている。
+
+
+		!減算部分の算出
+		call CSubstitute(LUUH_SET,Z,SYMBL,SYMBL)
+		do i=2, SYMBL
+			!収束する固有ベクトル(SYMBL,1)
+			do k=1, SYMBL
+				Xn(k,1) = Xpre(k,i)
+			end do
+
+			!減算する固有ベクトル(SYMBL,1)
+			do k=1, SYMBL
+				U(k,1) = Xpre(k,i-1)
+			end do
+
+			!固有ベクトルの随伴行列(1,SYMBL)
+			call CAdjoint(U,UH,SYMBL,1)
+
+			!λ*U(SYMBL,1)
+			do k=1, SYMBL
+				LU(k,1) = LAMBDA(i-1,1)*U(k,1)
+			end do
+
+			!LU*UH(SYMBL,SYMBL)
+			call CMultiply(LU,UH,LUUH,SYMBL,1,1,SYMBL)
+
+			!λUUHの集合を格納
+			do j=1, SYMBL
+				do k=1, SYMBL
+					LUUH_SET(j,k) = LUUH_SET(j,k) + LUUH(j,k)
+				end do
+			end do
+
+			!LUUH_SET*Xn(SYMBL,1) iの次ループで足し合わせる
+			call CMultiply(LUUH_SET,Xn,LUUHXn,SYMBL,SYMBL,SYMBL,1)
+
+			!減算部の格納
+			do k=1, SYMBL
+				SUB_PART(k,i) = LUUHXn(k,1)
+			end do
+
 		end do
 
-		do m=1, l
-			!次ループでの固有値算出のため、Xを退避
-			call CSubstitute(Xpre,X,SYMBL,SYMBL)
+		!減算
+		call CSubtract(HHHX,SUB_PART,arSUB,SYMBL,SYMBL,SYMBL,SYMBL)
 
-			!伝搬路H通過
-			call CMultiply(H,X,HX,SYMBL+PATH-1,SYMBL,SYMBL,SYMBL)
 
-			!処理I
-			call ProcI(HX,HXarI,SYMBL+PATH-1,SYMBL)
-
-			!HE通過
-			call CMultiply(HE,HXarI,HHHXbrJ,SYMBL+2*(PATH-1),SYMBL+PATH-1,SYMBL+PATH-1,SYMBL)
-
-			!処理J
-			call ProcJ(HHHXbrJ,HHHX,SYMBL+2*(PATH-1),SYMBL,PATH)
-
-			!列ベクトル群の固有値をそれぞれ算出
-			do i=1, SYMBL
-				!列ベクトル内の各行ごとに固有値を算出
-				do j=1,SYMBL
-					D(j,1) = Xpre(j,i)
-					D1(j,1) = HHHX(j,i)
-				end do
-
-				call CAbs(D,D_ABS,SYMBL,1)
-				call CAbs(D1,D1_ABS,SYMBL,1)
-
-				LAMBDA_TMP = D1_ABS / D_ABS
-				LAMBDA(i,1) = cmplx(LAMBDA_TMP,0.0, kind(0d0))
+		!正規化
+		do i=1, SYMBL
+			!固有ベクトル群を1列のベクトルに格納
+			do j=1, SYMBL
+				NORM(j,1) = arSUB(j,i)
 			end do
-			!この時点で配列LAMBDAの各行に固有値が入っている。
-
-
-			!減算部分の算出
-			call CSubstitute(LUUH_SET,Z,SYMBL,SYMBL)
-			do i=2, SYMBL
-				!収束する固有ベクトル(SYMBL,1)
-				do k=1, SYMBL
-					Xn(k,1) = Xpre(k,i)
-				end do
-
-				!減算する固有ベクトル(SYMBL,1)
-				do k=1, SYMBL
-					U(k,1) = Xpre(k,i-1)
-				end do
-
-				!固有ベクトルの随伴行列(1,SYMBL)
-				call CAdjoint(U,UH,SYMBL,1)
-
-				!λ*U(SYMBL,1)
-				do k=1, SYMBL
-					LU(k,1) = LAMBDA(i-1,1)*U(k,1)
-				end do
-
-				!LU*UH(SYMBL,SYMBL)
-				call CMultiply(LU,UH,LUUH,SYMBL,1,1,SYMBL)
-
-				!λUUHの集合を格納
-				do j=1, SYMBL
-					do k=1, SYMBL
-						LUUH_SET(j,k) = LUUH_SET(j,k) + LUUH(j,k)
-					end do
-				end do
-
-				!LUUH_SET*Xn(SYMBL,1) iの次ループで足し合わせる
-				call CMultiply(LUUH_SET,Xn,LUUHXn,SYMBL,SYMBL,SYMBL,1)
-
-				!減算部の格納
-				do k=1, SYMBL
-					SUB_PART(k,i) = LUUHXn(k,1)
-				end do
-
-			end do
-
-			!減算
-			call CSubtract(HHHX,SUB_PART,arSUB,SYMBL,SYMBL,SYMBL,SYMBL)
-
 
 			!正規化
-			do i=1, SYMBL
-				!固有ベクトル群を1列のベクトルに格納
-				do j=1, SYMBL
-					NORM(j,1) = arSUB(j,i)
-				end do
+			call CNormalize(NORM,SYMBL,1)
 
-				!正規化
-				call CNormalize(NORM,SYMBL,1)
-
-				!正規化したベクトルをXに格納
-				do j=1, SYMBL
-					X(j,i) = NORM(j,1)
-				end do
+			!正規化したベクトルをXに格納
+			do j=1, SYMBL
+				X(j,i) = NORM(j,1)
 			end do
 		end do
-
 
 		!固有ベクトルか確認(内積=0)
 		NAISEKI(1,1) = cmplx(0.0,0.0, kind(0d0))
@@ -229,11 +228,11 @@ program colMat_noiseNone
 			end do
 		end do
 		Q(l,1) = M1 / M2
-
 	end do
 
 	!結果の出力
 	do i=1, NLOOP
+		if(PRINT_RSLT) print *, i, ",", Q(i,1), ",", AVGOTH(i,1)	
 		write(20,*) i, Q(i,1)
 		write(21,*) i, AVGOTH(i,1)
 	end do
