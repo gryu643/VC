@@ -3,7 +3,7 @@ program colMat_noiseExist
 	integer,parameter :: NLOOP=200
 	integer,parameter :: TRIALS=1
 	logical :: PRINT_RSLT=.TRUE.
-	logical :: NOISE=.FALSE.
+	logical :: NOISE=.TRUE.
 	integer i,j,k,l,w,seedsize
 	integer,allocatable :: seed1(:)
 	integer,allocatable :: seed2(:)
@@ -40,6 +40,7 @@ program colMat_noiseExist
 	complex(kind(0d0)),allocatable :: XLMXH(:,:) !(SYMBL,SYMBL)
 	complex(kind(0d0)),allocatable :: S(:,:) !(SYMBL,SYMBL)
 	complex(kind(0d0)),allocatable :: Xold(:,:) !(SYMBL,SYMBL)
+	complex(kind(0d0)),allocatable :: Xold2(:,:) !(SYMBL,SYMBL)
 	double precision :: LAMBDA_TMP=0.0
 	double precision,allocatable :: TMP1(:) !(SYMBL)
 	double precision :: NAISEKI_TMP=0.0
@@ -59,6 +60,7 @@ program colMat_noiseExist
 	complex(kind(0d0)),allocatable :: NOISE_HE(:,:) !(SYMBL+2*(PATH-1),SYMBL)
 	double precision :: N0=(0.0,0.0)
 	complex(kind(0d0)),allocatable :: Bold(:,:) !(SYMBL+PATH-1,SYMBL)
+	complex(kind(0d0)),allocatable :: Bold2(:,:) !(SYMBL+PATH-1,SYMBL)
 	complex(kind(0d0)),allocatable :: Bnew(:,:) !(SYMBL+PATH-1,SYMBL)
 	double precision :: Qave(NLOOP,1)=0.0
 	double precision :: AVGOTHave(NLOOP,1)=0.0
@@ -108,10 +110,12 @@ program colMat_noiseExist
  	allocate(XLMXH(SYMBL,SYMBL))
 	allocate(S(SYMBL,SYMBL))
 	allocate(Xold(SYMBL,SYMBL))
+	allocate(Xold2(SYMBL,SYMBL))
 	allocate(NOISE_EbN0(SYMBL+2*(PATH-1),SYMBL))
 	allocate(NOISE_H(SYMBL+PATH-1,SYMBL))
 	allocate(NOISE_HE(SYMBL+2*(PATH-1),SYMBL))
 	allocate(Bold(SYMBL+PATH-1,SYMBL))
+	allocate(Bold2(SYMBL+PATH-1,SYMBL))
 	allocate(Bnew(SYMBL+PATH-1,SYMBL))
 
 	!配列初期化
@@ -146,7 +150,9 @@ program colMat_noiseExist
  	XLMXH=cmplx(0.0,0.0,kind(0d0))
 	S=cmplx(0.0,0.0,kind(0d0))
 	Xold=cmplx(0.0,0.0,kind(0d0))
+	Xold2=cmplx(0.0,0.0,kind(0d0))
 	Bold=cmplx(0.0,0.0,kind(0d0))
+	Bold2=cmplx(0.0,0.0,kind(0d0))
 	Bnew=cmplx(0.0,0.0,kind(0d0))
 
 	!seedサイズの取得・動的配列の再宣言
@@ -201,12 +207,13 @@ program colMat_noiseExist
 			if(l.gt.2) then
 				do j=1, SYMBL
 					do i=1, SYMBL
-						X(i,j) = ALPHA*Xold(i,j)+(1.0-ALPHA)*X(i,j)
+						X(i,j) = 0.05*Xold2(i,j)+0.15*Xold(i,j)+0.8*X(i,j)
 					end do
 				end do
 			end if
 
 			!次ループでの忘却係数適用のため固有符号群を保持
+			call CSubstitute(Xold2,Xold,SYMBL,SYMBL)
 			call CSubstitute(Xold,X,SYMBL,SYMBL)
 
 			!次ループでの固有値算出のため、Xを退避
@@ -255,11 +262,12 @@ program colMat_noiseExist
 			if(l.gt.1) then
 				do i=1, SYMBL
 					do j=1, SYMBL+PATH-1
-						HX(j,i) = ALPHA*Bold(j,i) + (1.0-ALPHA)*Bnew(j,i)
+						HX(j,i) = 0.05*Bold2(j,i) + 0.15*Bold(j,i) + 0.8*Bnew(j,i)
 					end do
 				end do
 			end if
 			!次ループでの忘却係数適用のため今回のループのHXを格納
+			call CSubstitute(Bold2,Bold,SYMBL+PATH-1,SYMBL)
 			call CSubstitute(Bold,HX,SYMBL+PATH-1,SYMBL)
 
 			!処理I
