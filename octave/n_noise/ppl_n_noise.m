@@ -1,6 +1,4 @@
-NLOOP = 1;
-SYMBL = 4;
-PATH = 3;
+load input.txt
 
 # 伝搬路行列Hの設定
 for l=0:PATH-1
@@ -47,7 +45,7 @@ for m=1:NLOOP
 	HHHXbrJ = conj(HHHXbrJ);
 	HHHXbrJ = flipud(HHHXbrJ);
 	for l=PATH:SYMBL+PATH-1
-		HHHX(l,:) = HHHXbrJ(l,:);
+		HHHX(l-(PATH-1),:) = HHHXbrJ(l,:);
 	end
 
 	# 列ベクトル群の固有値をそれぞれ算出
@@ -93,11 +91,8 @@ for m=1:NLOOP
 		LUUHXn = LUUH_SET * Xn;
 		
 		# 減算部の格納
-		SUB_PART
-		LUUHZn
 		SUB_PART(:,l) = LUUHXn(:,1);
 	end
-	SUB_PART
 	arSUB = HHHX - SUB_PART;
 
 	# 正規化
@@ -117,10 +112,10 @@ for m=1:NLOOP
 	for l=1:SYMBL
 		for k=l+1:SYMBL
 			# 固有ベクトル群を１列のベクトルに格納
-			U(:) = X(:,l);
+			U(:,1) = X(:,l);
 
 			# 内積を取る固有ベクトルを格納
-			N(:) = X(:,k);
+			N(:,1) = X(:,k);
 
 			# 随伴行列
 			UH = U';
@@ -129,14 +124,15 @@ for m=1:NLOOP
 			UHN = UH * N;
 
 			# 計算した内積を足し合わせる
-			NAISEKI = NAISEKI + UHN
+			NAISEKI = NAISEKI + UHN;
 		end
 	end
 
 	# 内積の絶対値を出力
-	NAISEKI_TMP = NORM(NAISEKI);
+	NAISEKI_TMP = norm(NAISEKI);
 	sC2 = SYMBL*(SYMBL-1.0)/2.0;
-	AO(m) = NAISEKI_TMP / sC2;
+	AO(m,1) = m;
+	AO(m,2) = NAISEKI_TMP / sC2;
 
 	# 検証
 	# スペクトル定理
@@ -153,12 +149,17 @@ for m=1:NLOOP
 	S = HHH - XLMXH;
 
 	# 上で計算した差の絶対値の２乗を理論値の絶対値の２乗で正規化する
-	M1=0.0
-	M2=0.0
-	M1 = M1 + real(S(:,:))^2 + imag(S(:,:))^2;
-	M2 = M2 + real(HHH(:,:))^2 + imag(HHH(:,:))^2;
+	M1=0.0;
+	M2=0.0;
+	for l=1:SYMBL
+		for k=1:SYMBL
+			M1 = M1 + real(S(k,l))^2 + imag(S(k,l))^2;
+			M2 = M2 + real(HHH(k,l))^2 + imag(HHH(k,l))^2;
+		end
+	end
 	Q(m) = M1 / M2;
 end
 
 # 結果の出力
-plot(l,AO(l))
+dlmwrite('out.txt',[AO(:,1) AO(:,2)],'delimiter',' ');
+semilogy(AO(:,2))
