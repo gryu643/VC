@@ -1,14 +1,16 @@
 close all;
 clear all;
-Nsybl = 4;
-Npath = 2;
+Nsybl = 32;
+Npath = 8;
 SEbN0 = -10;
 EEbN0 = 40;
 Step = 5;
 
 Nloop = 10000;
+PPLloop = 1000;
 
-fileID = fopen('ber(Npath=8,Nsym=64).txt','w');
+fileID = fopen('ber(Npath=8,Nsym=32).txt','w');
+
 
 %Channel parameter setting
 %for i=1:Npath
@@ -39,18 +41,24 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
         H(i+j-1,i) = Cpath(j);
       end
     end
-
-
-
-
-
-
-
-
+% 
+    for i=1:Nsybl+Npath-1
+      for j = 1:Npath
+        HE(i+j-1,i) = Cpath(j);
+      end
+    end
+%
+    for l=1:Nsybl
+      for k = 1:Nsybl
+        X(l,k) = 1.0 + 0.0*i;
+      end
+    end
+%
+    V = PPL (H, HE, X, Nsybl, Npath, PPLloop);
     
     HH = ctranspose(H);
     HHH = HH*H;
-    [V,D] = eig(HHH);
+%    [V,D] = eig(HHH);
 %
     S = complex(round(rand(1,Nsybl))*2-1,round(rand(1,Nsybl))*2-1); %[-1,1] Transmit symbol
     TdatI = (real(S)+1)/2;
