@@ -2,9 +2,8 @@ function V = PPL (H, HE, X, Nsybl, Npath, lp)
   # Hの随伴行列HHの設定
   HH = H';
 
-  # 合成チャネル豪列HHHの設定
+  # 合成チャネル行列HHHの設定
   HHH = HH * H;
-
   for m=1:lp
     # 固有値算出のためX退避
     Xpre = X;
@@ -22,11 +21,22 @@ function V = PPL (H, HE, X, Nsybl, Npath, lp)
     # 処理J
     HHHXbrJ = conj(HHHXbrJ);
     HHHXbrJ = flipud(HHHXbrJ);
-    for l=Npath:Nsybl+Npath-1
-      HHHX(l-(Npath-1),:) = HHHXbrJ(l,:);
-    end
+    l = Npath:Nsybl+Npath-1;
+    HHHX(l-(Npath-1),:) = HHHXbrJ(l,:);
+%    for l=Npath:Nsybl+Npath-1
+%      HHHX(l-(Npath-1),:) = HHHXbrJ(l,:);
+%    end
 
     # 列ベクトル群の固有値をそれぞれ算出
+%    l = 1:Nsybl;
+%    D(:,l) = Xpre(:,l);
+%    D1(:,l) = HHHX(:,l);
+
+%    D_NORM(l) = norm(D(:,l));
+%    D1_NORM(l) = norm(D1(:,l));
+
+%   LAMBDA_TMP(l) = D1_NORM(l) / D_NORM(l);
+%    LAMBDA(l) = LAMBDA_TMP(l) + 0.0*i;
     for l=1:Nsybl
       # 列ベクトル内の各行ごとに固有値を算出
       D(:,1) = Xpre(:,l);
@@ -40,11 +50,13 @@ function V = PPL (H, HE, X, Nsybl, Npath, lp)
     end
 
     # 減算部分の導出
-    for l=1:Nsybl
-      for k=1:Nsybl
-        LUUH_SET(k,l) = 0.0 + 0.0*i;
-      end
-    end
+    l=1:Nsybl;
+    LUUH_SET(l,l) = 0.0 + 0.0*i;
+%    for l=1:Nsybl
+%      for k=1:Nsybl
+%        LUUH_SET(k,l) = 0.0 + 0.0*i;
+%      end
+%    end
 
     for l=2:Nsybl
       # 収束する固有ベクトル
