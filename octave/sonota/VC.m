@@ -1,13 +1,14 @@
 close all;
 clear all;
-Nsybl = 32;
-Npath = 8;
+tic;
+Nsybl = 4;
+Npath = 2;
 SEbN0 = -10;
 EEbN0 = 40;
 Step = 5;
 
-Nloop = 10000;
-PPLloop = 1000;
+Nloop = 100;
+PPLloop = 500;
 
 fileID = fopen('ber(Npath=8,Nsym=32).txt','w');
 
@@ -18,10 +19,12 @@ fileID = fopen('ber(Npath=8,Nsym=32).txt','w');
 %end
 %
 %Channel gain parameter
-for i=1:Npath
-  Ampd(i) = sqrt(1/Npath); %Equal Gain
-%  Ampd(i) = sqrt(1/(2^(i-1))); %Exp. atten.
-end
+i=1:Npath;
+Ampd(i) = sqrt(1/Npath);
+%%for i=1:Npath
+%%  Ampd(i) = sqrt(1/Npath); %Equal Gain
+%%%  Ampd(i) = sqrt(1/(2^(i-1))); %Exp. atten.
+%%end
 %
 for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
   Psig = 0;
@@ -32,40 +35,45 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
   for loop=1:Nloop %Monte calro loop
 %
 %Channel parameter setting
-    for i=1:Npath
-      Cpath(i) = complex(randn,randn)/sqrt(2)*Ampd(i);
-    end
+    i=1:Npath;
+    Cpath(i) = complex(randn,randn)/sqrt(2)*Ampd(i);
+%%    for i=1:Npath
+%%      Cpath(i) = complex(randn,randn)/sqrt(2)*Ampd(i);
+%%    end
 %
     for i=1:Nsybl
-      for j=1:Npath
-        H(i+j-1,i) = Cpath(j);
-      end
+      j = 1:Npath;
+      H(i+j-1,i) = Cpath(j);
     end
 % 
     for i=1:Nsybl+Npath-1
-      for j = 1:Npath
-        HE(i+j-1,i) = Cpath(j);
-      end
+      j = 1:Npath;
+      HE(i+j-1,i) = Cpath(j);
     end
 %
-    for l=1:Nsybl
-      for k = 1:Nsybl
-        X(l,k) = 1.0 + 0.0*i;
-      end
-    end
+    l = 1:Nsybl;
+    Xppl(l,l) = 1.0 + 0.0*i;
+%%    for l=1:Nsybl
+%%      for k = 1:Nsybl
+%%        Xppl(l,k) = 1.0 + 0.0*i;
+%%      end
+%%    end
 %
-    V = PPL (H, HE, X, Nsybl, Npath, PPLloop);
+%    V = PPL (H, HE, Xppl, Nsybl, Npath, PPLloop);
     
     HH = ctranspose(H);
     HHH = HH*H;
-%    [V,D] = eig(HHH);
+    [V,D] = eig(HHH);
 %
+
     S = complex(round(rand(1,Nsybl))*2-1,round(rand(1,Nsybl))*2-1); %[-1,1] Transmit symbol
     TdatI = (real(S)+1)/2;
     TdatQ = (imag(S)+1)/2;
-    for i=1:Nsybl;
-      SU(:,i) = S(i)*V(:,i);
-    end
+    i=1:Nsybl;
+    SU(:,i) = S(i).*V(:,i);
+%%    for i=1:Nsybl;
+%%      SU(:,i) = S(i)*V(:,i);
+%%    end
 %
     X = zeros(1,Nsybl);
     for j=1:Nsybl;
@@ -132,3 +140,4 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
 end
 %
 fclose(fileID);
+toc;
