@@ -1,7 +1,7 @@
 clear
 Nsybl = 32;
 Npath = 8;
-Nlp = 1000;
+Nlp = 500;
 
 for i=1:Npath
   Ampd(i) = sqrt(1/Npath); %Equal Gain
@@ -12,15 +12,25 @@ for i=1:Npath
   Cpath(i) = complex(randn,randn)/sqrt(2)*Ampd(i);
 end
 
-for i=1:Nsybl
-  for j=1:Npath
-    H(i+j-1,i) = Cpath(j);
+%for i=1:Nsybl
+%  for j=1:Npath
+%    H(i+j-1,i) = Cpath(j);
+%  end
+%end
+for l=0:Npath-1
+  for k = 1:Nsybl
+    H(k+l,k) = (0.1+0.1*l) + (0.2+0.1*l)*i;
   end
 end
 % 
-for i=1:Nsybl+Npath-1
-  for j = 1:Npath
-    HE(i+j-1,i) = Cpath(j);
+%for i=1:Nsybl+Npath-1
+%  for j = 1:Npath
+%   HE(i+j-1,i) = Cpath(j);
+%  end
+%end
+for l=0:Npath-1
+  for k = 1:Nsybl+Npath-1
+    HE(k+l,k) = (0.1+0.1*l) + (0.2+0.1*l)*i;
   end
 end
 %
@@ -30,9 +40,9 @@ for l=1:Nsybl
     X(l,k) = 1.0 + 0.0*i;
   end
 end
-
-V = PPL (H, HE, X, Nsybl, Npath, Nlp);
-
+tic;
+V = paraarrayfun (4, @PPL, H, HE, X, Nsybl, Npath, Nlp);
+toc;
 # 固有ベクトルか確認
 NAISEKI = 0.0 + 0.0*i;
 for l=1:Nsybl
