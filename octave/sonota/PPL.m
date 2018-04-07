@@ -29,32 +29,33 @@ function V = PPL (H, HE, X, Nsybl, Npath, lp)
 %    end
 
     # 列ベクトル群の固有値をそれぞれ算出
-%    l = 1:Nsybl;
-%    D = Xpre;
-%    D1 = HHHX;
+    l = 1:Nsybl;
+    D = Xpre;
+    D1 = HHHX;
     
-%    D = real(D).^2+imag(D).^2;
-%    D1 = real(D1).^2+imag(D1).^2;
+    D = real(D).^2+imag(D).^2;
+    D1 = real(D1).^2+imag(D1).^2;
 
-%    D_SUM = sum(D,1);
-%    D1_SUM = sum(D1,1);
+    D_SUM(l) = sum(D,1);
+    D1_SUM(l) = sum(D1,1);
 
-%    D_NORM(l) = sqrt(D_SUM(l));
-%    D1_NORM(l) = sqrt(D1_SUM(l));
-%
-%   LAMBDA_TMP(l) = D1_NORM(l) / D_NORM(l);
-%    LAMBDA(l) = LAMBDA_TMP(l) + 0.0*i;
-    for l=1:Nsybl
-      # 列ベクトル内の各行ごとに固有値を算出
-      D(:,1) = Xpre(:,l);
-      D1(:,1) = HHHX(:,l);
+    D_NORM(l) = sqrt(D_SUM(l));
+    D1_NORM(l) = sqrt(D1_SUM(l));
 
-      D_NORM = norm(D);
-      D1_NORM = norm(D1);
+    LAMBDA_TMP(l) = D1_NORM(l) ./ D_NORM(l);
+    LAMBDA(l) = LAMBDA_TMP(l) + 0.0*i;
+    
+%      # 列ベクトル内の各行ごとに固有値を算出
+%    for l=1:Nsybl
+%      D(:,1) = Xpre(:,l);
+%      D1(:,1) = HHHX(:,l);
 
-      LAMBDA_TMP = D1_NORM / D_NORM;
-      LAMBDA(l) = LAMBDA_TMP + 0.0*i;
-    end
+%      D_NORM = norm(D);
+%      D1_NORM = norm(D1);
+
+%      LAMBDA_TMP = D1_NORM / D_NORM;
+%      LAMBDA(l) = LAMBDA_TMP + 0.0*i;
+%    end
 
     # 減算部分の導出
     LUUH_SET = zeros(Nsybl,Nsybl);
@@ -65,23 +66,24 @@ function V = PPL (H, HE, X, Nsybl, Npath, lp)
 %    end
 
 %    l = 2:Nsybl;
+%    LUUH = zeros(Nsybl,Nsybl,Nsybl-1);
 %    LUUHXn = zeros(Nsybl,Nsybl-1);
 %    %Xn(Nsybl,Nsybl-1)
 %    Xn(:,l-1) = Xpre(:,l);
-
+%
 %    %U(Nsybl,Nsybl-1)
 %    U(:,l-1) = Xpre(:,l-1);
-
+%
 %    %UH(Nsybl-1,Nsybl)
 %    UH = U';
-
+%
 %    %LU(Nsybl,Nsybl-1)
 %    LU(:,l-1) = LAMBDA(l-1).*U(:,l-1);
-
+%
 %    %(1,Nsybl-1)
-%    k=1:l-1;
-%    LUUHXn(:,l-1) += LU(:,k) * UH(k,:) * Xn(:,l-1);
-
+%    LUUH = LU(:,l-1) * UH(l-1,:);
+%    LUUHXn(:,l-1) = LUUHXn(:,l-2) + LUUH(:,l-1) * Xn(:,l-1);
+%
 %    SUB_PART(:,l) = LUUHXn(:,l-1);
 
     for l=2:Nsybl
@@ -111,17 +113,29 @@ function V = PPL (H, HE, X, Nsybl, Npath, lp)
     end
     arSUB = HHHX - SUB_PART;
 
+    l=1:Nsybl;
+    brNORM(:,l) = arSUB(:,l);
+    brNORM = real(brNORM).^2+imag(brNORM).^2;
+
+    brNORM(l) = sum(brNORM,1);
+
+    NORM(l) = sqrt(brNORM(l));
+
+    arSUB(:,l) = arSUB(:,l) ./ NORM(l);
+
+    X(:,l) = arSUB(:,l);
+    
     # 正規化
-    for l=1:Nsybl
-      # 固有ベクトル群を1列に格納
-      NORM(:,1) = arSUB(:,l);
-
-      # 正規化
-      NORM(:,1) = NORM(:,1) / norm(NORM);
-
-      # 正規化したベクトルをXに格納
-      X(:,l) = NORM(:,1);
-    end
+%    for l=1:Nsybl
+%      # 固有ベクトル群を1列に格納
+%      NORM(:,1) = arSUB(:,l);
+%
+%      # 正規化
+%      NORM(:,1) = NORM(:,1) / norm(NORM);
+%
+%      # 正規化したベクトルをXに格納
+%      X(:,l) = NORM(:,1);
+%    end
   end
 
   # 結果の出力
