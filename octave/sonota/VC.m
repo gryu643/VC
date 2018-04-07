@@ -59,7 +59,8 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
 %%      end
 %%    end
 %
-%    V = PPL (H, HE, Xppl, Nsybl, Npath, PPLloop);
+    V = PPL (H, HE, Xppl, Nsybl, Npath, PPLloop);
+    Xppl=V;
     
     HH = ctranspose(H);
     HHH = HH*H;

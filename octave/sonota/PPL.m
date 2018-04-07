@@ -1,4 +1,5 @@
 function V = PPL (H, HE, X, Nsybl, Npath, lp)
+  
   # Hの随伴行列HHの設定
   HH = H';
 
@@ -29,12 +30,18 @@ function V = PPL (H, HE, X, Nsybl, Npath, lp)
 
     # 列ベクトル群の固有値をそれぞれ算出
 %    l = 1:Nsybl;
-%    D(:,l) = Xpre(:,l);
-%    D1(:,l) = HHHX(:,l);
+%    D = Xpre;
+%    D1 = HHHX;
+    
+%    D = real(D).^2+imag(D).^2;
+%    D1 = real(D1).^2+imag(D1).^2;
 
-%    D_NORM(l) = norm(D(:,l));
-%    D1_NORM(l) = norm(D1(:,l));
+%    D_SUM = sum(D,1);
+%    D1_SUM = sum(D1,1);
 
+%    D_NORM(l) = sqrt(D_SUM(l));
+%    D1_NORM(l) = sqrt(D1_SUM(l));
+%
 %   LAMBDA_TMP(l) = D1_NORM(l) / D_NORM(l);
 %    LAMBDA(l) = LAMBDA_TMP(l) + 0.0*i;
     for l=1:Nsybl
@@ -50,13 +57,32 @@ function V = PPL (H, HE, X, Nsybl, Npath, lp)
     end
 
     # 減算部分の導出
-    l=1:Nsybl;
-    LUUH_SET(l,l) = 0.0 + 0.0*i;
+    LUUH_SET = zeros(Nsybl,Nsybl);
 %    for l=1:Nsybl
 %      for k=1:Nsybl
 %        LUUH_SET(k,l) = 0.0 + 0.0*i;
 %      end
 %    end
+
+%    l = 2:Nsybl;
+%    LUUHXn = zeros(Nsybl,Nsybl-1);
+%    %Xn(Nsybl,Nsybl-1)
+%    Xn(:,l-1) = Xpre(:,l);
+
+%    %U(Nsybl,Nsybl-1)
+%    U(:,l-1) = Xpre(:,l-1);
+
+%    %UH(Nsybl-1,Nsybl)
+%    UH = U';
+
+%    %LU(Nsybl,Nsybl-1)
+%    LU(:,l-1) = LAMBDA(l-1).*U(:,l-1);
+
+%    %(1,Nsybl-1)
+%    k=1:l-1;
+%    LUUHXn(:,l-1) += LU(:,k) * UH(k,:) * Xn(:,l-1);
+
+%    SUB_PART(:,l) = LUUHXn(:,l-1);
 
     for l=2:Nsybl
       # 収束する固有ベクトル
