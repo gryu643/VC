@@ -1,4 +1,5 @@
 function V = PPL (H, HE, X, Nsybl, Npath, lp)
+  
   # Hの随伴行列HHの設定
   HH = H';
 
@@ -23,79 +24,92 @@ function V = PPL (H, HE, X, Nsybl, Npath, lp)
     HHHXbrJ = flipud(HHHXbrJ);
     l = Npath:Nsybl+Npath-1;
     HHHX(l-(Npath-1),:) = HHHXbrJ(l,:);
-%    for l=Npath:Nsybl+Npath-1
-%      HHHX(l-(Npath-1),:) = HHHXbrJ(l,:);
-%    end
 
     # 列ベクトル群の固有値をそれぞれ算出
-%    l = 1:Nsybl;
-%    D(:,l) = Xpre(:,l);
-%    D1(:,l) = HHHX(:,l);
+    l = 1:Nsybl;
+    D = Xpre;
+    D1 = HHHX;
+    
+    D = real(D).^2+imag(D).^2;
+    D1 = real(D1).^2+imag(D1).^2;
 
-%    D_NORM(l) = norm(D(:,l));
-%    D1_NORM(l) = norm(D1(:,l));
+    D_SUM(l) = sum(D,1);
+    D1_SUM(l) = sum(D1,1);
 
-%   LAMBDA_TMP(l) = D1_NORM(l) / D_NORM(l);
-%    LAMBDA(l) = LAMBDA_TMP(l) + 0.0*i;
-    for l=1:Nsybl
-      # 列ベクトル内の各行ごとに固有値を算出
-      D(:,1) = Xpre(:,l);
-      D1(:,1) = HHHX(:,l);
+    D_NORM(l) = sqrt(D_SUM(l));
+    D1_NORM(l) = sqrt(D1_SUM(l));
 
-      D_NORM = norm(D);
-      D1_NORM = norm(D1);
-
-      LAMBDA_TMP = D1_NORM / D_NORM;
-      LAMBDA(l) = LAMBDA_TMP + 0.0*i;
-    end
+    LAMBDA_TMP(l) = D1_NORM(l) ./ D_NORM(l);
+    LAMBDA(l) = LAMBDA_TMP(l) + 0.0*i;
 
     # 減算部分の導出
-    l=1:Nsybl;
-    LUUH_SET(l,l) = 0.0 + 0.0*i;
-%    for l=1:Nsybl
-%      for k=1:Nsybl
-%        LUUH_SET(k,l) = 0.0 + 0.0*i;
-%      end
+    LUUH_SET = zeros(Nsybl,Nsybl);
+
+    l = 2:Nsybl;
+    LUUH = zeros(Nsybl,Nsybl,Nsybl);
+    SUB_PART = zeros(Nsybl,Nsybl);
+
+    Xn(:,l-1) = Xpre(:,l);
+
+    U(:,l-1) = Xpre(:,l-1);
+
+    UH = U';
+
+    LU(:,l-1) = LAMBDA(l-1).*U(:,l-1);
+
+    for j=2:Nsybl
+        k = 1:l(j)
+        SUB_PART(:,j) = LU(:,k) * UH(k,:) * Xn(:,j-1);
+    end
+%    for k=2:Nsybl
+%        LUUH(:,:,k) = LU(:,k-1) * UH(k-1,:);
+%    end 
+%
+%    for k=2:Nsybl
+%        LUUH(:,:,k) = LUUH(:,:,k-1) + LUUH(:,:,k);
+%    end
+%    for k=2:Nsybl        
+%        SUB_PART(:,k) = LUUH(:,:,k) * Xn(:,k-1);
 %    end
 
-    for l=2:Nsybl
-      # 収束する固有ベクトル
-      Xn(:,1) = Xpre(:,l);
-
-      # 減算する固有ベクトル
-      U(:,1) = Xpre(:,l-1);
-
-      # 固有ベクトルの随伴行列
-      UH = U';
-
-      # λ*U
-      LU = LAMBDA(l-1)*U;
-
-      # LU*UH
-      LUUH = LU * UH;
-
-      # LUUHの集合を格納
-      LUUH_SET = LUUH_SET + LUUH;
-
-      # LUUH_SET*Xn
-      LUUHXn = LUUH_SET * Xn;
-      
-      # 減算部の格納
-      SUB_PART(:,l) = LUUHXn(:,1);
-    end
+%    for l=2:Nsybl
+%      # 収束する固有ベクトル
+%      Xn(:,1) = Xpre(:,l);
+%
+%      # 減算する固有ベクトル
+%      U(:,1) = Xpre(:,l-1);
+%
+%      # 固有ベクトルの随伴行列
+%      UH = U';
+%
+%      # λ*U
+%      LU = LAMBDA(l-1)*U;
+%
+%      # LU*UH
+%      LUUH = LU * UH;
+%
+%      # LUUHの集合を格納
+%      LUUH_SET = LUUH_SET + LUUH;
+%
+%      # LUUH_SET*Xn
+%      LUUHXn = LUUH_SET * Xn;
+%      
+%      # 減算部の格納
+%      SUB_PART(:,l) = LUUHXn(:,1);
+%    end
     arSUB = HHHX - SUB_PART;
 
-    # 正規化
-    for l=1:Nsybl
-      # 固有ベクトル群を1列に格納
-      NORM(:,1) = arSUB(:,l);
+    l=1:Nsybl;
+    brNORM(:,l) = arSUB(:,l);
+    brNORM = real(brNORM).^2+imag(brNORM).^2;
 
-      # 正規化
-      NORM(:,1) = NORM(:,1) / norm(NORM);
+    brNORM(l) = sum(brNORM,1);
 
-      # 正規化したベクトルをXに格納
-      X(:,l) = NORM(:,1);
-    end
+    NORM(l) = sqrt(brNORM(l));
+
+    arSUB(:,l) = arSUB(:,l) ./ NORM(l);
+
+    X(:,l) = arSUB(:,l);
   end
 
   # 結果の出力

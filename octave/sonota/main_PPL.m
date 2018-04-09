@@ -1,4 +1,4 @@
-clear
+clear;
 Nsybl = 32;
 Npath = 8;
 Nlp = 500;
@@ -41,7 +41,7 @@ for l=1:Nsybl
   end
 end
 tic;
-V = paraarrayfun (4, @PPL, H, HE, X, Nsybl, Npath, Nlp);
+V = PPL (H, HE, X, Nsybl, Npath, Nlp);
 toc;
 # 固有ベクトルか確認
 NAISEKI = 0.0 + 0.0*i;
