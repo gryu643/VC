@@ -1,13 +1,13 @@
 close all;
 clear all;
 tic;
-Nsybl = 4;
-Npath = 2;
+Nsybl = 32;
+Npath = 8;
 SEbN0 = -10;
 EEbN0 = 40;
 Step = 5;
 
-Nloop = 100;
+Nloop = 10000;
 PPLloop = 500;
 
 fileID = fopen('ber(Npath=8,Nsym=32).txt','w');
@@ -60,11 +60,11 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
 %%    end
 %
     V = PPL (H, HE, Xppl, Nsybl, Npath, PPLloop);
-    Xppl=V;
+%    Xppl=V;
     
     HH = ctranspose(H);
     HHH = HH*H;
-    [V,D] = eig(HHH);
+%    [V,D] = eig(HHH);
 %
 
     S = complex(round(rand(1,Nsybl))*2-1,round(rand(1,Nsybl))*2-1); %[-1,1] Transmit symbol
