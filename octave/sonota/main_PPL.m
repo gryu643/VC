@@ -1,4 +1,4 @@
-clear
+clear;
 Nsybl = 32;
 Npath = 8;
 Nlp = 500;
