@@ -1,4 +1,7 @@
-load input.txt
+clear;
+SYMBL =32;
+PATH = 8;
+NLOOP = 500;
 
 # 伝搬路行列Hの設定
 for l=0:PATH-1
@@ -157,9 +160,9 @@ for m=1:NLOOP
 			M2 = M2 + real(HHH(k,l))^2 + imag(HHH(k,l))^2;
 		end
 	end
-	Q(m) = M1 / M2;
+	Q(m,1) = m;
+	Q(m,2) = M1 / M2;
 end
 
 # 結果の出力
-dlmwrite('out.txt',[AO(:,1) AO(:,2)],'delimiter',' ');
-semilogy(AO(:,2))
+dlmwrite('out.csv',[Q(:,1) Q(:,2)],'delimiter',',');
