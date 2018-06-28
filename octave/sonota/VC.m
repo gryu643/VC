@@ -1,16 +1,16 @@
 close all;
 clear all;
 tic;
-Nsybl = 32;
+Nsybl = 16;
 Npath = 8;
 SEbN0 = -10;
 EEbN0 = 40;
 Step = 5;
 
-Nloop = 10000;
+Nloop = 1;
 PPLloop = 500;
 
-fileID = fopen('ber(Npath=8,Nsym=32).txt','w');
+fileID = fopen('ber(Npath=8,Nsym=16).txt','w');
 
 
 %Channel parameter setting
@@ -21,10 +21,7 @@ fileID = fopen('ber(Npath=8,Nsym=32).txt','w');
 %Channel gain parameter
 i=1:Npath;
 Ampd(i) = sqrt(1/Npath);
-%%for i=1:Npath
-%%  Ampd(i) = sqrt(1/Npath); %Equal Gain
-%%%  Ampd(i) = sqrt(1/(2^(i-1))); %Exp. atten.
-%%end
+% Ampd(i) = sqrt(1/(2^(i-1))); %Exp. atten.
 %
 for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
   Psig = 0;
@@ -37,9 +34,6 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
 %Channel parameter setting
     i=1:Npath;
     Cpath(i) = complex(randn,randn)/sqrt(2)*Ampd(i);
-%%    for i=1:Npath
-%%      Cpath(i) = complex(randn,randn)/sqrt(2)*Ampd(i);
-%%    end
 %
     for i=1:Nsybl
       j = 1:Npath;
@@ -53,11 +47,6 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
 %
     l = 1:Nsybl;
     Xppl(l,l) = 1.0 + 0.0*i;
-%%    for l=1:Nsybl
-%%      for k = 1:Nsybl
-%%        Xppl(l,k) = 1.0 + 0.0*i;
-%%      end
-%%    end
 %
     V = PPL (H, HE, Xppl, Nsybl, Npath, PPLloop);
 %    Xppl=V;
@@ -72,9 +61,6 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
     TdatQ = (imag(S)+1)/2;
     i=1:Nsybl;
     SU(:,i) = S(i).*V(:,i);
-%%    for i=1:Nsybl;
-%%      SU(:,i) = S(i)*V(:,i);
-%%    end
 %
     X = zeros(1,Nsybl);
     for j=1:Nsybl;
