@@ -1,16 +1,15 @@
 close all;
 clear all;
-tic;
-Nsybl = 16;
+Nsybl = 32;
 Npath = 8;
 SEbN0 = -10;
 EEbN0 = 40;
 Step = 5;
 
-Nloop = 1;
-PPLloop = 500;
+Nloop = 10000;
+PPLloop = 1000;
 
-fileID = fopen('ber(Npath=8,Nsym=16).txt','w');
+fileID = fopen('ber(Npath=8,Nsym=32).txt','w');
 
 
 %Channel parameter setting
@@ -19,9 +18,10 @@ fileID = fopen('ber(Npath=8,Nsym=16).txt','w');
 %end
 %
 %Channel gain parameter
-i=1:Npath;
-Ampd(i) = sqrt(1/Npath);
-% Ampd(i) = sqrt(1/(2^(i-1))); %Exp. atten.
+for i=1:Npath
+  Ampd(i) = sqrt(1/Npath); %Equal Gain
+%  Ampd(i) = sqrt(1/(2^(i-1))); %Exp. atten.
+end
 %
 for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
   Psig = 0;
@@ -32,35 +32,40 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
   for loop=1:Nloop %Monte calro loop
 %
 %Channel parameter setting
-    i=1:Npath;
-    Cpath(i) = complex(randn,randn)/sqrt(2)*Ampd(i);
+    for i=1:Npath
+      Cpath(i) = complex(randn,randn)/sqrt(2)*Ampd(i);
+    end
 %
     for i=1:Nsybl
-      j = 1:Npath;
-      H(i+j-1,i) = Cpath(j);
+      for j=1:Npath
+        H(i+j-1,i) = Cpath(j);
+      end
     end
 % 
     for i=1:Nsybl+Npath-1
-      j = 1:Npath;
-      HE(i+j-1,i) = Cpath(j);
+      for j = 1:Npath
+        HE(i+j-1,i) = Cpath(j);
+      end
     end
 %
-    l = 1:Nsybl;
-    Xppl(l,l) = 1.0 + 0.0*i;
+    for l=1:Nsybl
+      for k = 1:Nsybl
+        X(l,k) = 1.0 + 0.0*i;
+      end
+    end
 %
-    V = PPL (H, HE, Xppl, Nsybl, Npath, PPLloop);
-%    Xppl=V;
+    V = PPL (H, HE, X, Nsybl, Npath, PPLloop);
     
     HH = ctranspose(H);
     HHH = HH*H;
 %    [V,D] = eig(HHH);
 %
-
     S = complex(round(rand(1,Nsybl))*2-1,round(rand(1,Nsybl))*2-1); %[-1,1] Transmit symbol
     TdatI = (real(S)+1)/2;
     TdatQ = (imag(S)+1)/2;
-    i=1:Nsybl;
-    SU(:,i) = S(i).*V(:,i);
+    for i=1:Nsybl;
+      SU(:,i) = S(i)*V(:,i);
+    end
 %
     X = zeros(1,Nsybl);
     for j=1:Nsybl;
@@ -127,4 +132,3 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
 end
 %
 fclose(fileID);
-toc;
