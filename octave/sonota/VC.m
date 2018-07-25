@@ -1,15 +1,16 @@
 close all;
 clear all;
+tic;
 Nsybl = 32;
-Npath = 8;
+Npath = 1;
 SEbN0 = -10;
 EEbN0 = 40;
 Step = 5;
 
 Nloop = 10000;
-PPLloop = 1000;
+PPLloop = 500;
 
-fileID = fopen('ber(Npath=8,Nsym=32).txt','w');
+fileID = fopen('ber(Npath=1,Nsym=32)_ashikiri_.csv','w');
 
 
 %Channel parameter setting
@@ -48,27 +49,29 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
       end
     end
 %
-    for l=1:Nsybl
-      for k = 1:Nsybl
-        X(l,k) = 1.0 + 0.0*i;
-      end
-    end
+%    for l=1:Nsybl
+%      for k = 1:Nsybl
+%        Xppl(l,k) = 1.0 + 0.0*i;
+%      end
+%    end
 %
-    V = PPL (H, HE, X, Nsybl, Npath, PPLloop);
+%    V = PPL (H, HE, Xppl, Nsybl, Npath, PPLloop);
     
     HH = ctranspose(H);
     HHH = HH*H;
-%    [V,D] = eig(HHH);
+    [V,D] = eig(HHH);
+
+    Nsybl_ashi = 16;
 %
-    S = complex(round(rand(1,Nsybl))*2-1,round(rand(1,Nsybl))*2-1); %[-1,1] Transmit symbol
+    S = complex(round(rand(1,Nsybl_ashi))*2-1,round(rand(1,Nsybl_ashi))*2-1); %[-1,1] Transmit symbol
     TdatI = (real(S)+1)/2;
     TdatQ = (imag(S)+1)/2;
-    for i=1:Nsybl;
+    for i=1:Nsybl_ashi;
       SU(:,i) = S(i)*V(:,i);
     end
 %
     X = zeros(1,Nsybl);
-    for j=1:Nsybl;
+    for j=1:Nsybl_ashi;
       for i=1:Nsybl;
         X(i) = X(i) + SU(i,j); %Transmit vector
       end
@@ -92,10 +95,10 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
     Y = Y + Noise; %Add AWGN
     Yn = HH*Y; %Matched Filter
     Y2 = Yn(:,1);
-    RdatI = zeros(1,Nsybl);
-    RdatQ = zeros(1,Nsybl);
+    RdatI = zeros(1,Nsybl_ashi);
+    RdatQ = zeros(1,Nsybl_ashi);
 %Demodulation
-    for i=1:Nsybl
+    for i=1:Nsybl_ashi
       A = V(:,i);
       R = conj(dot(Y2,A));
       if real(R) > 0
@@ -110,7 +113,7 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
       end
     end
 %Bit Error Rate
-    for i=1:Nsybl
+    for i=1:Nsybl_ashi
       if RdatI(i) == TdatI(i)
         Collect = Collect + 1;
       elseif RdatI(i) != TdatI(i)
@@ -127,8 +130,9 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
   EbN0 = 10*log10(Psig/Pwgn*2) %QPSK rate = 2 
   BER = False/(Collect + False)
   if BER > 0
-    fprintf(fileID,'%f %f\n',EbN0,BER);  
+    fprintf(fileID,'%f, %f\n',EbN0,BER);  
   end
 end
 %
 fclose(fileID);
+toc;
