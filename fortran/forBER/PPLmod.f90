@@ -4,58 +4,79 @@ contains
 	function PPL(H,HE,X,Nsybl,Npath,PPLloop)
 		implicit none
 
-		!ifdef
-		logical :: PRINT_RSLT=.TRUE.
-
 		!return
-		complex(kind(0d0)) :: PPL(Nsybl,Nsybl)=(0.0,0.0)
+		complex(kind(0d0)) PPL(Nsybl,Nsybl)
 
 		!argument
 		integer Nsybl,Npath,PPLloop
 		complex(kind(0d0)) X(Nsybl,Nsybl)
-		complex(kind(0d0)) :: H(Nsybl+Npath-1,Nsybl)
-		complex(kind(0d0)) :: HE(Nsybl+2*(Npath-1),Nsybl+Npath-1)
+		complex(kind(0d0)) H(Nsybl+Npath-1,Nsybl)
+		complex(kind(0d0)) HE(Nsybl+2*(Npath-1),Nsybl+Npath-1)
 
+		!declaration
 		integer i,j,k,l,m
-		complex(kind(0d0)) :: Z(Nsybl,Nsybl)=(0.0,0.0)
-		complex(kind(0d0)) :: Xpre(Nsybl,Nsybl)=(0.0,0.0) !(Nsybl,Nsybl)
-		complex(kind(0d0)) :: HH(Nsybl,Nsybl+Npath-1)=(0.0,0.0) !(Nsybl,Nsybl+Npath-1)
-		complex(kind(0d0)) :: HHH(Nsybl,Nsybl)=(0.0,0.0) !(Nsybl,Nsybl)
-		complex(kind(0d0)) :: HX(Nsybl+Npath-1,Nsybl)=(0.0,0.0) !(Nsybl+Npath-1,Nsybl)
-		complex(kind(0d0)) :: HXarI(Nsybl+Npath-1,Nsybl)=(0.0,0.0) !(Nsybl+Npath-1,Nsybl)
-		complex(kind(0d0)) :: HHHXbrJ(Nsybl+2*(Npath-1),Nsybl)=(0.0,0.0) !(Nsybl+2*Npath-1,Nsybl)
-		complex(kind(0d0)) :: HHHX(Nsybl,Nsybl)=(0.0,0.0) !(Nsybl,Nsybl)
-		complex(kind(0d0)) :: LAMBDA(Nsybl,1)=(0.0,0.0) !(Nsybl,1)
-		complex(kind(0d0)) :: Xn(Nsybl,1)=(0.0,0.0) !(Nsybl,1)
-		complex(kind(0d0)) :: U(Nsybl,1)=(0.0,0.0) !(Nsybl,1)
-		complex(kind(0d0)) :: UH(1,Nsybl)=(0.0,0.0) !(1,Nsybl)
-		complex(kind(0d0)) :: LUUH(Nsybl,Nsybl)=(0.0,0.0) !(Nsybl,Nsybl)
-		complex(kind(0d0)) :: LUUH_SET(Nsybl,Nsybl)=(0.0,0.0) !(Nsybl,Nsybl)
-		complex(kind(0d0)) :: LU(Nsybl,1)=(0.0,0.0) !(Nsybl,1)
-		complex(kind(0d0)) :: LUUHXn(Nsybl,1)=(0.0,0.0) !(Nsybl,1)
-		complex(kind(0d0)) :: SUB_PART(Nsybl,Nsybl)=(0.0,0.0) !(Nsybl,Nsybl)
-		complex(kind(0d0)) :: arSUB(Nsybl,Nsybl)=(0.0,0.0) !(Nsybl,Nsybl)
-		complex(kind(0d0)) :: NORM(Nsybl,1)=(0.0,0.0) !(Nsybl,1)
-		complex(kind(0d0)) :: UHN(1,1)=(0.0)
-		complex(kind(0d0)) :: N(Nsybl,1)=(0.0,0.0) !(Nsybl,1)
-		complex(kind(0d0)) :: NAISEKI(1,1)=(0.0,0.0) !(1,1)
-		complex(kind(0d0)) :: LAMBDA_MATRIX(Nsybl,Nsybl) !(Nsybl,Nsybl)
-		complex(kind(0d0)) :: XH(Nsybl,Nsybl) !(Nsybl,Nsybl)
-		complex(kind(0d0)) :: XLM(Nsybl,Nsybl) !(Nsybl,Nsybl)
-		complex(kind(0d0)) :: XLMXH(Nsybl,Nsybl) !(Nsybl,Nsybl)
-		complex(kind(0d0)) :: S(Nsybl,Nsybl) !(Nsybl,Nsybl)
-		double precision :: LAMBDA_TMP=0.0
-		double precision :: TMP1(Nsybl)=0.0 !(Nsybl,1)
-		double precision :: NAISEKI_TMP=0.0
-		double precision :: sC2=0.0
-		double precision :: M1=0.0
-		double precision :: M2=0.0
-		double precision :: Q(PPLloop,1) !(PPLloop,1)
-		double precision :: AVGOTH(PPLloop,1) !(PPLloop,1)
-		complex(kind(0d0)) :: D(Nsybl,1)=(0.0,0.0)
-		complex(kind(0d0)) :: D1(Nsybl,1)=(0.0,0.0)
-		double precision :: D_ABS=0.0
-		double precision :: D1_ABS=0.0
+		complex(kind(0d0)) Z(Nsybl,Nsybl)
+		complex(kind(0d0)) Xpre(Nsybl,Nsybl)
+		complex(kind(0d0)) HH(Nsybl,Nsybl+Npath-1)
+		complex(kind(0d0)) HHH(Nsybl,Nsybl)
+		complex(kind(0d0)) HX(Nsybl+Npath-1,Nsybl)
+		complex(kind(0d0)) HXarI(Nsybl+Npath-1,Nsybl)
+		complex(kind(0d0)) HHHXbrJ(Nsybl+2*(Npath-1),Nsybl)
+		complex(kind(0d0)) HHHX(Nsybl,Nsybl)
+		complex(kind(0d0)) LAMBDA(Nsybl,1)
+		complex(kind(0d0)) Xn(Nsybl,1)
+		complex(kind(0d0)) U(Nsybl,1)
+		complex(kind(0d0)) UH(1,Nsybl)
+		complex(kind(0d0)) LUUH(Nsybl,Nsybl)
+		complex(kind(0d0)) LUUH_SET(Nsybl,Nsybl)
+		complex(kind(0d0)) LU(Nsybl,1)
+		complex(kind(0d0)) LUUHXn(Nsybl,1)
+		complex(kind(0d0)) SUB_PART(Nsybl,Nsybl)
+		complex(kind(0d0)) arSUB(Nsybl,Nsybl)
+		complex(kind(0d0)) NORM(Nsybl,1)
+		complex(kind(0d0)) UHN(1,1)
+		complex(kind(0d0)) LAMBDA_MATRIX(Nsybl,Nsybl)
+		complex(kind(0d0)) XH(Nsybl,Nsybl)
+		complex(kind(0d0)) XLM(Nsybl,Nsybl)
+		complex(kind(0d0)) XLMXH(Nsybl,Nsybl)
+		complex(kind(0d0)) S(Nsybl,Nsybl)
+		double precision LAMBDA_TMP
+		complex(kind(0d0)) D(Nsybl,1)
+		complex(kind(0d0)) D1(Nsybl,1)
+		double precision D_ABS
+		double precision D1_ABS
+
+		!initialize
+		Z(Nsybl,Nsybl)=(0.0,0.0)
+		Xpre(Nsybl,Nsybl)=(0.0,0.0)
+		HH(Nsybl,Nsybl+Npath-1)=(0.0,0.0)
+		HHH(Nsybl,Nsybl)=(0.0,0.0)
+		HX(Nsybl+Npath-1,Nsybl)=(0.0,0.0)
+		HXarI(Nsybl+Npath-1,Nsybl)=(0.0,0.0)
+		HHHXbrJ(Nsybl+2*(Npath-1),Nsybl)=(0.0,0.0)
+		HHHX(Nsybl,Nsybl)=(0.0,0.0)
+		LAMBDA(Nsybl,1)=(0.0,0.0)
+		Xn(Nsybl,1)=(0.0,0.0)
+		U(Nsybl,1)=(0.0,0.0)
+		UH(1,Nsybl)=(0.0,0.0)
+		LUUH(Nsybl,Nsybl)=(0.0,0.0)
+		LUUH_SET(Nsybl,Nsybl)=(0.0,0.0)
+		LU(Nsybl,1)=(0.0,0.0)
+		LUUHXn(Nsybl,1)=(0.0,0.0)
+		SUB_PART(Nsybl,Nsybl)=(0.0,0.0)
+		arSUB(Nsybl,Nsybl)=(0.0,0.0)
+		NORM(Nsybl,1)=(0.0,0.0)
+		UHN(1,1)=(0.0,0.0)
+		LAMBDA_MATRIX(Nsybl,Nsybl)=(0.0,0.0)
+		XH(Nsybl,Nsybl)=(0.0,0.0)
+		XLM(Nsybl,Nsybl)=(0.0,0.0)
+		XLMXH(Nsybl,Nsybl)=(0.0,0.0)
+		S(Nsybl,Nsybl)=(0.0,0.0)
+		LAMBDA_TMP=0.0
+		D(Nsybl,1)=(0.0,0.0)
+		D1(Nsybl,1)=(0.0,0.0)
+		D_ABS=0.0
+		D1_ABS=0.0
 
 		!行列Hの随伴行列HHの設定
 		call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
