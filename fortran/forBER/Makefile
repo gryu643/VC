@@ -1,9 +1,9 @@
 # Makefile for colMat.f90 noiseExist
 
 CC = gfortran
-PROGRAM = modulePPL
+PROGRAM = PPLmod
 CFLAGS = -O3
-OBJS = modulePPL.o
+OBJS = PPLmod.o
 
 all: $(PROGRAM)
 
