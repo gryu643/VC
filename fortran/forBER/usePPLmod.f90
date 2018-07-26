@@ -1,5 +1,6 @@
 program usePPLmod
     use PPLmod
+    use CALmod
     implicit none
 
     !declaration
@@ -88,67 +89,5 @@ program usePPLmod
 
     print *, AVGOTH
 
-contains
-    subroutine CAdjoint(A,AH,A_ROW,A_COL)
-        integer A_ROW,A_COL,i,j
-        complex(kind(0d0)) A(:,:),AH(:,:)
-
-        do i=1, A_ROW
-            do j=1, A_COL
-                AH(j,i) = conjg(A(i,j))
-            end do
-        end do
-
-    end subroutine
-
-    subroutine CMultiply(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
-        integer A_ROW,A_COL,B_ROW,B_COL,i,j,k
-        complex(kind(0d0)) A(:,:), B(:,:),C(:,:)
-
-        if(A_COL.ne.B_ROW) then
-            print *, "can't calculate (Multiply)"
-            stop
-        end if
-
-        do i=1, A_ROW
-            do j=1, B_COL
-                C(i,j) = cmplx(0.0,0.0, kind(0d0))
-                do k=1, A_COL
-                    C(i,j) = C(i,j)+A(i,k)*B(k,j)
-                end do
-            end do
-        end do
-
-    end subroutine
-
-    subroutine CAdd(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
-        integer A_ROW,A_COL,B_ROW,B_COL,i,j
-        complex(kind(0d0)) A(:,:),B(:,:),C(:,:)
-
-        if((A_ROW.ne.B_ROW).or.(A_COL.ne.B_COL)) then
-            print *, "can't calculate (Add)"
-            stop
-        end if
-
-        do i=1, A_ROW
-            do j=1, A_COL
-                C(i,j) = A(i,j) + B(i,j)
-            end do
-        end do 
-
-    end subroutine
-
-    subroutine CAbs(A,TMP,A_ROW,A_COL)
-        integer i,A_ROW,A_COL
-        complex(kind(0d0)) A(:,:)
-        double precision TMP
-
-        TMP = 0.0
-        do i=1, A_ROW
-            !実部と虚部の二乗の和を計算
-            TMP = TMP + real(A(i,A_COL))**2 + aimag(A(i,A_COL))**2
-        end do
-        TMP = sqrt(TMP)
-    end subroutine
 
 end program
