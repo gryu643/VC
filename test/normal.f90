@@ -2,25 +2,11 @@ program seikibunpu
 	implicit none
 	integer,parameter :: trial=100000
 	double precision,parameter :: stride=0.1
-	integer seedsize,i,j
-	integer,allocatable :: seed1(:)
-	integer,allocatable :: seed2(:)
 	double precision :: out=0.0
 	double precision :: result(100)=0.0
 	double precision :: max=0.0
+	integer i,j
 
-	!seedサイズの取得・動的配列の再宣言
-	call random_seed(size=seedsize)
-	allocate(seed1(seedsize))
-	allocate(seed2(seedsize))
-
-	!初期シードを設定（独立になるようseed配列を書き換える）
-	do i=1, seedsize
-		seed1(i) = 1
-	end do
-	do i=1, seedsize
-		seed2(i) = 1000000
-	end do
 
 	do i=1, trial
 		out = normal()
@@ -87,6 +73,27 @@ contains
 		double precision :: r2=0.0
 		double precision normal
 		double precision :: r=0.0
+		integer,save :: cnt=0
+
+		integer seedsize,i
+		integer,allocatable :: seed1(:)
+		integer,allocatable :: seed2(:)
+
+		!seedサイズの取得・動的配列の再宣言
+		call random_seed(size=seedsize)
+		allocate(seed1(seedsize))
+		allocate(seed2(seedsize))
+	
+		if(cnt==0) then
+			!初期シードを設定（独立になるようseed配列を書き換える）
+			do i=1, seedsize
+				seed1(i) = 1
+			end do
+			do i=1, seedsize
+				seed2(i) = 1000000
+			end do
+			cnt = cnt + 1
+		end if
 
 		call random_seed(put=seed1)
 		call random_number(r1)
@@ -101,7 +108,7 @@ contains
 		y = sqrt(-2.0*dlog(r1)*var)*dsin(2.0*pi*r2)+m
 		r = sqrt(x**2 + y**2)
 
-		normal = r
+		normal = x
 	end function
 
 end program
