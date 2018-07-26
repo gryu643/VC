@@ -1,4 +1,4 @@
-module modulePPL
+module PPLmod
 	implicit none
 contains
 	function PPL(H,HE,X,Nsybl,Npath,PPLloop)
@@ -34,7 +34,6 @@ contains
 		complex(kind(0d0)) SUB_PART(Nsybl,Nsybl)
 		complex(kind(0d0)) arSUB(Nsybl,Nsybl)
 		complex(kind(0d0)) NORM(Nsybl,1)
-		complex(kind(0d0)) UHN(1,1)
 		complex(kind(0d0)) LAMBDA_MATRIX(Nsybl,Nsybl)
 		complex(kind(0d0)) XH(Nsybl,Nsybl)
 		complex(kind(0d0)) XLM(Nsybl,Nsybl)
@@ -47,34 +46,33 @@ contains
 		double precision D1_ABS
 
 		!initialize
-		Z(Nsybl,Nsybl)=(0.0,0.0)
-		Xpre(Nsybl,Nsybl)=(0.0,0.0)
-		HH(Nsybl,Nsybl+Npath-1)=(0.0,0.0)
-		HHH(Nsybl,Nsybl)=(0.0,0.0)
-		HX(Nsybl+Npath-1,Nsybl)=(0.0,0.0)
-		HXarI(Nsybl+Npath-1,Nsybl)=(0.0,0.0)
-		HHHXbrJ(Nsybl+2*(Npath-1),Nsybl)=(0.0,0.0)
-		HHHX(Nsybl,Nsybl)=(0.0,0.0)
-		LAMBDA(Nsybl,1)=(0.0,0.0)
-		Xn(Nsybl,1)=(0.0,0.0)
-		U(Nsybl,1)=(0.0,0.0)
-		UH(1,Nsybl)=(0.0,0.0)
-		LUUH(Nsybl,Nsybl)=(0.0,0.0)
-		LUUH_SET(Nsybl,Nsybl)=(0.0,0.0)
-		LU(Nsybl,1)=(0.0,0.0)
-		LUUHXn(Nsybl,1)=(0.0,0.0)
-		SUB_PART(Nsybl,Nsybl)=(0.0,0.0)
-		arSUB(Nsybl,Nsybl)=(0.0,0.0)
-		NORM(Nsybl,1)=(0.0,0.0)
-		UHN(1,1)=(0.0,0.0)
-		LAMBDA_MATRIX(Nsybl,Nsybl)=(0.0,0.0)
-		XH(Nsybl,Nsybl)=(0.0,0.0)
-		XLM(Nsybl,Nsybl)=(0.0,0.0)
-		XLMXH(Nsybl,Nsybl)=(0.0,0.0)
-		S(Nsybl,Nsybl)=(0.0,0.0)
+		Z(:,:)=(0.0,0.0)
+		Xpre(:,:)=(0.0,0.0)
+		HH(:,:)=(0.0,0.0)
+		HHH(:,:)=(0.0,0.0)
+		HX(:,:)=(0.0,0.0)
+		HXarI(:,:)=(0.0,0.0)
+		HHHXbrJ(:,:)=(0.0,0.0)
+		HHHX(:,:)=(0.0,0.0)
+		LAMBDA(:,:)=(0.0,0.0)
+		Xn(:,:)=(0.0,0.0)
+		U(:,:)=(0.0,0.0)
+		UH(:,:)=(0.0,0.0)
+		LUUH(:,:)=(0.0,0.0)
+		LUUH_SET(:,:)=(0.0,0.0)
+		LU(:,:)=(0.0,0.0)
+		LUUHXn(:,:)=(0.0,0.0)
+		SUB_PART(:,:)=(0.0,0.0)
+		arSUB(:,:)=(0.0,0.0)
+		NORM(:,:)=(0.0,0.0)
+		LAMBDA_MATRIX(:,:)=(0.0,0.0)
+		XH(:,:)=(0.0,0.0)
+		XLM(:,:)=(0.0,0.0)
+		XLMXH(:,:)=(0.0,0.0)
+		S(:,:)=(0.0,0.0)
 		LAMBDA_TMP=0.0
-		D(Nsybl,1)=(0.0,0.0)
-		D1(Nsybl,1)=(0.0,0.0)
+		D(:,:)=(0.0,0.0)
+		D1(:,:)=(0.0,0.0)
 		D_ABS=0.0
 		D1_ABS=0.0
 
@@ -352,4 +350,4 @@ contains
 		end subroutine
 
 	end function
-end module modulePPL
+end module PPLmod
