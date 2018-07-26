@@ -5,9 +5,9 @@ PROGRAM = PPLmod usePPLmod
 CFLAGS = -O3
 OBJS = PPLmod.o usePPLmod.o
 
-all: $(PROGRAM)
 usePPLmod: PPLmod.o usePPLmod.o
 	$(CC) $^ -o $@
+	rm $(OBJS)
 
 .SUFFIXES: .f90 .o
 .f90.o:
