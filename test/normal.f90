@@ -9,7 +9,7 @@ program seikibunpu
 
 
 	do i=1, trial
-		out = normal()
+		out = rand()
 
 		do j=1, 100
 			if((out.ge.(-5.0+stride*j)).and.(out.lt.(-5.0+stride*(j+1)))) then
@@ -62,6 +62,28 @@ contains
 			print *, i, x
 		end do
 	end subroutine
+
+	function rand()
+		!declaration
+		integer seedsize,i
+		integer,allocatable :: seed(:)
+		integer,save :: rand_cnt=0
+		double precision rand
+
+		!initialization
+		rand=0.0
+
+		call random_seed(size=seedsize)
+		allocate(seed(seedsize))
+
+		if(rand_cnt==0) then
+			do i=1, seedsize
+				seed(i) = 1
+			end do
+		end if
+
+		call random_number(rand)
+	end function
 
 	function normal()
 		double precision :: m=0.0
