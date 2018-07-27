@@ -175,7 +175,7 @@ contains
 
     end subroutine
 
-    !正規乱数を返す
+    !normal random number
     function normal()
         double precision :: m=0.0
         double precision :: var=1.0
@@ -223,4 +223,27 @@ contains
 
         normal = x
     end function
+
+    !random number
+	function rand()
+		!declaration
+		integer seedsize,i
+		integer,allocatable :: seed(:)
+		integer,save :: rand_cnt=0
+		double precision rand
+
+		!initialization
+		rand=0.0
+
+		call random_seed(size=seedsize)
+		allocate(seed(seedsize))
+
+		if(rand_cnt==0) then
+			do i=1, seedsize
+				seed(i) = 1
+			end do
+		end if
+
+		call random_number(rand)
+	end function
 end module CALmod
