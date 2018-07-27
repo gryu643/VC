@@ -9,6 +9,9 @@ MOD = calmod.mod calmod.mod
 usePPLmod: CALmod.o PPLmod.o usePPLmod.o
 	$(CC) $^ -o $@
 
+VC: CALmod.o PPLmod.o VC.o
+	$(CC) $^ -o $@
+
 .SUFFIXES: .f90 .o
 .f90.o:
 	$(CC) -c $< $(CFLAGS)
