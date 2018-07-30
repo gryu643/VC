@@ -6,13 +6,16 @@ program VC
     !ifdef
     logical,parameter :: APPLY_PPL=.TRUE.
 
+    !run time declaration
+    integer t1, t2, t_rate, t_max, diff
+
     !declaration
     integer,parameter :: Nsybl=32
     integer,parameter :: Npath=8
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=5
-    integer,parameter :: Nloop=10000
+    integer,parameter :: Nloop=1
     integer,parameter :: PPLloop=500
 
     integer i,j
@@ -49,7 +52,6 @@ program VC
     double precision EbN0
     double precision BER
 
-
     !initialize
     Ampd(:,:)=0.0d0
     Psig=0.0d0
@@ -84,8 +86,13 @@ program VC
     EbN0=0.0d0
     BER=0.0d0
 
-    !implimentation part
+    !time measurement start
+    call system_clock(t1)
 
+    !file open
+    open (1, file='VC(Nsybl=32,Npath=8).csv', status='replace')
+
+    !implimentation part
     !channel gain parameter
     do i=1, Npath
         Ampd(i,1) = sqrt(1.0d0/dble(Npath)) !Equal Gain
@@ -102,145 +109,146 @@ program VC
             do i=1, Npath
                 Cpath(i,1) = cmplx(normal(),normal(),kind(0d0))/sqrt(2.0d0)*Ampd(i,1)
             end do
-        end do 
 
-        !set H
-        do i=1, Nsybl
-            do j=1, Npath
-                H(i+j-1,i) = Cpath(j,1)
-            end do
-        end do
-
-        !set HE
-        do i=1, Nsybl+Npath-1
-            do j=1, Npath
-                HE(i+j-1,i) = Cpath(j,1)
-            end do
-        end do
-
-        if(APPLY_PPL) then
-            !set Xppl
+            !set H
             do i=1, Nsybl
-                do j=1, Nsybl
-                    Xppl(i,j) = cmplx(1.0d0, 0.0d0, kind(0d0))
+                do j=1, Npath
+                    H(i+j-1,i) = Cpath(j,1)
                 end do
             end do
-        endif
 
-        !set HH
-        call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
-
-        !set HHH
-        call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
-
-        !eigenvalue decomposition
-        !
-        ! to do
-        !
-        if(APPLY_PPL) then
-            V = PPL(H,HE,Xppl,Nsybl,Npath,PPLloop)
-        endif
-
-        !set information symbol
-        do i=1, Nsybl
-            S(1,i) = cmplx(nint(rand())*2.0d0-1.0d0,nint(rand())*2.0d0-1.0d0,kind(0d0)) !-1or1
-        end do
-        do i=1, Nsybl
-            TdatI(1,i) = (real(S(1,i))+1)/2 !0or1
-            TdatQ(1,i) = (aimag(S(1,i))+1)/2
-        end do
-        do i=1, Nsybl
-            do j=1, Nsybl
-                SU(j,i) = S(1,i) * V(j,i)
+            !set HE
+            do i=1, Nsybl+Npath-1
+                do j=1, Npath
+                    HE(i+j-1,i) = Cpath(j,1)
+                end do
             end do
-        end do
 
-        !transmit vector
-        X = (0.0d0,0.0d0)
-        do i=1,Nsybl
-            do j=1,Nsybl
-                X(j,1) = X(j,1) + SU(j,i)
+            if(APPLY_PPL) then
+                !set Xppl
+                do i=1, Nsybl
+                    do j=1, Nsybl
+                        Xppl(i,j) = cmplx(1.0d0, 0.0d0, kind(0d0))
+                    end do
+                end do
+            endif
+
+            !set HH
+            call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
+
+            !set HHH
+            call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
+
+            !eigenvalue decomposition
+            !
+            ! to do
+            !
+            if(APPLY_PPL) then
+                V = PPL(H,HE,Xppl,Nsybl,Npath,PPLloop)
+            endif
+
+            !set information symbol
+            do i=1, Nsybl
+                S(1,i) = cmplx(nint(rand())*2.0d0-1.0d0,nint(rand())*2.0d0-1.0d0,kind(0d0)) !-1or1
             end do
-        end do
-
-        !power
-        Pow = 0.0d0
-        do i=1, Nsybl
-            Pow = Pow + (abs(X(i,1))**2)/Nsybl
-        end do
-        X = X / sqrt(Pow)
-        call CMultiply(H,X,Y,Nsybl+Npath-1,Nsybl,Nsybl,1) !pass H
-
-        do i=1, Nsybl+Npath-1
-            Noise(i,1) = cmplx(normal(),normal(),kind(0d0))
-        end do
-        Noise = Noise / sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)/sqrt(2.0d0)
-
-        do i=1, Nsybl+Npath-1
-            Psig = Psig + (abs(Y(i,1))**2.0d0)/2.0d0
-            Pwgn = Pwgn + abs(Noise(i,1))**2.0d0
-        end do
-
-        !add noise
-        call CAdd(Y,Noise,Y,Nsybl+Npath-1,1,Nsybl+Npath-1,1)
-
-        !Matched Filter
-        call CMultiply(HH,Y,Yn,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,1)
-    
-        do i=1, Nsybl
-            Y2(i,1) = Yn(i,1)
-        end do
-        RdatI = 0
-        RdatQ = 0
-        !Demodulation
-        do i=1, Nsybl
-            do j=1, Nsybl
-                A(j,1) = V(j,i)
+            do i=1, Nsybl
+                TdatI(1,i) = (real(S(1,i))+1)/2 !0or1
+                TdatQ(1,i) = (aimag(S(1,i))+1)/2
             end do
-            call CAdjoint(Y2,Y2H,Nsybl,1)
-            call CMultiply(Y2H,A,R,1,Nsybl,Nsybl,1)
-            R(1,1) = conjg(R(1,1))
-            R2 = R(1,1)
+            do i=1, Nsybl
+                do j=1, Nsybl
+                    SU(j,i) = S(1,i) * V(j,i)
+                end do
+            end do
 
-            if(real(R2).gt.0) then
-                RdatI(1,i) = 1
-            elseif(real(R2).lt.0) then
-                RdatI(1,i) = 0
-            endif
-            if(aimag(R2).gt.0) then
-                RdatQ(1,i) = 1
-            elseif(aimag(R2).lt.0) then
-                RdatQ(1,i) = 0
-            endif
-        end do
+            !transmit vector
+            X = (0.0d0,0.0d0)
+            do i=1,Nsybl
+                do j=1,Nsybl
+                    X(j,1) = X(j,1) + SU(j,i)
+                end do
+            end do
 
-        !Bit Error Rate
-        do i=1, Nsybl
-            if(RdatI(1,i).eq.TdatI(1,i)) then
-                Collect = Collect + 1
-            elseif(RdatI(1,i).ne.TdatI(1,i)) then
-                False = False + 1
-            endif
-            if(RdatQ(1,i).eq.TdatQ(1,i)) then
-                Collect = Collect + 1
-            elseif(RdatQ(1,i).ne.TdatQ(1,i)) then
-                False = False + 1
-            endif
+            !power
+            Pow = 0.0d0
+            do i=1, Nsybl
+                Pow = Pow + (abs(X(i,1))**2.0d0)/Nsybl
+            end do
+            X = X / sqrt(Pow)
+            call CMultiply(H,X,Y,Nsybl+Npath-1,Nsybl,Nsybl,1) !pass H
+
+            do i=1, Nsybl+Npath-1
+                Noise(i,1) = cmplx(normal(),normal(),kind(0d0))
+            end do
+            Noise = Noise * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)/sqrt(2.0d0)
+
+            do i=1, Nsybl+Npath-1
+                Psig = Psig + (abs(Y(i,1))**2.0d0)/2.0d0
+                Pwgn = Pwgn + abs(Noise(i,1))**2.0d0
+            end do
+
+            !add noise
+            call CAdd(Y,Noise,Y,Nsybl+Npath-1,1,Nsybl+Npath-1,1)
+
+            !Matched Filter
+            call CMultiply(HH,Y,Yn,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,1)
+        
+            do i=1, Nsybl
+                Y2(i,1) = Yn(i,1)
+            end do
+            RdatI = 0
+            RdatQ = 0
+            !Demodulation
+            do i=1, Nsybl
+                do j=1, Nsybl
+                    A(j,1) = V(j,i)
+                end do
+                !inner product
+                call CAdjoint(Y2,Y2H,Nsybl,1)
+                call CMultiply(Y2H,A,R,1,Nsybl,Nsybl,1)
+                R(1,1) = conjg(R(1,1))
+                R2 = R(1,1)
+
+                if(real(R2)>0.0) then
+                    RdatI(1,i) = 1
+                elseif(real(R2)<0.0) then
+                    RdatI(1,i) = 0
+                endif
+                if(aimag(R2)>0.0) then
+                    RdatQ(1,i) = 1
+                elseif(aimag(R2)<0.0) then
+                    RdatQ(1,i) = 0
+                endif
+            end do
+
+            !Bit Error Rate
+            do i=1, Nsybl
+                if(RdatI(1,i)==TdatI(1,i)) then
+                    Collect = Collect + 1
+                elseif(RdatI(1,i)/=TdatI(1,i)) then
+                    False = False + 1
+                endif
+                if(RdatQ(1,i)==TdatQ(1,i)) then
+                    Collect = Collect + 1
+                elseif(RdatQ(1,i)/=TdatQ(1,i)) then
+                    False = False + 1
+                endif
+            end do
         end do
         
         EbN0 = 10.0d0*dlog10(Psig/Pwgn*2.0d0) !QPSK rate =2
-        BER = False/(Collect + False)
-        if(BER.gt.0) then
-            write(18,*) EbN0, ',', BER
+        BER = dble(False) / (dble(Collect) + dble(False))
+        if(BER>0.0) then
+            write(1,*) EbN0, ',', BER
             print *, 'EbN0=', EbN0
             print *, 'BER=', BER
         endif
     end do
 
-    !file open
-    open (1, file='VC(Nsybl=32,Npath=8).csv', status='replace')
-
-
     !file close
-    close(18)
+    close(1)
+
+    !time measurement end
+    call system_clock(t2, t_rate, t_max)
+    print *, 'Elapsed time is...', (t2-t1)/dble(t_rate)
 end program
