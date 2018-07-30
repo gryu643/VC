@@ -5,14 +5,14 @@ contains
 	function PPL(H,HE,X,Nsybl,Npath,PPLloop)
 		implicit none
 
-		!return
-		complex(kind(0d0)) PPL(Nsybl,Nsybl)
-
 		!argument
 		integer Nsybl,Npath,PPLloop
 		complex(kind(0d0)) X(Nsybl,Nsybl)
 		complex(kind(0d0)) H(Nsybl+Npath-1,Nsybl)
 		complex(kind(0d0)) HE(Nsybl+2*(Npath-1),Nsybl+Npath-1)
+
+		!return
+		complex(kind(0d0)) PPL(Nsybl,Nsybl)
 
 		!declaration
 		integer i,j,k,l,m
