@@ -4,13 +4,14 @@ CC = gfortran
 PROGRAM = CALmod PPLmod usePPLmod
 CFLAGS = -O3
 OBJS = CALmod.o PPLmod.o usePPLmod.o
-MOD = calmod.mod calmod.mod
+MOD = pplmod.mod calmod.mod
+LAPACK = -llapack
 
 usePPLmod: CALmod.o PPLmod.o usePPLmod.o
-	$(CC) $^ -o $@
+	$(CC) $^ -o $@ $(LAPACK)
 
-VC: CALmod.o PPLmod.o VC.o
-	$(CC) $^ -o $@
+vc: CALmod.o PPLmod.o VC.o
+	$(CC) $^ -o $@ $(LAPACK)
 
 .SUFFIXES: .f90 .o
 .f90.o:
@@ -18,4 +19,4 @@ VC: CALmod.o PPLmod.o VC.o
 
 .PHONY: clean
 clean:
-	rm -f $(OBJS) $(PROGRAM)
+	rm -f $(OBJS) $(PROGRAM) $(MOD)
