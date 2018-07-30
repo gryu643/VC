@@ -245,5 +245,54 @@ contains
 		end if
 
 		call random_number(rand)
-	end function
+    end function
+    
+    !return eigenvalue decomposition
+    subroutine zdiag(N,A,ev)
+        !sikinote
+        implicit none
+        integer::N
+        double precision::ev(1:N)
+        complex(kind(0d0))::A(1:N,1:N)
+       
+        integer::lda,lwork,liwork,lrwork,info
+        double precision,allocatable::rwork(:)
+        complex(kind(0d0)),allocatable::work(:)
+        complex(kind(0d0))::qw(1:3)
+        double precision::qrw(1:3)
+        integer,allocatable::iwork(:)
+        integer::qiw(1:3)
+        character(1)::job,uplo
+       
+        job="V"
+        uplo="U"
+        lda=N
+       
+        call zheevd(job,uplo,N,0,lda,0,qw,-1,qrw,-1,qiw,-1,info)
+        if(info.ne.0)then
+           write(6,'(A)')"    program stop @zheevd"
+           write(6,'(A,i0)')"    info --> ",info
+           stop
+        endif
+       
+        lrwork=idint(qrw(1))+1
+        lwork=idint(dble(qw(1)))+1
+        liwork=qiw(1)+1
+        allocate(work(1:lwork),iwork(1:liwork),rwork(1:lrwork))
+        work(1:lwork)=0.d0
+        iwork(1:liwork)=0
+        rwork(1:lrwork)=0.d0
+       
+        !diagonalise.
+        call zheevd(job,uplo,N,A,lda,ev,work,lwork,rwork,lrwork,iwork,liwork,info)
+        if(info.ne.0)then
+           write(6,'(A)')"    program stop @zheevd"
+           write(6,'(A,i0)')"    info --> ",info
+           stop
+        endif
+       
+        deallocate(work,iwork)
+       
+        return
+      end subroutine zdiag
 end module CALmod
