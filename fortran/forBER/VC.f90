@@ -4,7 +4,7 @@ program VC
     implicit none
 
     !ifdef
-    logical,parameter :: APPLY_PPL=.TRUE.
+    logical,parameter :: APPLY_PPL=.False.
 
     !run time declaration
     integer t1, t2, t_rate, t_max, diff
@@ -51,6 +51,7 @@ program VC
     complex(kind(0d0)) R2
     double precision EbN0
     double precision BER
+    double precision Eig(1,Nsybl)
 
     !initialize
     Ampd(:,:)=0.0d0
@@ -85,6 +86,7 @@ program VC
     R2=(0.0d0,0.0d0)
     EbN0=0.0d0
     BER=0.0d0
+    Eig=0.0d0
 
     !time measurement start
     call system_clock(t1)
@@ -141,10 +143,13 @@ program VC
 
             !eigenvalue decomposition
             !
-            ! to do
+            !
             !
             if(APPLY_PPL) then
                 V = PPL(H,HE,Xppl,Nsybl,Npath,PPLloop)
+            else
+                call CSubstitute(V,HHH,Nsybl,Nsybl)
+                call zdiag(Nsybl,V,Eig)
             endif
 
             !set information symbol
