@@ -295,4 +295,145 @@ contains
        
         return
       end subroutine zdiag
+
+    subroutine diag(N,A,Ev)
+        ! sikinote
+        !date      : 2015/07/07
+        !            2015/08/21   
+        !developer : sikino & fernandeskun
+        implicit none
+        integer,intent(in)::N
+        complex(kind(0d0)),intent(inout)::A(1:N,1:N)
+        complex(kind(0d0)),intent(out)::Ev(1:N)
+
+        integer::ilo,ihi,info,lwork,turn(1:N),tmp,i
+        double precision::scale(1:N),rwork(1:N)
+        complex(kind(0d0))::tau(1:N-1),w(1:N),z(1:N,1:N),Q(1:N,1:N),vr(1:N,1:N),tw(1:3)
+        complex(kind(0d0)),allocatable::work(:)
+        
+        tau(1:N-1)=dcmplx(0d0,0d0)
+        w(1:N)=dcmplx(0d0,0d0)
+        z(1:N,1:N)=dcmplx(0d0,0d0)
+        Q(1:N,1:N)=dcmplx(0d0,0d0)
+        vr(1:N,1:N)=dcmplx(0d0,0d0)
+        tw(1:3)=dcmplx(0d0,0d0)
+        Ev(1:N)=dcmplx(0d0,0d0)
+        
+        !Equilibrate matrix A to equilibrated matrix A' to improve accuracy.  
+        !            i   i io  i   o    o     o     o 
+        call zgebal('P', N, A, N, ilo, ihi, scale, info)
+        if(info.ne.0)then
+            write(6,'(A,i0)')" At zgebal error, info --> ",info
+            write(6,'(A)')" Program stop"
+            stop
+        endif
+        
+        !Size Query
+        call zgehrd(N, ilo, ihi, A, N, tau, tw, -1, info)
+        lwork=nint(dble(tw(1)))
+        allocate(work(1:lwork)); work=dcmplx(0d0,0d0)
+        
+        !Degenerate matrix A to upper Hessenberg matrix H.   
+        !           i   i    i  io  i   o    i      i      o
+        call zgehrd(N, ilo, ihi, A, N, tau, work, lwork, info)
+        if(info.ne.0)then
+            write(6,'(A,i0)')" At zgehrd error, info --> ",info
+            write(6,'(A)')" Program stop"
+            stop
+        endif
+        deallocate(work)
+
+        Q=a
+        !Size Query
+        call zunghr(N, ilo, ihi, Q, N, tau, tw, -1, info)
+        lwork=nint(dble(tw(1)))
+        allocate(work(1:lwork)); work=dcmplx(0d0,0d0)
+
+        !Make complex unitary matrix Q from upper Hessenberg matrix H.
+        !           i   i    i  io  i   i    i      i      o
+        call zunghr(N, ilo, ihi, Q, N, tau, work, lwork, info)
+        if(info.ne.0)then
+            write(6,'(A,i0)')" At zunghr error, info --> ",info
+            write(6,'(A)')" Program stop"
+            stop
+        endif
+        deallocate(work)
+        
+        z=Q
+        !Size Query
+        call zhseqr('S', 'V', N, ilo, ihi, A, N, Ev, z, N, tw, -1, info)
+        lwork=nint(dble(tw(1)))
+        allocate(work(1:lwork)); work=dcmplx(0d0,0d0)
+
+        !Get eigenvalue of upper Hessenberg matrix H and Get Schur vector.
+        !                     i   i    i  io  i   o  o  i   i      i      o  
+        call zhseqr('S', 'V', N, ilo, ihi, A, N, Ev, z, N, work, lwork, info)
+        if(info.ne.0)then
+            write(6,'(A,i0)')" At zhseqr error, info --> ",info
+            write(6,'(A)')" Program stop"
+            stop
+        endif
+        deallocate(work)
+
+        !Get right eigenvector X from upper triangular matrix T. 
+        allocate(work(1:2*N))  
+        vr=z
+        !                        i  i  i         o  i  i   o   i      i      i
+        call ztrevc('R', 'B', 0, N, A, N, 0, 1, vr, N, N, tmp, work, rwork, info)
+        if(info.ne.0)then
+            write(6,'(A,i0)')" At zhseqr error, info --> ",info
+            write(6,'(A)')" Program stop"
+            stop
+        endif
+        deallocate(work)
+        
+        !Transrate right eigenvector X of Equilibrated matrix A' to right eigenvector of matrix A
+        !                     i   i    i     i    i   o  i   o 
+        call zgebak('P', 'R', N, ilo, ihi, scale, N, vr, N, info)
+        if(info.ne.0)then
+            write(6,'(A,i0)')" At zhseqr error, info --> ",info
+            write(6,'(A)')" Program stop"
+            stop
+        endif
+            
+        A=vr
+
+        !swap Eigenvectol as same arrangement for Eigenvalue
+        call sortdp2(N,Ev,turn)
+
+        Q=A
+        do i=1,N
+            tmp=turn(i)
+            A(1:N,i)=Q(1:N,tmp)
+        enddo
+        return
+
+    !sort Eigenvalue of real part from small to big.
+    contains
+        subroutine sortdp2(N,data,turn)
+            implicit none
+            integer::i,ti,j,N,turn(1:N)
+            complex(kind(0d0))::data(1:N),tmp
+
+            do i=1,N
+            turn(i)=i
+            enddo
+
+            do i=1,N-1
+            do j=i+1,N
+                if(dble(data(i)) > dble(data(j)))then
+                    tmp=data(i)
+                    data(i)=data(j)
+                    data(j)=tmp
+
+                    ti=turn(i)
+                    turn(i)=turn(j)
+                    turn(j)=ti
+                end if
+            end do
+            end do
+
+            return
+        end subroutine sortdp2
+    end subroutine diag
 end module CALmod
