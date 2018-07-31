@@ -4,9 +4,9 @@ program usePPLmod
     implicit none
 
     !declaration
-    integer,parameter :: Nsybl=16
+    integer,parameter :: Nsybl=32
     integer,parameter :: Npath=8
-    integer,parameter :: PPLloop=10000
+    integer,parameter :: PPLloop=500
 
     integer i,j,k
     complex(kind(0d0)) X(Nsybl,Nsybl)
@@ -65,11 +65,11 @@ program usePPLmod
         do j=i+1, Nsybl
             !固有ベクトル群を１列のベクトルに格納
             do k=1, Nsybl
-                U(k,1) = X(k,i)
+                U(k,1) = V(k,i)
             end do
             !内積を取る固有ベクトルを格納
             do k=1, Nsybl
-                N(k,1) = X(k,j)
+                N(k,1) = V(k,j)
             end do
 
             !随伴行列
