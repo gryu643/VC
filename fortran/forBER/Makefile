@@ -7,10 +7,16 @@ OBJS = CALmod.o PPLmod.o usePPLmod.o
 MOD = pplmod.mod calmod.mod
 LAPACK = -llapack
 
+.PHONY: usePPLmod
 usePPLmod: CALmod.o PPLmod.o usePPLmod.o
 	$(CC) $^ -o $@ $(LAPACK)
 
+.PHONY: vc
 vc: CALmod.o PPLmod.o VC.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+.PHONY: normal
+normal: CALmod.o verify_normal.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .SUFFIXES: .f90 .o
