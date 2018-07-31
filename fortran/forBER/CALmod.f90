@@ -177,15 +177,15 @@ contains
 
     !normal random number
     function normal()
-        double precision :: m=0.0
-        double precision :: var=1.0
-        double precision :: x=0.0
-        double precision :: y=0.0
+        double precision :: m=0.0d0
+        double precision :: var=1.0d0
+        double precision :: x=0.0d0
+        double precision :: y=0.0d0
         double precision :: pi=dacos(dble(-1))
-        double precision :: r1=0.0
-        double precision :: r2=0.0
+        double precision :: r1=0.0d0
+        double precision :: r2=0.0d0
         double precision normal
-        double precision :: r=0.0
+        double precision :: r=0.0d0
         integer,save :: cnt=0
 
         integer seedsize,i
@@ -200,10 +200,12 @@ contains
         if(cnt==0) then
             !初期シードを設定（独立になるようseed配列を書き換える）
             do i=1, seedsize
+                call system_clock(count=seed1(i))
                 seed1(i) = 1
             end do
             do i=1, seedsize
-                seed2(i) = 1000000
+            call system_clock(count=seed2(i))
+                seed2(i) = seed2(i) - 100000
             end do
             cnt = cnt + 1
         end if
@@ -217,8 +219,8 @@ contains
         call random_seed(get=seed2)
 
 
-        x = sqrt(-2.0*dlog(r1)*var)*dcos(2.0*pi*r2)+m
-        y = sqrt(-2.0*dlog(r1)*var)*dsin(2.0*pi*r2)+m
+        x = sqrt(-2.0d0*dlog(r1)*var)*dcos(2.0d0*pi*r2)+m
+        y = sqrt(-2.0d0*dlog(r1)*var)*dsin(2.0d0*pi*r2)+m
         r = sqrt(x**2 + y**2)
 
         normal = x
@@ -240,7 +242,7 @@ contains
 
 		if(rand_cnt==0) then
 			do i=1, seedsize
-				seed(i) = 1
+                call system_clock(count=seed(i))
 			end do
 		end if
 
