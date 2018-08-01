@@ -4,13 +4,16 @@ program eigenvaluePDF
     implicit none
 
     !ifdef
-    logical,parameter :: APPLY_PPL=.TRUE.
+    logical,parameter :: APPLY_PPL=.FALSE.
+
+    !run time declaration
+    integer t1, t2, t_rate, t_max, diff
 
     !declatation
     integer,parameter :: Nsybl=32
     integer,parameter :: Npath=8
     integer,parameter :: PPLloop=500
-    integer,parameter :: trial=10000
+    integer,parameter :: trial=1000
 
     double precision Ampd(Npath,1)
     complex(kind(0d0)) Cpath(Npath,1)
@@ -23,7 +26,7 @@ program eigenvaluePDF
     double precision Eig(1,Nsybl)
 
     double precision,parameter :: stride=0.01d0
-    double precision out
+    double precision output
     double precision,allocatable :: result(:,:)
     integer i,j,loop
     double precision start,end
@@ -40,16 +43,19 @@ program eigenvaluePDF
     V(:,:)=(0.0d0,0.0d0)
     Eig(:,:)=0.0d0
 
-    out=0.0d0
+    output=0.0d0
     start=0.0d0
-    end=10.0d0
+    end=50.0d0
     rank=nint((end-start)/stride)+1
 
-    !allocate initialize
-    result(:,:)=0.0d0
+    !allocate
+    allocate(result(rank,2))
+
+    !time measurement start
+    call system_clock(t1)
 
     !file open
-    open(1,file='fort_evPDF.csv', status='replace')
+    open(1,file='fort_evPDF_zdiag.csv', status='replace')
 
     !implementation
     !channel gain parameter
@@ -57,7 +63,6 @@ program eigenvaluePDF
         Ampd(i,1) = sqrt(1.0d0/dble(Npath)) !Equal Gain
         !Ampd(i) = sqrt(1/(2**(i-1))) !Exp. atten.
     end do
-
 
 
 	do loop=1, trial
@@ -79,6 +84,12 @@ program eigenvaluePDF
             end do
         end do
 
+        !set HH
+        call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
+
+        !set HHH
+        call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
+
         if(APPLY_PPL) then
             !set Xppl
             do i=1, Nsybl
@@ -94,9 +105,9 @@ program eigenvaluePDF
         endif
 
 		do i=1, Nsybl
-            out = Eig(1,i)
+            output = Eig(1,i)
             do j=1, rank
-                if((out.ge.(start+stride*(j-1))).and.(out.lt.(start+stride*j))) then
+                if((output.ge.(start+stride*(j-1))).and.(output.lt.(start+stride*j))) then
                     result(j,2) = result(j,2) + 1.0
                 end if
             end do
@@ -115,4 +126,7 @@ program eigenvaluePDF
     !file close
     close(1)
 
+    !time measurementend
+    call system_clock(t2,t_rate,t_max)
+    print *, 'Elapsed time is...', (t2-t1)/dble(t_rate)
 end program
