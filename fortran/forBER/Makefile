@@ -19,6 +19,10 @@ vc: CALmod.o PPLmod.o VC.o
 normal: CALmod.o verify_normal.o
 	$(CC) $^ -o $@ $(LAPACK)
 
+.PHONY: pdf
+pdf: CALmod.o PPLmod.o eigenvaluePDF.f90
+	$(CC) $^ -o $@ $(LAPACK)
+
 .SUFFIXES: .f90 .o
 .f90.o:
 	$(CC) -c $< $(CFLAGS)
