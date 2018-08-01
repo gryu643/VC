@@ -146,7 +146,7 @@ program VC
             !
             !
             if(APPLY_PPL) then
-                V = PPL(H,HE,Xppl,Nsybl,Npath,PPLloop)
+                call PPL(H,HE,Xppl,Eig,Nsybl,Npath,PPLloop)
             else
                 call CSubstitute(V,HHH,Nsybl,Nsybl)
                 call zdiag(Nsybl,V,Eig)
