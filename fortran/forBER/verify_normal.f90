@@ -8,13 +8,12 @@ program verify_normal
     double precision out
     double precision,allocatable :: result(:,:)
     integer i,j
-    double precision sum,avg,var
+    double precision avg,var
     double precision start,end,amp
     integer rank
 
     !initialization
     out=0.0d0
-    sum=0.0d0
     avg=0.0d0
     var=0.0d0
     start=-5.0d0
@@ -32,7 +31,7 @@ program verify_normal
     open(1,file='fortran_normal.csv', status='replace')
 
 
-    !implimentation
+    !implementation
 	do i=1, trial
 		out = normal()
 		do j=1, rank
