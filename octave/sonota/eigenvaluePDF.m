@@ -2,7 +2,7 @@ close all;
 clear all;
 tic;
 Nsybl = 32;
-Npath = 32;
+Npath = 8;
 PPLloop = 500;
 trial = 1000;
 stride=0.01;
@@ -40,14 +40,13 @@ for loop=1:trial
 %        Xppl(l,k) = 1.0 + 0.0*i;
 %      end
 %    end
-%
-%    V = PPL (H, HE, Xppl, Nsybl, Npath, PPLloop);
+
+%    [V,D] = PPL (H, HE, Xppl, Nsybl, Npath, PPLloop);
     
     HH = ctranspose(H);
     HHH = HH*H;
     [V,D] = eig(HHH);
 
-    out = rand;
     for i=1:Nsybl
 
         out = D(i,i);
@@ -64,11 +63,9 @@ end
 
 for i=1:result_rank;
     result(i,1) = s + stride * (i-1);
-    result(i,2) = result(i,2) / trial;
+    result(i,2) = result(i,2) /  (trial*32);
 end
 
-i=1:result_rank;
-%fprintf(fileID,'%f, %f\n',result(i,1),result(i,2));
-csvwrite('oct_evPDF_zdiag.csv', result);
+csvwrite('oct_evPDFeig.csv', result);
 
 toc;
