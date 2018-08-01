@@ -2,7 +2,7 @@ module PPLmod
 	use CALmod
 	implicit none
 contains
-	function PPL(H,HE,X,Nsybl,Npath,PPLloop)
+	subroutine PPL(H,HE,X,Eig,Nsybl,Npath,PPLloop)
 		implicit none
 
 		!argument
@@ -10,9 +10,7 @@ contains
 		complex(kind(0d0)) X(Nsybl,Nsybl)
 		complex(kind(0d0)) H(Nsybl+Npath-1,Nsybl)
 		complex(kind(0d0)) HE(Nsybl+2*(Npath-1),Nsybl+Npath-1)
-
-		!return
-		complex(kind(0d0)) PPL(Nsybl,Nsybl)
+		double precision Eig(1,Nsybl)
 
 		!declaration
 		integer i,j,k,l,m
@@ -76,6 +74,7 @@ contains
 		D1(:,:)=(0.0,0.0)
 		D_ABS=0.0
 		D1_ABS=0.0
+		Eig(:,:)=0.0d0
 
 		!行列Hの随伴行列HHの設定
 		call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
@@ -179,6 +178,8 @@ contains
 		end do
 
 		! return
-		call CSubstitute(PPL,X,Nsybl,Nsybl)
-	end function
+		do i=1, Nsybl
+			Eig(1,i) = real(LAMBDA(i,1))
+		end do
+	end subroutine
 end module PPLmod
