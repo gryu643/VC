@@ -26,7 +26,7 @@ program eigenvaluePDF
     double precision out
     double precision,allocatable :: result(:,:)
     integer i,j,loop
-    double precision start,end,amp
+    double precision start,end
     integer rank
 
     !initialization
@@ -41,9 +41,8 @@ program eigenvaluePDF
     Eig(:,:)=0.0d0
 
     out=0.0d0
-    start=-5.0d0
-    end=5.0d0
-    amp=0.0d0
+    start=0.0d0
+    end=10.0d0
     rank=nint((end-start)/stride)+1
 
     !allocate initialize
@@ -94,17 +93,19 @@ program eigenvaluePDF
             call zdiag(Nsybl,V,Eig)
         endif
 
-		out = normal()
-		do j=1, rank
-			if((out.ge.(start+stride*(j-1))).and.(out.lt.(start+stride*j))) then
-				result(j,2) = result(j,2) + 1.0
-			end if
-		end do
+		do i=1, Nsybl
+            out = Eig(1,i)
+            do j=1, rank
+                if((out.ge.(start+stride*(j-1))).and.(out.lt.(start+stride*j))) then
+                    result(j,2) = result(j,2) + 1.0
+                end if
+            end do
+        end do
 	end do
 
     do i=1, rank
         result(i,1) = start + stride * (i-1)
-        result(i,2) = result(i,2) / trial
+        result(i,2) = result(i,2) / (trial*Nsybl)
     end do
 
     do i=1, rank
