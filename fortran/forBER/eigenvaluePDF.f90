@@ -11,7 +11,7 @@ program eigenvaluePDF
 
     !declatation
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=8
+    integer,parameter :: Npath=1
     integer,parameter :: PPLloop=500
     integer,parameter :: trial=1000
 
@@ -24,6 +24,7 @@ program eigenvaluePDF
     complex(kind(0d0)) HHH(Nsybl,Nsybl)
     complex(kind(0d0)) V(Nsybl,Nsybl)
     double precision Eig(1,Nsybl)
+    complex(kind(0d0)) Eig_diag(1,Nsybl)
 
     double precision,parameter :: stride=0.01d0
     double precision output
@@ -42,6 +43,7 @@ program eigenvaluePDF
     HHH(:,:)=(0.0d0,0.0d0)
     V(:,:)=(0.0d0,0.0d0)
     Eig(:,:)=0.0d0
+    Eig_diag(:,:)=(0.0d0,0.0d0)
 
     output=0.0d0
     start=0.0d0
@@ -55,7 +57,7 @@ program eigenvaluePDF
     call system_clock(t1)
 
     !file open
-    open(1,file='fort_evPDF_zdiag.csv', status='replace')
+    open(1,file='fort_evPDFdiag.csv', status='replace')
 
     !implementation
     !channel gain parameter
@@ -101,11 +103,11 @@ program eigenvaluePDF
             call PPL(H,HE,Xppl,Eig,Nsybl,Npath,PPLloop)
         else
             call CSubstitute(V,HHH,Nsybl,Nsybl)
-            call zdiag(Nsybl,V,Eig)
+            call diag(Nsybl,V,Eig_diag)
         endif
 
 		do i=1, Nsybl
-            output = Eig(1,i)
+            output = Eig_diag(1,i)
             do j=1, rank
                 if((output.ge.(start+stride*(j-1))).and.(output.lt.(start+stride*j))) then
                     result(j,2) = result(j,2) + 1.0
@@ -126,7 +128,7 @@ program eigenvaluePDF
     !file close
     close(1)
 
-    !time measurementend
+    !time measurement end
     call system_clock(t2,t_rate,t_max)
     print *, 'Elapsed time is...', (t2-t1)/dble(t_rate)
 end program
