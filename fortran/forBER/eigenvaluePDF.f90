@@ -57,7 +57,7 @@ program eigenvaluePDF
     call system_clock(t1)
 
     !file open
-        open(1,file='fort_evPDFdecomp_zgeev_s2p2U.csv', status='replace')
+        open(1,file='fort_evPDFdecomp_zhpev_s2p2.csv', status='replace')
 
     !implementation
     !channel gain parameter
@@ -105,7 +105,8 @@ program eigenvaluePDF
             call CSubstitute(V,HHH,Nsybl,Nsybl)
 !            call decomp_zheev(Nsybl,V,Eig)
 !            call decomp_zheevd(Nsybl,V,Eig)
-            call decomp_zgeev(Nsybl,V,Eig)
+!            call decomp_zgeev(Nsybl,V,Eig)
+            call decomp_zhpev(Nsybl,V,Eig)
         endif
 
 		do i=1, Nsybl
