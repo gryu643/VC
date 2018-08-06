@@ -438,4 +438,43 @@ contains
             return
         end subroutine sortdp2
     end subroutine diag
+
+    subroutine decomp_zheevd(Nsybl,V,Eig)
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) V(Nsybl,Nsybl)
+        double precision Eig(1,Nsybl)
+
+        !-- declaration
+        integer :: i,ifail,info,lda,liwork,lrwork,lwork,n
+        character(1) :: job, uplo
+        complex(kind(0d0)),allocatable :: work(:)
+        double precision,allocatable :: rwork(:),w(:)
+        integer,allocatable :: iwork(:)
+
+        !-- initialization
+        n = Nsybl
+        lda = n
+        liwork = 5*n + 3
+        lrwork = 2*n*n + 5*n + 1
+        lwork = n*(n+2)
+        job = 'V'
+        uplo = 'U'
+
+        !-- allocate
+        allocate(work(lwork),rwork(lrwork),w(n),iwork(liwork))
+
+        !-- implementation
+        ! calculate all the eigenvalues and eigenvectors
+        call zheevd(job,uplo,n,V,lda,w,work,lwork,rwork,lrwork,iwork, &
+        liwork,info)
+
+        !-- return
+        do i=1, Nsybl
+            Eig(1,i) = w(i)
+        end do
+
+    end subroutine decomp_zheevd
 end module CALmod
