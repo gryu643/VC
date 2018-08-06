@@ -11,11 +11,11 @@ program VC
 
     !declaration
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=8
+    integer,parameter :: Npath=1
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=5
-    integer,parameter :: Nloop=1
+    integer,parameter :: Nloop=10000
     integer,parameter :: PPLloop=500
 
     integer i,j
@@ -92,7 +92,7 @@ program VC
     call system_clock(t1)
 
     !file open
-    open (1, file='VC(Nsybl=32,Npath=8).csv', status='replace')
+    open (1, file='VC(Nsybl=32,Npath=1).csv', status='replace')
 
     !implimentation part
     !channel gain parameter
@@ -142,14 +142,12 @@ program VC
             call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
 
             !eigenvalue decomposition
-            !
-            !
-            !
             if(APPLY_PPL) then
                 call PPL(H,HE,Xppl,Eig,Nsybl,Npath,PPLloop)
             else
                 call CSubstitute(V,HHH,Nsybl,Nsybl)
-                call zdiag(Nsybl,V,Eig)
+!                call zdiag(Nsybl,V,Eig)
+                call decomp_zheev(Nsybl,V,Eig)
             endif
 
             !set information symbol
