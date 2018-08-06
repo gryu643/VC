@@ -177,15 +177,15 @@ contains
 
     !normal random number
     function normal()
-        double precision :: m=0.0
-        double precision :: var=1.0
-        double precision :: x=0.0
-        double precision :: y=0.0
+        double precision :: m=0.0d0
+        double precision :: var=1.0d0
+        double precision :: x=0.0d0
+        double precision :: y=0.0d0
         double precision :: pi=dacos(dble(-1))
-        double precision :: r1=0.0
-        double precision :: r2=0.0
+        double precision :: r1=0.0d0
+        double precision :: r2=0.0d0
         double precision normal
-        double precision :: r=0.0
+        double precision :: r=0.0d0
         integer,save :: cnt=0
 
         integer seedsize,i
@@ -200,10 +200,12 @@ contains
         if(cnt==0) then
             !初期シードを設定（独立になるようseed配列を書き換える）
             do i=1, seedsize
+                call system_clock(count=seed1(i))
                 seed1(i) = 1
             end do
             do i=1, seedsize
-                seed2(i) = 1000000
+            call system_clock(count=seed2(i))
+                seed2(i) = seed2(i) - 100000
             end do
             cnt = cnt + 1
         end if
@@ -217,8 +219,8 @@ contains
         call random_seed(get=seed2)
 
 
-        x = sqrt(-2.0*dlog(r1)*var)*dcos(2.0*pi*r2)+m
-        y = sqrt(-2.0*dlog(r1)*var)*dsin(2.0*pi*r2)+m
+        x = sqrt(-2.0d0*dlog(r1)*var)*dcos(2.0d0*pi*r2)+m
+        y = sqrt(-2.0d0*dlog(r1)*var)*dsin(2.0d0*pi*r2)+m
         r = sqrt(x**2 + y**2)
 
         normal = x
@@ -240,10 +242,366 @@ contains
 
 		if(rand_cnt==0) then
 			do i=1, seedsize
-				seed(i) = 1
+                call system_clock(count=seed(i))
 			end do
 		end if
 
 		call random_number(rand)
-	end function
+    end function
+    
+    !return eigenvalue decomposition
+    subroutine zdiag(N,A,ev)
+        !sikinote
+        implicit none
+        integer::N
+        double precision::ev(1:N)
+        complex(kind(0d0))::A(1:N,1:N)
+       
+        integer::lda,lwork,liwork,lrwork,info
+        double precision,allocatable::rwork(:)
+        complex(kind(0d0)),allocatable::work(:)
+        complex(kind(0d0))::qw(1:3)
+        double precision::qrw(1:3)
+        integer,allocatable::iwork(:)
+        integer::qiw(1:3)
+        character(1)::job,uplo
+       
+        job="V"
+        uplo="U"
+        lda=N
+       
+        call zheevd(job,uplo,N,0,lda,0,qw,-1,qrw,-1,qiw,-1,info)
+        if(info.ne.0)then
+           write(6,'(A)')"    program stop @zheevd"
+           write(6,'(A,i0)')"    info --> ",info
+           stop
+        endif
+       
+        lrwork=idint(qrw(1))+1
+        lwork=idint(dble(qw(1)))+1
+        liwork=qiw(1)+1
+        allocate(work(1:lwork),iwork(1:liwork),rwork(1:lrwork))
+        work(1:lwork)=0.d0
+        iwork(1:liwork)=0
+        rwork(1:lrwork)=0.d0
+       
+        !diagonalise.
+        call zheevd(job,uplo,N,A,lda,ev,work,lwork,rwork,lrwork,iwork,liwork,info)
+        if(info.ne.0)then
+           write(6,'(A)')"    program stop @zheevd"
+           write(6,'(A,i0)')"    info --> ",info
+           stop
+        endif
+       
+        deallocate(work,iwork)
+       
+        return
+      end subroutine zdiag
+
+    subroutine diag(N,A,Ev)
+        ! sikinote
+        !date      : 2015/07/07
+        !            2015/08/21   
+        !developer : sikino & fernandeskun
+        implicit none
+        integer,intent(in)::N
+        complex(kind(0d0)),intent(inout)::A(1:N,1:N)
+        complex(kind(0d0)),intent(out)::Ev(1:N)
+
+        integer::ilo,ihi,info,lwork,turn(1:N),tmp,i
+        double precision::scale(1:N),rwork(1:N)
+        complex(kind(0d0))::tau(1:N-1),w(1:N),z(1:N,1:N),Q(1:N,1:N),vr(1:N,1:N),tw(1:3)
+        complex(kind(0d0)),allocatable::work(:)
+        
+        tau(1:N-1)=dcmplx(0d0,0d0)
+        w(1:N)=dcmplx(0d0,0d0)
+        z(1:N,1:N)=dcmplx(0d0,0d0)
+        Q(1:N,1:N)=dcmplx(0d0,0d0)
+        vr(1:N,1:N)=dcmplx(0d0,0d0)
+        tw(1:3)=dcmplx(0d0,0d0)
+        Ev(1:N)=dcmplx(0d0,0d0)
+        
+        !Equilibrate matrix A to equilibrated matrix A' to improve accuracy.  
+        !            i   i io  i   o    o     o     o 
+        call zgebal('P', N, A, N, ilo, ihi, scale, info)
+        if(info.ne.0)then
+            write(6,'(A,i0)')" At zgebal error, info --> ",info
+            write(6,'(A)')" Program stop"
+            stop
+        endif
+        
+        !Size Query
+        call zgehrd(N, ilo, ihi, A, N, tau, tw, -1, info)
+        lwork=nint(dble(tw(1)))
+        allocate(work(1:lwork)); work=dcmplx(0d0,0d0)
+        
+        !Degenerate matrix A to upper Hessenberg matrix H.   
+        !           i   i    i  io  i   o    i      i      o
+        call zgehrd(N, ilo, ihi, A, N, tau, work, lwork, info)
+        if(info.ne.0)then
+            write(6,'(A,i0)')" At zgehrd error, info --> ",info
+            write(6,'(A)')" Program stop"
+            stop
+        endif
+        deallocate(work)
+
+        Q=a
+        !Size Query
+        call zunghr(N, ilo, ihi, Q, N, tau, tw, -1, info)
+        lwork=nint(dble(tw(1)))
+        allocate(work(1:lwork)); work=dcmplx(0d0,0d0)
+
+        !Make complex unitary matrix Q from upper Hessenberg matrix H.
+        !           i   i    i  io  i   i    i      i      o
+        call zunghr(N, ilo, ihi, Q, N, tau, work, lwork, info)
+        if(info.ne.0)then
+            write(6,'(A,i0)')" At zunghr error, info --> ",info
+            write(6,'(A)')" Program stop"
+            stop
+        endif
+        deallocate(work)
+        
+        z=Q
+        !Size Query
+        call zhseqr('S', 'V', N, ilo, ihi, A, N, Ev, z, N, tw, -1, info)
+        lwork=nint(dble(tw(1)))
+        allocate(work(1:lwork)); work=dcmplx(0d0,0d0)
+
+        !Get eigenvalue of upper Hessenberg matrix H and Get Schur vector.
+        !                     i   i    i  io  i   o  o  i   i      i      o  
+        call zhseqr('S', 'V', N, ilo, ihi, A, N, Ev, z, N, work, lwork, info)
+        if(info.ne.0)then
+            write(6,'(A,i0)')" At zhseqr error, info --> ",info
+            write(6,'(A)')" Program stop"
+            stop
+        endif
+        deallocate(work)
+
+        !Get right eigenvector X from upper triangular matrix T. 
+        allocate(work(1:2*N))  
+        vr=z
+        !                        i  i  i         o  i  i   o   i      i      i
+        call ztrevc('R', 'B', 0, N, A, N, 0, 1, vr, N, N, tmp, work, rwork, info)
+        if(info.ne.0)then
+            write(6,'(A,i0)')" At zhseqr error, info --> ",info
+            write(6,'(A)')" Program stop"
+            stop
+        endif
+        deallocate(work)
+        
+        !Transrate right eigenvector X of Equilibrated matrix A' to right eigenvector of matrix A
+        !                     i   i    i     i    i   o  i   o 
+        call zgebak('P', 'R', N, ilo, ihi, scale, N, vr, N, info)
+        if(info.ne.0)then
+            write(6,'(A,i0)')" At zhseqr error, info --> ",info
+            write(6,'(A)')" Program stop"
+            stop
+        endif
+            
+        A=vr
+
+        !swap Eigenvectol as same arrangement for Eigenvalue
+        call sortdp2(N,Ev,turn)
+
+        Q=A
+        do i=1,N
+            tmp=turn(i)
+            A(1:N,i)=Q(1:N,tmp)
+        enddo
+        return
+
+    !sort Eigenvalue of real part from small to big.
+    contains
+        subroutine sortdp2(N,data,turn)
+            implicit none
+            integer::i,ti,j,N,turn(1:N)
+            complex(kind(0d0))::data(1:N),tmp
+
+            do i=1,N
+            turn(i)=i
+            enddo
+
+            do i=1,N-1
+            do j=i+1,N
+                if(dble(data(i)) > dble(data(j)))then
+                    tmp=data(i)
+                    data(i)=data(j)
+                    data(j)=tmp
+
+                    ti=turn(i)
+                    turn(i)=turn(j)
+                    turn(j)=ti
+                end if
+            end do
+            end do
+
+            return
+        end subroutine sortdp2
+    end subroutine diag
+
+    subroutine decomp_zheevd(Nsybl,V,Eig)
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) V(Nsybl,Nsybl)
+        double precision Eig(1,Nsybl)
+
+        !-- declaration
+        integer :: i,ifail,info,lda,liwork,lrwork,lwork,n
+        character(1) :: job, uplo
+        complex(kind(0d0)),allocatable :: work(:)
+        double precision,allocatable :: rwork(:),w(:)
+        integer,allocatable :: iwork(:)
+
+        !-- initialization
+        n = Nsybl
+        lda = n
+        liwork = 5*n + 3
+        lrwork = 2*n*n + 5*n + 1
+        lwork = n*(n+2)
+        job = 'V'
+        uplo = 'L'
+
+        !-- allocate
+        allocate(work(lwork),rwork(lrwork),w(n),iwork(liwork))
+
+        !-- implementation
+        ! calculate all the eigenvalues and eigenvectors
+        call zheevd(job,uplo,n,V,lda,w,work,lwork,rwork,lrwork,iwork, &
+        liwork,info)
+
+        !-- return
+        do i=1, Nsybl
+            Eig(1,i) = w(i)
+        end do
+
+    end subroutine decomp_zheevd
+
+    subroutine decomp_zheev(Nsybl,V,Eig)
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) V(Nsybl,Nsybl)
+        double precision Eig(1,Nsybl)
+
+        !-- declaration
+        integer :: i,ifail,info,lda,lrwork,lwork,n
+        character(1) :: job, uplo
+        complex(kind(0d0)),allocatable :: work(:)
+        double precision,allocatable :: rwork(:),w(:)
+
+        !-- initialization
+        n = Nsybl
+        lda = n
+        lrwork = 3*n-2
+        lwork = n*(n+2)
+        job = 'V'
+        uplo = 'L'
+
+        !-- allocate
+        allocate(work(lwork),rwork(lrwork),w(n))
+
+        !-- implementation
+        ! calculate all the eigenvalues and eigenvectors
+        call zheev(job,uplo,n,V,lda,w,work,lwork,rwork,info)
+
+        !-- return
+        do i=1, Nsybl
+            Eig(1,i) = w(i)
+        end do
+
+    end subroutine decomp_zheev
+
+    subroutine decomp_zgeev(Nsybl,V,Eig)
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) V(Nsybl,Nsybl)
+        double precision Eig(1,Nsybl)
+
+        !-- declaration
+        integer,parameter :: nb=64
+        integer :: i,ifail,info,lda,ldvr,lwork,n
+        complex(kind(0d0)) :: dummy(1,1)
+        complex(kind(0d0)),allocatable :: work(:),vr(:,:),w(:)
+        double precision,allocatable :: rwork(:)
+
+        !-- initialization
+        n = Nsybl
+        lda = n
+        ldvr = n
+
+        !-- allocate
+        allocate(rwork(2*n),w(n),vr(ldvr,n))
+
+        !-- implementation
+        ! use routine workspace query to get optimal workspace.
+        lwork = -1
+        call zgeev('No left vectors','Vectors(right)',n,V,lda,w,dummy,1, &
+        vr,ldvr,dummy,lwork,rwork,info)
+
+        !Make sure that there is enough workspace for block size nb.
+        lwork = max((nb+1)*n, nint(real(dummy(1,1))))
+        allocate(work(lwork))
+
+        ! calculate all the eigenvalues and eigenvectors
+        call zgeev('No left vectors','Vectors(right)',n,V,lda,w,dummy,1, &
+        vr,ldvr,work,lwork,rwork,info)
+
+        if(info==0) then
+            !-- return
+            do i=1, Nsybl
+                Eig(1,i) = real(w(i))
+            end do
+        else
+            print *, 'Failure in ZGEEV. info =', info
+        end if
+
+    end subroutine decomp_zgeev
+
+    subroutine decomp_zhpev(Nsybl,V,Eig)
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) V(Nsybl,Nsybl)
+        double precision Eig(1,Nsybl)
+
+        !-- declaration
+        integer :: i,j,info,n
+        character(1),parameter :: uplo='U'
+        complex(kind(0d0)) :: dummy(1,1)
+        complex(kind(0d0)),allocatable :: work(:),ap(:)
+        double precision,allocatable :: rwork(:),w(:)
+
+        !-- initialization
+        n = Nsybl
+
+        !-- allocate
+        allocate(ap((n*(n+1))/2),rwork(3*n-2),w(n),work(2*n-1))
+
+        !-- implementation
+        do i=1, n
+            do j=i,n
+                ap(i+(j*(j-1))/2) = V(i,j)
+            end do
+        end do
+
+        ! calculate all the eigenvalues and eigenvectors
+        call zhpev('V', uplo, n, ap, w, V, n, work, rwork, info)
+
+        if(info==0) then
+            !-- return
+            do i=1, Nsybl
+                Eig(1,i) = real(w(i))
+            end do
+        else
+            print *, 'Failure in ZGEEV. info =', info
+        end if
+
+    end subroutine decomp_zhpev
+    
 end module CALmod

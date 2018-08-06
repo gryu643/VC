@@ -4,18 +4,18 @@ program VC
     implicit none
 
     !ifdef
-    logical,parameter :: APPLY_PPL=.TRUE.
+    logical,parameter :: APPLY_PPL=.False.
 
     !run time declaration
     integer t1, t2, t_rate, t_max, diff
 
     !declaration
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=8
+    integer,parameter :: Npath=1
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=5
-    integer,parameter :: Nloop=1
+    integer,parameter :: Nloop=10000
     integer,parameter :: PPLloop=500
 
     integer i,j
@@ -51,6 +51,7 @@ program VC
     complex(kind(0d0)) R2
     double precision EbN0
     double precision BER
+    double precision Eig(1,Nsybl)
 
     !initialize
     Ampd(:,:)=0.0d0
@@ -85,12 +86,13 @@ program VC
     R2=(0.0d0,0.0d0)
     EbN0=0.0d0
     BER=0.0d0
+    Eig=0.0d0
 
     !time measurement start
     call system_clock(t1)
 
     !file open
-    open (1, file='VC(Nsybl=32,Npath=8).csv', status='replace')
+    open (1, file='VC(Nsybl=32,Npath=1).csv', status='replace')
 
     !implimentation part
     !channel gain parameter
@@ -140,11 +142,14 @@ program VC
             call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
 
             !eigenvalue decomposition
-            !
-            ! to do
-            !
             if(APPLY_PPL) then
-                V = PPL(H,HE,Xppl,Nsybl,Npath,PPLloop)
+                call PPL(H,HE,Xppl,Eig,Nsybl,Npath,PPLloop)
+            else
+                call CSubstitute(V,HHH,Nsybl,Nsybl)
+!                call decomp_zheevd(Nsybl,V,Eig)
+!                call decomp_zheev(Nsybl,V,Eig)
+!                call decomp_zgeev(Nsybl,V,Eig)
+                call decomp_zhpev(Nsybl,V,Eig)
             endif
 
             !set information symbol

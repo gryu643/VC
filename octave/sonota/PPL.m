@@ -1,4 +1,4 @@
-function V = PPL (H, HE, X, Nsybl, Npath, lp)
+function [V,Eig] = PPL (H, HE, X, Nsybl, Npath, lp)
   
   # Hの随伴行列HHの設定
   HH = H';
@@ -114,4 +114,8 @@ function V = PPL (H, HE, X, Nsybl, Npath, lp)
 
   # 結果の出力
   V = X; 
+  Eig = zeros(Nsybl,Nsybl);
+  for i=1:Nsybl
+    Eig(i,i) = real(LAMBDA(i));
+  end
 endfunction

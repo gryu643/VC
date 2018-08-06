@@ -4,13 +4,28 @@ CC = gfortran
 PROGRAM = CALmod PPLmod usePPLmod
 CFLAGS = -O3
 OBJS = CALmod.o PPLmod.o usePPLmod.o
-MOD = calmod.mod calmod.mod
+MOD = pplmod.mod calmod.mod
+LAPACK = -llapack -lblas
 
+.PHONY: usePPLmod
 usePPLmod: CALmod.o PPLmod.o usePPLmod.o
-	$(CC) $^ -o $@
+	$(CC) $^ -o $@ $(LAPACK)
 
-VC: CALmod.o PPLmod.o VC.o
-	$(CC) $^ -o $@
+.PHONY: vc
+vc: CALmod.o PPLmod.o VC.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+.PHONY: normal
+normal: CALmod.o verify_normal.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+.PHONY: pdf
+pdf: CALmod.o PPLmod.o eigenvaluePDF.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+.PHONY: pdf_ideal
+pdf_ideal: eigenvaluePDF_ideal.o
+	$(CC) $^ -o $@ $(LAPACK)
 
 .SUFFIXES: .f90 .o
 .f90.o:
@@ -18,4 +33,4 @@ VC: CALmod.o PPLmod.o VC.o
 
 .PHONY: clean
 clean:
-	rm -f $(OBJS) $(PROGRAM)
+	rm -f $(OBJS) $(PROGRAM) $(MOD)

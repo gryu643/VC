@@ -7,7 +7,7 @@ SEbN0 = -10;
 EEbN0 = 40;
 Step = 5;
 
-Nloop = 10000;
+Nloop = 100;
 PPLloop = 500;
 
 fileID = fopen('ber(Npath=1,Nsym=32)_ashikiri_.csv','w');
@@ -61,17 +61,17 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
     HHH = HH*H;
     [V,D] = eig(HHH);
 
-    Nsybl_ashi = 16;
+%    Nsybl = 16;
 %
-    S = complex(round(rand(1,Nsybl_ashi))*2-1,round(rand(1,Nsybl_ashi))*2-1); %[-1,1] Transmit symbol
+    S = complex(round(rand(1,Nsybl))*2-1,round(rand(1,Nsybl))*2-1); %[-1,1] Transmit symbol
     TdatI = (real(S)+1)/2;
     TdatQ = (imag(S)+1)/2;
-    for i=1:Nsybl_ashi;
+    for i=1:Nsybl;
       SU(:,i) = S(i)*V(:,i);
     end
 %
     X = zeros(1,Nsybl);
-    for j=1:Nsybl_ashi;
+    for j=1:Nsybl;
       for i=1:Nsybl;
         X(i) = X(i) + SU(i,j); %Transmit vector
       end
@@ -95,10 +95,10 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
     Y = Y + Noise; %Add AWGN
     Yn = HH*Y; %Matched Filter
     Y2 = Yn(:,1);
-    RdatI = zeros(1,Nsybl_ashi);
-    RdatQ = zeros(1,Nsybl_ashi);
+    RdatI = zeros(1,Nsybl);
+    RdatQ = zeros(1,Nsybl);
 %Demodulation
-    for i=1:Nsybl_ashi
+    for i=1:Nsybl
       A = V(:,i);
       R = conj(dot(Y2,A));
       if real(R) > 0
@@ -113,7 +113,7 @@ for KEbN0=SEbN0:Step:EEbN0 %Eb/N0 loop
       end
     end
 %Bit Error Rate
-    for i=1:Nsybl_ashi
+    for i=1:Nsybl
       if RdatI(i) == TdatI(i)
         Collect = Collect + 1;
       elseif RdatI(i) != TdatI(i)
