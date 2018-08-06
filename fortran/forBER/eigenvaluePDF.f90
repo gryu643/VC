@@ -10,10 +10,10 @@ program eigenvaluePDF
     integer t1, t2, t_rate, t_max, diff
 
     !declatation
-    integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=1
+    integer,parameter :: Nsybl=2
+    integer,parameter :: Npath=2
     integer,parameter :: PPLloop=500
-    integer,parameter :: trial=1000
+    integer,parameter :: trial=100000
 
     double precision Ampd(Npath,1)
     complex(kind(0d0)) Cpath(Npath,1)
@@ -57,7 +57,7 @@ program eigenvaluePDF
     call system_clock(t1)
 
     !file open
-    open(1,file='fort_evPDFdiag.csv', status='replace')
+        open(1,file='fort_evPDFdecomp_zheevd_s2p2U.csv', status='replace')
 
     !implementation
     !channel gain parameter
@@ -103,11 +103,11 @@ program eigenvaluePDF
             call PPL(H,HE,Xppl,Eig,Nsybl,Npath,PPLloop)
         else
             call CSubstitute(V,HHH,Nsybl,Nsybl)
-            call diag(Nsybl,V,Eig_diag)
+            call decomp_zheevd(Nsybl,V,Eig)
         endif
 
 		do i=1, Nsybl
-            output = Eig_diag(1,i)
+            output = Eig(1,i)
             do j=1, rank
                 if((output.ge.(start+stride*(j-1))).and.(output.lt.(start+stride*j))) then
                     result(j,2) = result(j,2) + 1.0
