@@ -146,8 +146,9 @@ program VC
                 call PPL(H,HE,Xppl,Eig,Nsybl,Npath,PPLloop)
             else
                 call CSubstitute(V,HHH,Nsybl,Nsybl)
-!                call zdiag(Nsybl,V,Eig)
-                call decomp_zheev(Nsybl,V,Eig)
+!                call decomp_zheevd(Nsybl,V,Eig)
+!                call decomp_zheev(Nsybl,V,Eig)
+                call decomp_zgeev(Nsybl,V,Eig)
             endif
 
             !set information symbol
