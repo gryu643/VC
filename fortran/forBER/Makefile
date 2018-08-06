@@ -20,7 +20,11 @@ normal: CALmod.o verify_normal.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: pdf
-pdf: CALmod.o PPLmod.o eigenvaluePDF.f90
+pdf: CALmod.o PPLmod.o eigenvaluePDF.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+.PHONY: pdf_ideal
+pdf_ideal: eigenvaluePDF_ideal.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .SUFFIXES: .f90 .o
