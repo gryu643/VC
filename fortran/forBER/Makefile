@@ -5,7 +5,7 @@ PROGRAM = CALmod PPLmod usePPLmod
 CFLAGS = -O3
 OBJS = CALmod.o PPLmod.o usePPLmod.o
 MOD = pplmod.mod calmod.mod
-LAPACK = -llapack
+LAPACK = -llapack -lblas
 
 .PHONY: usePPLmod
 usePPLmod: CALmod.o PPLmod.o usePPLmod.o
