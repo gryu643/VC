@@ -461,7 +461,7 @@ contains
         lrwork = 2*n*n + 5*n + 1
         lwork = n*(n+2)
         job = 'V'
-        uplo = 'U'
+        uplo = 'L'
 
         !-- allocate
         allocate(work(lwork),rwork(lrwork),w(n),iwork(liwork))
@@ -477,4 +477,40 @@ contains
         end do
 
     end subroutine decomp_zheevd
+
+    subroutine decomp_zheev(Nsybl,V,Eig)
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) V(Nsybl,Nsybl)
+        double precision Eig(1,Nsybl)
+
+        !-- declaration
+        integer :: i,ifail,info,lda,lrwork,lwork,n
+        character(1) :: job, uplo
+        complex(kind(0d0)),allocatable :: work(:)
+        double precision,allocatable :: rwork(:),w(:)
+
+        !-- initialization
+        n = Nsybl
+        lda = n
+        lrwork = 3*n-2
+        lwork = n*(n+2)
+        job = 'V'
+        uplo = 'L'
+
+        !-- allocate
+        allocate(work(lwork),rwork(lrwork),w(n))
+
+        !-- implementation
+        ! calculate all the eigenvalues and eigenvectors
+        call zheev(job,uplo,n,V,lda,w,work,lwork,rwork,info)
+
+        !-- return
+        do i=1, Nsybl
+            Eig(1,i) = w(i)
+        end do
+
+    end subroutine decomp_zheev
 end module CALmod
