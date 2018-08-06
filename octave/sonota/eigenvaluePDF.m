@@ -1,10 +1,10 @@
 close all;
 clear all;
 tic;
-Nsybl = 32;
-Npath = 8;
+Nsybl = 2;
+Npath = 2;
 PPLloop = 500;
-trial = 1000;
+trial = 10000;
 stride=0.01;
 
 s=0.0;
@@ -63,9 +63,9 @@ end
 
 for i=1:result_rank;
     result(i,1) = s + stride * (i-1);
-    result(i,2) = result(i,2) /  (trial*32);
+    result(i,2) = result(i,2) /  (trial*Nsybl);
 end
 
-csvwrite('oct_evPDFeig.csv', result);
+csvwrite('oct_evPDFeig_s2p2.csv', result);
 
 toc;
