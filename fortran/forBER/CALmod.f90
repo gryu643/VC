@@ -513,4 +513,49 @@ contains
         end do
 
     end subroutine decomp_zheev
+
+    subroutine decomp_zgeev(Nsybl,V,Eig)
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) V(Nsybl,Nsybl)
+        double precision Eig(1,Nsybl)
+
+        !-- declaration
+        integer,parameter :: nb=64
+        integer :: i,ifail,info,lda,ldvr,lwork,n
+        complex(kind(0d0)) :: dummy(1,1)
+        complex(kind(0d0)),allocatable :: work(:),vr(:,:),w(:)
+        double precision,allocatable :: rwork(:)
+
+        !-- initialization
+        n = Nsybl
+        lda = n
+        ldvr = n
+
+        !-- allocate
+        allocate(rwork(2*n),w(n),vr(ldvr,n))
+
+        !-- implementation
+        ! use routine workspace query to get optimal workspace.
+        lwork = -1
+        call zgeev('No left vectors','Vectors(right)',n,V,lda,w,dummy,1, &
+        vr,ldvr,dummy,lwork,rwork,info)
+
+        !Make sure that there is enough workspace for block size nb.
+        lwork = max((nb+1)*n, nint(real(dummy(1,1))))
+        allocate(work(lwork))
+
+        ! calculate all the eigenvalues and eigenvectors
+        call zgeev('No left vectors','Vectors(right)',n,V,lda,w,dummy,1, &
+        vr,ldvr,work,lwork,rwork,info)
+
+        !-- return
+        do i=1, Nsybl
+            Eig(1,i) = real(w(i))
+        end do
+
+    end subroutine decomp_zgeev
+    
 end module CALmod
