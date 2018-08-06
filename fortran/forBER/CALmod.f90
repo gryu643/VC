@@ -551,11 +551,57 @@ contains
         call zgeev('No left vectors','Vectors(right)',n,V,lda,w,dummy,1, &
         vr,ldvr,work,lwork,rwork,info)
 
-        !-- return
-        do i=1, Nsybl
-            Eig(1,i) = real(w(i))
-        end do
+        if(info==0) then
+            !-- return
+            do i=1, Nsybl
+                Eig(1,i) = real(w(i))
+            end do
+        else
+            print *, 'Failure in ZGEEV. info =', info
+        end if
 
     end subroutine decomp_zgeev
+
+    subroutine decomp_zhpev(Nsybl,V,Eig)
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) V(Nsybl,Nsybl)
+        double precision Eig(1,Nsybl)
+
+        !-- declaration
+        integer :: i,j,info,n
+        character(1),parameter :: uplo='U'
+        complex(kind(0d0)) :: dummy(1,1)
+        complex(kind(0d0)),allocatable :: work(:),ap(:)
+        double precision,allocatable :: rwork(:),w(:)
+
+        !-- initialization
+        n = Nsybl
+
+        !-- allocate
+        allocate(ap((n*(n+1))/2),rwork(3*n-2),w(n),work(2*n-1))
+
+        !-- implementation
+        do i=1, n
+            do j=i,n
+                ap(i+(j*(j-1))/2) = V(i,j)
+            end do
+        end do
+
+        ! calculate all the eigenvalues and eigenvectors
+        call zhpev('V', uplo, n, ap, w, V, n, work, rwork, info)
+
+        if(info==0) then
+            !-- return
+            do i=1, Nsybl
+                Eig(1,i) = real(w(i))
+            end do
+        else
+            print *, 'Failure in ZGEEV. info =', info
+        end if
+
+    end subroutine decomp_zhpev
     
 end module CALmod
