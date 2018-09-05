@@ -11,10 +11,10 @@ program VC
 
     !declaration
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=1
-    integer,parameter :: SEbN0=-10
-    integer,parameter :: EEbN0=40
-    integer,parameter :: Step=5
+    integer,parameter :: Npath=8
+    integer,parameter :: SEbN0=-3
+    integer,parameter :: EEbN0=12
+    integer,parameter :: Step=1
     integer,parameter :: Nloop=10000
     integer,parameter :: PPLloop=500
 
@@ -185,6 +185,7 @@ program VC
             do i=1, Nsybl+Npath-1
                 Noise(i,1) = cmplx(normal(),normal(),kind(0d0))
             end do
+            !正規乱数の分散＝１＝雑音電力なので、正規乱数に雑音電力をかける（√２で割っているのはIとQの両方合わせて雑音電力とするため）
             Noise = Noise * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)/sqrt(2.0d0)
 
             do i=1, Nsybl+Npath-1
