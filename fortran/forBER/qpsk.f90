@@ -9,11 +9,11 @@ program qpsk
     integer,parameter :: SEbN0=-3
     integer,parameter :: EEbN0=12
     integer,parameter :: Step=1
-    integer,parameter :: Nloop=100000
+    integer,parameter :: Nloop=10000
 
     integer i,j
-    double precision C
-    double precision N
+    double precision Ps
+    double precision Pn
     integer Collect
     integer False
     integer loop
@@ -29,8 +29,8 @@ program qpsk
     double precision BER
 
     !initialize
-    C=0.0d0
-    N=0.0d0
+    Ps=0.0d0
+    Pn=0.0d0
     Collect=0
     False=0
     loop=0
@@ -52,9 +52,9 @@ program qpsk
     open (1, file='qpsk_ber.csv', status='replace')
 
     !implimentation part
-    do KEbN0=SEbN0,EEbN0, Step !C/N loop
-        C = 0.0d0
-        N = 0.0d0
+    do KEbN0=SEbN0,EEbN0, Step !Ps/Pn loop
+        Ps = 0.0d0
+        Pn = 0.0d0
         Collect = 0
         False = 0
 
@@ -66,18 +66,18 @@ program qpsk
 
             !signal power = 1
             Pow = 0.0d0
-            Pow = (abs(S)**2.0d0)/2.0d0
+            Pow = abs(S)**2.0d0
             S = S / sqrt(Pow)
 
             !generate Noise
             Noise = cmplx(normal(),normal(),kind(0d0))
 
-            !正規乱数の分散＝１＝雑音電力なので、正規乱数に雑音電力をかける（√２で割っているのはIとQの両方合わせて雑音電力とするため）
-            Noise = Noise * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0)))/sqrt(2.0d0)
+            !EbN0
+            Noise = Noise * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)/sqrt(2.0d0)
 
-            !calculate C and N
-            C = (abs(S)**2.0d0)/2.0d0
-            N = (abs(Noise)**2.0d0)/2.0d0
+            !calculate Ps and Pn
+            Ps = Ps + abs(S)**2.0d0
+            Pn = Pn + abs(Noise)**2.0d0
 
             !add noise
             S = S + Noise
@@ -109,11 +109,11 @@ program qpsk
             endif
         end do
         
-        EbN0 = 10.0d0*dlog10(C/N) !QPSK rate =2
+        EbN0 = 10.0d0*dlog10(Ps/Pn/2.0d0) !1/2*SNR=EbN0 (QPSK)
         BER = dble(False) / (dble(Collect) + dble(False))
         if(BER>0.0) then
-            write(1,*) KEbN0, ',', BER
-            print *, 'EbN0=', KEbN0
+            write(1,*) EbN0, ',', BER
+            print *, 'EbN0=', EbN0
             print *, 'BER=', BER
         endif
     end do
