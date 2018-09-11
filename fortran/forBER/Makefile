@@ -27,6 +27,10 @@ pdf: CALmod.o PPLmod.o eigenvaluePDF.o
 pdf_ideal: eigenvaluePDF_ideal.o
 	$(CC) $^ -o $@ $(LAPACK)
 
+.PHONY: qpsk
+qpsk: CALmod.o qpsk.o
+	$(CC) $^ -o $@ $(LAPACK)
+
 .SUFFIXES: .f90 .o
 .f90.o:
 	$(CC) -c $< $(CFLAGS)
