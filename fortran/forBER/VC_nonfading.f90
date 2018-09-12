@@ -150,7 +150,8 @@ program VC
 !                call decomp_zheevd(Nsybl,V,Eig)
 !                call decomp_zheev(Nsybl,V,Eig)
 !                call decomp_zgeev(Nsybl,V,Eig)
-                call decomp_zhpev(Nsybl,V,Eig)
+!                call decomp_zhpev(Nsybl,V,Eig)
+                !HHHが単位ベクトルIの時、固有値は１（重複度Nsybl）となって固有ベクトルは何でもよいので、V=Iとする
             endif
 
             !set information symbol
