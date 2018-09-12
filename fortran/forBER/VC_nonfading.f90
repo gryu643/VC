@@ -92,7 +92,7 @@ program VC
     call system_clock(t1)
 
     !file open
-    open (1, file='VC(Nsybl=32,Npath=8)nonfading.csv', status='replace')
+    open (1, file='VC(Nsybl=32)nonfading_Hpass.csv', status='replace')
 
     !implimentation part
     !channel gain parameter
@@ -115,9 +115,9 @@ program VC
             !set H
             do i=1, Nsybl
                 do j=1, Npath
-                    H(i+j-1,i) = Cpath(j,1)
+!                    H(i+j-1,i) = Cpath(j,1)
                 end do
-!                H(i,i) = cmplx(1.0d0,0.0d0,kind(0d0))
+                H(i,i) = cmplx(1.0d0,0.0d0,kind(0d0))
             end do
 
             !set HE
@@ -181,7 +181,7 @@ program VC
                 Pow = Pow + (abs(X(i,1))**2.0d0)/Nsybl
             end do
             X = X / sqrt(Pow)
-!            call CMultiply(H,X,Y,Nsybl,Nsybl,Nsybl,1) !pass H
+            call CMultiply(H,X,Y,Nsybl,Nsybl,Nsybl,1) !pass H
 
             do i=1, Nsybl
                 Noise(i,1) = cmplx(normal(),normal(),kind(0d0))
@@ -190,16 +190,16 @@ program VC
             Noise = Noise * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)/sqrt(2.0d0)
 
             do i=1, Nsybl
-                Psig = Psig + abs(X(i,1))**2.0d0
+                Psig = Psig + (abs(Y(i,1))**2.0d0)
                 Pwgn = Pwgn + abs(Noise(i,1))**2.0d0
             end do
 
             !add noise
-            call CAdd(X,Noise,X,Nsybl,1,Nsybl,1)
+            call CAdd(Y,Noise,Y,Nsybl,1,Nsybl,1)
 
             !Matched Filter
-!            call CMultiply(HH,Y,Yn,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,1)
-            call CSubstitute(Yn,X,Nsybl,1)
+            call CMultiply(HH,Y,Yn,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,1)
+!            call CSubstitute(Yn,X,Nsybl,1)
         
             do i=1, Nsybl
                 Y2(i,1) = Yn(i,1)
