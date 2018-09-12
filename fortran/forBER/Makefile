@@ -1,10 +1,10 @@
 # Makefile for colMat.f90 noiseExist
 
 CC = gfortran
-PROGRAM = CALmod PPLmod usePPLmod VC normal pdf pdf_ideal qpsk
+PROGRAM = CALmod PPLmod usePPLmod vc vc_nonfading normal pdf pdf_ideal qpsk
 CFLAGS = -O3
-OBJS = CALmod.o PPLmod.o usePPLmod.o VC.o verify_normal.o eigenvaluePDF.o eigenvaluePDF_ideal.o qpsk.o
-MOD = pplmod.mod calmod.mod
+OBJS = *.o
+MOD = *.mod
 LAPACK = -llapack -lblas
 
 .PHONY: usePPLmod
@@ -13,6 +13,10 @@ usePPLmod: CALmod.o PPLmod.o usePPLmod.o
 
 .PHONY: vc
 vc: CALmod.o PPLmod.o VC.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+.PHONY: vc_nonfading
+vc_nonfading: CALmod.o PPLmod.o VC_nonfading.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: normal
