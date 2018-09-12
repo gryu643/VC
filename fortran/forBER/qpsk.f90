@@ -9,7 +9,7 @@ program qpsk
     integer,parameter :: SEbN0=-3
     integer,parameter :: EEbN0=12
     integer,parameter :: Step=1
-    integer,parameter :: Nloop=10000
+    integer,parameter :: Nloop=100000
 
     integer i,j
     double precision Ps
@@ -76,6 +76,7 @@ program qpsk
             Noise = Noise * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)/sqrt(2.0d0)
 
             !calculate Ps and Pn
+            !Noiseが統計的に電力１になるので、試行回数分電力を足し合わせる
             Ps = Ps + abs(S)**2.0d0
             Pn = Pn + abs(Noise)**2.0d0
 
