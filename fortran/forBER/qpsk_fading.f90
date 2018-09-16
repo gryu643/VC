@@ -6,7 +6,7 @@ program qpsk_fading
     integer t1, t2, t_rate, t_max, diff
 
     !declaration
-    integer,parameter :: SEbN0=-0
+    integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=10
     integer,parameter :: Nloop=100000
@@ -75,13 +75,13 @@ program qpsk_fading
             Noise = cmplx(normal(),normal(),kind(0d0))
 
             !generate rayleigh
-            Rayl = cmplx(normal(),normal(),kind(0d0))/sqrt(2.0d0)/sqrt(8.0d0)
+            Rayl = cmplx(normal(),normal(),kind(0d0))
 
             !EbN0
             Noise = Noise * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)/sqrt(2.0d0)
 
             !multiply rayleigh
-            S = Rayl * S
+            S = abs(Rayl) * S
 
             !calculate Ps and Pn
             !Noiseが統計的に電力１になるので、試行回数分電力を足し合わせる
