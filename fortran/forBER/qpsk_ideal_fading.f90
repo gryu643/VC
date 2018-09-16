@@ -2,8 +2,8 @@ program qpsk_ideal_fading
     implicit none
 
     !declaration
-    integer,parameter :: SEbN0=-30
-    integer,parameter :: EEbN0=120
+    integer,parameter :: SEbN0=-100
+    integer,parameter :: EEbN0=400
     integer KEbN0
     double precision BER
     double precision EbN0
