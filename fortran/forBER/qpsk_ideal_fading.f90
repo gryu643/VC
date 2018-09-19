@@ -13,14 +13,14 @@ program qpsk_ideal_fading
     EbN0=0.0d0
 
     !file open
-    open (1, file='qpsk_ideal_fading.csv', status='replace')
+    open (1, file='qpsk_ideal_fading2.csv', status='replace')
 
     !implementation
     do KEbN0=SEbN0, EEbN0
         EbN0 = 10.0d0**(dble(KEbN0/10.0d0)/10.0d0)
         BER = 1.0d0/2.0d0*(1.0d0-1.0d0/sqrt(1.0d0+1.0d0/EbN0))
 
-        write(1,*) dble(kEbN0/10.0d0), ",", BER
+        write(1,*) dble(kEbN0/10.0d0+1.6825), ",", BER
     end do
 
     !file close

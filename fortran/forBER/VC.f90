@@ -11,10 +11,10 @@ program VC
 
     !declaration
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=8
-    integer,parameter :: SEbN0=-3
-    integer,parameter :: EEbN0=12
-    integer,parameter :: Step=1
+    integer,parameter :: Npath=1
+    integer,parameter :: SEbN0=-10
+    integer,parameter :: EEbN0=20
+    integer,parameter :: Step=5
     integer,parameter :: Nloop=10000
     integer,parameter :: PPLloop=500
 
@@ -52,6 +52,10 @@ program VC
     double precision EbN0
     double precision BER
     double precision Eig(1,Nsybl)
+    integer LCollect
+    integer LFalse
+    double precision LBER
+    double precision LEbN0
 
     !initialize
     Ampd(:,:)=0.0d0
@@ -87,12 +91,14 @@ program VC
     EbN0=0.0d0
     BER=0.0d0
     Eig=0.0d0
+    LBER=0.0d0
 
     !time measurement start
     call system_clock(t1)
 
     !file open
     open (1, file='VC(Nsybl=32,Npath=1).csv', status='replace')
+    open (2, file='LVC(Nsybl=32,Npath=1).csv', status='replace')
 
     !implimentation part
     !channel gain parameter
@@ -101,57 +107,59 @@ program VC
         !Ampd(i) = sqrt(1/(2**(i-1))) !Exp. atten.
     end do
 
+    do i=1, Npath
+        Cpath(i,1) = cmplx(normal(),normal(),kind(0d0))/sqrt(2.0d0)*Ampd(i,1)
+    end do
+
+    !set H
+    do i=1, Nsybl
+        do j=1, Npath
+            H(i+j-1,i) = Cpath(j,1)
+        end do
+    end do
+
+    !set HE
+    do i=1, Nsybl+Npath-1
+        do j=1, Npath
+            HE(i+j-1,i) = Cpath(j,1)
+        end do
+    end do
+
+    if(APPLY_PPL) then
+        !set Xppl
+        do i=1, Nsybl
+            do j=1, Nsybl
+                Xppl(i,j) = cmplx(1.0d0, 0.0d0, kind(0d0))
+            end do
+        end do
+    endif
+
+    !set HH
+    call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
+
+    !set HHH
+    call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
+
+    !eigenvalue decomposition
+    if(APPLY_PPL) then
+        call PPL(H,HE,Xppl,Eig,Nsybl,Npath,PPLloop)
+    else
+        call CSubstitute(V,HHH,Nsybl,Nsybl)
+!                call decomp_zheevd(Nsybl,V,Eig)
+!                call decomp_zheev(Nsybl,V,Eig)
+!                call decomp_zgeev(Nsybl,V,Eig)
+        call decomp_zhpev(Nsybl,V,Eig)
+    endif
+
     do KEbN0=SEbN0, EEbN0, Step !Eb/N0 loop
         Psig = 0.0d0
         Pwgn = 0.0d0
         Collect = 0
         False = 0
+        LCollect = 0
+        LFalse = 0
 
         do loop=1, Nloop !Monte calro loop
-            do i=1, Npath
-                Cpath(i,1) = cmplx(normal(),normal(),kind(0d0))/sqrt(2.0d0)*Ampd(i,1)
-            end do
-
-            !set H
-            do i=1, Nsybl
-                do j=1, Npath
-                    H(i+j-1,i) = Cpath(j,1)
-                end do
-            end do
-
-            !set HE
-            do i=1, Nsybl+Npath-1
-                do j=1, Npath
-                    HE(i+j-1,i) = Cpath(j,1)
-                end do
-            end do
-
-            if(APPLY_PPL) then
-                !set Xppl
-                do i=1, Nsybl
-                    do j=1, Nsybl
-                        Xppl(i,j) = cmplx(1.0d0, 0.0d0, kind(0d0))
-                    end do
-                end do
-            endif
-
-            !set HH
-            call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
-
-            !set HHH
-            call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
-
-            !eigenvalue decomposition
-            if(APPLY_PPL) then
-                call PPL(H,HE,Xppl,Eig,Nsybl,Npath,PPLloop)
-            else
-                call CSubstitute(V,HHH,Nsybl,Nsybl)
-!                call decomp_zheevd(Nsybl,V,Eig)
-!                call decomp_zheev(Nsybl,V,Eig)
-!                call decomp_zgeev(Nsybl,V,Eig)
-                call decomp_zhpev(Nsybl,V,Eig)
-            endif
-
             !set information symbol
             do i=1, Nsybl
                 S(1,i) = cmplx(nint(rand())*2.0d0-1.0d0,nint(rand())*2.0d0-1.0d0,kind(0d0)) !-1or1
@@ -186,10 +194,10 @@ program VC
                 Noise(i,1) = cmplx(normal(),normal(),kind(0d0))
             end do
             !正規乱数の分散＝１＝雑音電力なので、正規乱数に雑音電力をかける（√２で割っているのはIとQの両方合わせて雑音電力とするため）
-            Noise = Noise * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)/sqrt(2.0d0)
+            Noise = Noise / sqrt(2.0d0) * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)
 
             do i=1, Nsybl+Npath-1
-                Psig = Psig + (abs(Y(i,1))**2.0d0)/2.0d0
+                Psig = Psig + (abs(Y(i,1))**2.0d0)
                 Pwgn = Pwgn + abs(Noise(i,1))**2.0d0
             end do
 
@@ -231,28 +239,49 @@ program VC
             do i=1, Nsybl
                 if(RdatI(1,i)==TdatI(1,i)) then
                     Collect = Collect + 1
+                    if(i==1) then
+                        LCollect = LCollect + 1
+                    endif
                 elseif(RdatI(1,i)/=TdatI(1,i)) then
                     False = False + 1
+                    if(i==1) then
+                        LFalse = LFalse + 1
+                    endif
                 endif
                 if(RdatQ(1,i)==TdatQ(1,i)) then
                     Collect = Collect + 1
+                    if(i==1) then
+                        LCollect = LCollect + 1
+                    endif
                 elseif(RdatQ(1,i)/=TdatQ(1,i)) then
                     False = False + 1
+                    if(i==1) then
+                        LFalse = LFalse + 1
+                    endif
                 endif
             end do
         end do
         
-        EbN0 = 10.0d0*dlog10(Psig/Pwgn*2.0d0) !QPSK rate =2
+        EbN0 = 10.0d0*dlog10(Psig/Pwgn/2.0d0) !QPSK rate =2
         BER = dble(False) / (dble(Collect) + dble(False))
+        LEbN0 = KEbN0 + 10.0d0*dlog10(Eig(1,1))
+        LBER = dble(LFalse) / (dble(LCollect) + dble(LFalse))
         if(BER>0.0) then
             write(1,*) EbN0, ',', BER
-            print *, 'EbN0=', EbN0
-            print *, 'BER=', BER
+
+        endif
+        if(LBER>0.0) then
+            print *, 'EbN0=', LEbN0
+            print *, 'BER=', LBER
+            write(2,*) LEbN0, ',', LBER
         endif
     end do
+    print *, 'lambda=', Eig(1,1)
+    print *, 'lambda[dB]=', 10.0d0*dlog10(Eig(1,1))
 
     !file close
     close(1)
+    close(2)
 
     !time measurement end
     call system_clock(t2, t_rate, t_max)
