@@ -13,7 +13,7 @@ program qpsk_ideal_fading
     EbN0=0.0d0
 
     !file open
-    open (1, file='qpsk_ideal_fading2.csv', status='replace')
+    open (1, file='qpsk_ideal_fading.csv', status='replace')
 
     !implementation
     do KEbN0=SEbN0, EEbN0
