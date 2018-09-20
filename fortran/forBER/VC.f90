@@ -93,6 +93,7 @@ program VC
 
     !file open
     open (1, file='VC(Nsybl=32,Npath=2).csv', status='replace')
+    open (2, file='VC(trial).csv', status='replace')
 
     !implimentation part
     !channel gain parameter
@@ -240,6 +241,7 @@ program VC
                     False = False + 1
                 endif
             end do
+            write(2,*) loop, ',', dble(False)/(dble(Collect)+dble(False))
         end do
         
         EbN0 = 10.0d0*dlog10(Psig/Pwgn) !QPSK rate =2
@@ -253,6 +255,7 @@ program VC
 
     !file close
     close(1)
+    close(2)
 
     !time measurement end
     call system_clock(t2, t_rate, t_max)
