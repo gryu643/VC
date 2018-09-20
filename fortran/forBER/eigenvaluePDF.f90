@@ -10,8 +10,8 @@ program eigenvaluePDF
     integer t1, t2, t_rate, t_max, diff
 
     !declatation
-    integer,parameter :: Nsybl=2
-    integer,parameter :: Npath=2
+    integer,parameter :: Nsybl=32
+    integer,parameter :: Npath=1
     integer,parameter :: PPLloop=500
     integer,parameter :: trial=100000
 
@@ -32,6 +32,8 @@ program eigenvaluePDF
     integer i,j,loop
     double precision start,end
     integer rank
+    double precision avg
+    double precision avgdB
 
     !initialization
     Ampd(:,:)=0.0d0
@@ -44,6 +46,7 @@ program eigenvaluePDF
     V(:,:)=(0.0d0,0.0d0)
     Eig(:,:)=0.0d0
     Eig_diag(:,:)=(0.0d0,0.0d0)
+    avg=0.0d0
 
     output=0.0d0
     start=0.0d0
@@ -57,7 +60,7 @@ program eigenvaluePDF
     call system_clock(t1)
 
     !file open
-        open(1,file='fort_evPDFdecomp_zhpev_s2p2.csv', status='replace')
+        open(1,file='evPDFdecomp_s32p1.csv', status='replace')
 
     !implementation
     !channel gain parameter
@@ -122,7 +125,9 @@ program eigenvaluePDF
     do i=1, rank
         result(i,1) = start + stride * (i-1)
         result(i,2) = result(i,2) / (trial*Nsybl)
+        avg = avg + result(i,1) * result(i,2)
     end do
+    avgdB = 10.0d0*dlog10(avg)
 
     do i=1, rank
         write(1,*) result(i,1), ',', result(i,2)
@@ -130,6 +135,9 @@ program eigenvaluePDF
 
     !file close
     close(1)
+
+    print *, 'avg[dB]=', avgdB
+    print *, 'avg=', avg
 
     !time measurement end
     call system_clock(t2,t_rate,t_max)

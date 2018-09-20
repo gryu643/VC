@@ -11,10 +11,10 @@ program VC
 
     !declaration
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=1
+    integer,parameter :: Npath=2
     integer,parameter :: SEbN0=-10
-    integer,parameter :: EEbN0=20
-    integer,parameter :: Step=5
+    integer,parameter :: EEbN0=40
+    integer,parameter :: Step=10
     integer,parameter :: Nloop=10000
     integer,parameter :: PPLloop=500
 
@@ -97,8 +97,8 @@ program VC
     call system_clock(t1)
 
     !file open
-    open (1, file='VC(Nsybl=32,Npath=1).csv', status='replace')
-    open (2, file='LVC(Nsybl=32,Npath=1).csv', status='replace')
+    open (1, file='VC(Nsybl=32,Npath=2).csv', status='replace')
+    open (2, file='LVC(Nsybl=32,Npath=2).csv', status='replace')
 
     !implimentation part
     !channel gain parameter

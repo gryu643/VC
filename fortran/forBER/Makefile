@@ -47,6 +47,10 @@ qpsk_fading: CALmod.o qpsk_fading.o
 qpsk_ideal_fading: CALmod.o qpsk_ideal_fading.o
 	$(CC) $^ -o $@ $(LAPACK)
 
+.PHONY: MRdiv
+MRdiv: CALmod.o qpsk_ideal_MRdiv.o
+	$(CC) $^ -o $@ $(LAPACK)
+
 .SUFFIXES: .f90 .o
 .f90.o:
 	$(CC) -c $< $(CFLAGS)
