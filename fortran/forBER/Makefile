@@ -15,6 +15,15 @@ usePPLmod: CALmod.o PPLmod.o usePPLmod.o
 vc: CALmod.o PPLmod.o VC.o
 	$(CC) $^ -o $@ $(LAPACK)
 
+.PHONY: each_ch
+each_ch: CALmod.o PPLmod.o VC_BEReachCH.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+.PHONY: fixedH
+fixedH: CALmod.o PPLmod.o VC_fixedH.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+
 .PHONY: vc_nonfading
 vc_nonfading: CALmod.o PPLmod.o VC_nonfading.o
 	$(CC) $^ -o $@ $(LAPACK)
