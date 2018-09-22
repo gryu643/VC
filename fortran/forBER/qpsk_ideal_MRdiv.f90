@@ -20,7 +20,7 @@ program qpsk_ideal_MRdiv
         EbN0 = 10.0d0**(dble(KEbN0/10.0d0)/10.0d0)
         BER = 1.0d0/2.0d0 - 1.0d0/2.0d0*(1.0d0+3.0d0/EbN0)/(1.0d0+2.0d0/EbN0)**1.5d0
 
-        write(1,*) dble(kEbN0/10.0d0+1.6825), ",", BER
+        write(1,*) dble(kEbN0/10.0d0), ",", BER
     end do
 
     !file close
