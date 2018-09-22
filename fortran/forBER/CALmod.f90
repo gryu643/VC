@@ -603,5 +603,29 @@ contains
         end if
 
     end subroutine decomp_zhpev
+
+    subroutine sort(A,num)
+        implicit none
+
+        !-- declaration
+        integer i,j,num
+        double precision A(1,num)
+        double precision TMP
+
+        !-- initialization
+        TMP=0.0d0
+
+        !-- implementation
+        do i=1, num
+            do j=i+1, num
+                if(A(1,i)<A(1,j)) then
+                    TMP = A(1,i)
+                    A(1,i) = A(1,j)
+                    A(1,j) = TMP
+                endif
+            end do
+        end do
+
+    end subroutine sort
     
 end module CALmod
