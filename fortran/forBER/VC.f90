@@ -4,14 +4,14 @@ program VC
     implicit none
 
     !ifdef
-    logical,parameter :: APPLY_PPL=.False.
+    logical,parameter :: APPLY_PPL=.True.
 
     !run time declaration
     integer t1, t2, t_rate, t_max, diff
 
     !declaration
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=2
+    integer,parameter :: Npath=8
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=10
@@ -92,8 +92,8 @@ program VC
     call system_clock(t1)
 
     !file open
-    open (1, file='VC(Nsybl=32,Npath=2).csv', status='replace')
-    open (2, file='VC(trial).csv', status='replace')
+    open (1, file='VCs32p8.csv', status='replace')
+    open (2, file='VCtrial.csv', status='replace')
 
     !implimentation part
     !channel gain parameter
