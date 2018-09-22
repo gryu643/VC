@@ -244,7 +244,7 @@ program VC
             write(2,*) loop, ',', dble(False)/(dble(Collect)+dble(False))
         end do
         
-        EbN0 = 10.0d0*dlog10(Psig/Pwgn) !QPSK rate =2
+        EbN0 = 10.0d0*dlog10(Psig/Pwgn/2.0d0) !QPSK rate =2
         BER = dble(False) / (dble(Collect) + dble(False))
         if(BER>0.0) then
             write(1,*) EbN0, ',', BER
