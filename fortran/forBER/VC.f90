@@ -92,7 +92,7 @@ program VC
     call system_clock(t1)
 
     !file open
-    open (1, file='VCs32p8.csv', status='replace')
+    open (1, file='VCs32p8PPL.csv', status='replace')
     open (2, file='VCtrial.csv', status='replace')
 
     !implimentation part
@@ -145,6 +145,7 @@ program VC
             !eigenvalue decomposition
             if(APPLY_PPL) then
                 call PPL(H,HE,Xppl,Eig,Nsybl,Npath,PPLloop)
+                call CSubstitute(V,Xppl,Nsybl,Nsybl)
             else
                 call CSubstitute(V,HHH,Nsybl,Nsybl)
         !                call decomp_zheevd(Nsybl,V,Eig)
