@@ -1,7 +1,7 @@
 module CALmod
     implicit none
 contains
-	!行列の掛け算を行う
+	!複素行列の掛け算を行う
 
     subroutine CMultiply(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
         integer A_ROW,A_COL,B_ROW,B_COL,i,j,k
@@ -15,6 +15,27 @@ contains
         do i=1, A_ROW
             do j=1, B_COL
                 C(i,j) = cmplx(0.0,0.0,kind(0d0))
+                do k=1, A_COL
+                    C(i,j) = C(i,j)+A(i,k)*B(k,j)
+                end do
+            end do
+        end do
+
+    end subroutine
+
+    !実行列の掛け算を行う
+    subroutine RMultiply(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
+        integer A_ROW,A_COL,B_ROW,B_COL,i,j,k
+        double precision A(:,:), B(:,:),C(:,:)
+
+        if(A_COL.ne.B_ROW) then
+            print *, "can't calculate (Multiply)"
+            stop
+        end if
+
+        do i=1, A_ROW
+            do j=1, B_COL
+                C(i,j) = 0.0d0
                 do k=1, A_COL
                     C(i,j) = C(i,j)+A(i,k)*B(k,j)
                 end do
@@ -627,5 +648,50 @@ contains
         end do
 
     end subroutine sort
+
+    !逆行列計算
+    subroutine InverseMat(A,n)
+!      .. Implicit None Statement ..
+       IMPLICIT NONE
+!      .. Parameters ..
+       INTEGER, PARAMETER              :: nin = 5, nout = 6
+!      .. Local Scalars ..
+       INTEGER                         :: i, ifail, info, lda, lwork, n
+!      .. Local Arrays ..
+       double precision, ALLOCATABLE :: work(:)
+       double precision A(n,n)
+       INTEGER, ALLOCATABLE            :: ipiv(:)
+!      .. Executable Statements ..
+
+!      Skip heading in data file
+       lda = n
+       lwork = 64*n
+       ALLOCATE (work(lwork),ipiv(n))
+
+!      Factorize A
+
+!      The NAG name equivalent of dgetrf is f07adf
+       CALL dgetrf(n,n,A,lda,ipiv,info)
+
+       FLUSH (nout)
+       IF (info==0) THEN
+
+!         Compute inverse of A
+
+!         The NAG name equivalent of dgetri is f07ajf
+          CALL dgetri(n,A,lda,ipiv,work,lwork,info)
+
+!         Print inverse
+
+!         ifail: behaviour on error exit
+!                =0 for hard exit, =1 for quiet-soft, =-1 for noisy-soft
+          ifail = 0
+!          CALL x04caf('General',' ',n,n,A,lda,'Inverse',ifail)
+
+       ELSE
+          WRITE (nout,*) 'The factor U is singular'
+       END IF
+
+    end subroutine InverseMat
     
 end module CALmod
