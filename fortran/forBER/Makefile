@@ -23,6 +23,9 @@ each_ch: CALmod.o PPLmod.o VC_BEReachCH.o
 fixedH: CALmod.o PPLmod.o VC_fixedH.o
 	$(CC) $^ -o $@ $(LAPACK)
 
+.PHONY: Pcon
+Pcon: CALmod.o PPLmod.o PCONmod.o VC_Pcontrol.o
+	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: vc_nonfading
 vc_nonfading: CALmod.o PPLmod.o VC_nonfading.o
