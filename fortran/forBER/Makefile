@@ -2,7 +2,7 @@
 
 CC = gfortran
 PROGRAM = CALmod PPLmod usePPLmod vc vc_nonfading normal pdf pdf_ideal qpsk qpsk_ideal_fading vc_ideal vc_ideal_formula
-CFLAGS = -O3
+CFLAGS = -O3 -mtune=native -march=native -mfpmath=both
 OBJS = *.o
 MOD = *.mod
 LAPACK = -llapack -lblas
