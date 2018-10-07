@@ -65,14 +65,12 @@ program VC_ideal
     do KLambda=SSLambda, EELambda
         SumPL = SumPL + LambdaPDF(PDF,ReadFileRow,dble(KLambda)*LStep,Npath)
     end do
-!    PDF(:,2) = PDF(:,2)/SumPL
 
     !implementation
     do KEbN0=SEbN0, EEbN0, Step
         BER=0.0d0
         EbN0 = 10.0d0**(dble(KEbN0)/10.0d0)
         AvLambdaEbN0=0.0d0
-!        PDF2(:,1) = PDF(:,1)+EbN0
 
         do KLambda=SSLambda, EELambda
             LambdaEbN0 = (dble(Klambda)*LStep)*EbN0
