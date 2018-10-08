@@ -10,33 +10,29 @@ program VC_ideal
     integer,parameter :: Step=10
     integer i
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=1
     integer KEbN0
     integer,parameter :: SLambda=0
-    integer,parameter :: ELambda=15
+    integer,parameter :: ELambda=20
     !入力する確率密度分布の、横軸刻み幅に合わせる
-    double precision,parameter :: LStep=0.00001
+    double precision,parameter :: LStep=0.000001
 
     integer KLambda
     integer SSLambda,EELambda
     double precision BER
     double precision EbN0
-    double precision AvLambda(1,8)
     double precision InstantBER
     double precision LambdaEbN0
     double precision ProbLambda
     double precision AvLambdaEbN0
     !入力する確率密度分布の、lambda=15までの行数
-    integer,parameter :: ReadFileRow=1500001
+    integer,parameter :: ReadFileRow=int(ELambda/Lstep)+1
     double precision PDF(ReadFileRow,2)
     double precision EbN0dB
     double precision SumPL
-    double precision PDF2(ReadFileRow,2)
 
     !initialization
     BER=0.0d0
     EbN0=0.0d0
-    AvLambda=0.0d0
     InstantBER=0.0d0
     LambdaEbN0=0.0d0
     ProbLambda=0.0d0
@@ -44,18 +40,12 @@ program VC_ideal
     PDF=0.0d0
     SumPL=0.0d0
 
-    !average LambdaPDF(each Npath)
-    AvLambda(1,1)=0.0d0
-    AvLambda(1,2)=0.79d0
-    AvLambda(1,4)=0.0d0
-    AvLambda(1,8)=0.0d0
-
     !time measurement start
     call system_clock(t1)
 
     !file open
-    open (1, file='VC_ideal1_0.00001.csv', status='replace')
-    open (2, file='ev(s32p1)0.00001.csv', status='old')
+    open (1, file='VC_ideal(s32p2)e-6.csv', status='replace')
+    open (2, file='ev(s32p2)Ae-6.csv', status='old')
 
     !file read
     do i=1, ReadFileRow
@@ -66,7 +56,7 @@ program VC_ideal
     EELambda = nint(dble(ELambda)/LStep)
 
     do KLambda=SSLambda, EELambda
-        SumPL = SumPL + LambdaPDF(PDF,ReadFileRow,dble(KLambda)*LStep,Npath,LStep)
+        SumPL = SumPL + LambdaPDF(PDF,ReadFileRow,dble(KLambda)*LStep,LStep)
     end do
 
     !implementation
@@ -77,7 +67,7 @@ program VC_ideal
 
         do KLambda=SSLambda, EELambda
             LambdaEbN0 = (dble(Klambda)*LStep)*EbN0
-            ProbLambda = LambdaPDF(PDF,ReadFileRow,dble(Klambda)*LStep,Npath,LStep)/SumPL
+            ProbLambda = LambdaPDF(PDF,ReadFileRow,dble(Klambda)*LStep,LStep)/SumPL
             InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
             BER = BER + ProbLambda*InstantBER
             AvLambdaEbN0 = AvLambdaEbN0 + LambdaEbN0*ProbLambda
@@ -98,10 +88,9 @@ program VC_ideal
     print *, 'Elapsed time is...', (t2-t1)/dble(t_rate)
 
 contains
-    function LambdaPDF(PDF,Row,x,path,Step)
+    function LambdaPDF(PDF,Row,x,Step)
         !-- declaration
         double precision x
-        integer path
         integer i
         double precision LambdaPDF
         double precision y
