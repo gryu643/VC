@@ -10,11 +10,13 @@ program VC_ideal
     integer,parameter :: Step=10
     integer i
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=2
+    integer,parameter :: Npath=1
     integer KEbN0
     integer,parameter :: SLambda=0
     integer,parameter :: ELambda=15
-    double precision,parameter :: LStep=0.0001
+    !入力する確率密度分布の、横軸刻み幅に合わせる
+    double precision,parameter :: LStep=0.00001
+
     integer KLambda
     integer SSLambda,EELambda
     double precision BER
@@ -24,7 +26,8 @@ program VC_ideal
     double precision LambdaEbN0
     double precision ProbLambda
     double precision AvLambdaEbN0
-    integer,parameter :: ReadFileRow=150001
+    !入力する確率密度分布の、lambda=15までの行数
+    integer,parameter :: ReadFileRow=1500001
     double precision PDF(ReadFileRow,2)
     double precision EbN0dB
     double precision SumPL
@@ -51,8 +54,8 @@ program VC_ideal
     call system_clock(t1)
 
     !file open
-    open (1, file='VC_ideal2_0.0001.csv', status='replace')
-    open (2, file='evPDFdecomp_s32p2_0.0001.csv', status='old')
+    open (1, file='VC_ideal1_0.00001.csv', status='replace')
+    open (2, file='ev(s32p1)0.00001.csv', status='old')
 
     !file read
     do i=1, ReadFileRow
@@ -63,7 +66,7 @@ program VC_ideal
     EELambda = nint(dble(ELambda)/LStep)
 
     do KLambda=SSLambda, EELambda
-        SumPL = SumPL + LambdaPDF(PDF,ReadFileRow,dble(KLambda)*LStep,Npath)
+        SumPL = SumPL + LambdaPDF(PDF,ReadFileRow,dble(KLambda)*LStep,Npath,LStep)
     end do
 
     !implementation
@@ -74,7 +77,7 @@ program VC_ideal
 
         do KLambda=SSLambda, EELambda
             LambdaEbN0 = (dble(Klambda)*LStep)*EbN0
-            ProbLambda = LambdaPDF(PDF,ReadFileRow,dble(Klambda)*LStep,Npath)/SumPL
+            ProbLambda = LambdaPDF(PDF,ReadFileRow,dble(Klambda)*LStep,Npath,LStep)/SumPL
             InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
             BER = BER + ProbLambda*InstantBER
             AvLambdaEbN0 = AvLambdaEbN0 + LambdaEbN0*ProbLambda
@@ -95,7 +98,7 @@ program VC_ideal
     print *, 'Elapsed time is...', (t2-t1)/dble(t_rate)
 
 contains
-    function LambdaPDF(PDF,Row,x,path)
+    function LambdaPDF(PDF,Row,x,path,Step)
         !-- declaration
         double precision x
         integer path
@@ -104,17 +107,14 @@ contains
         double precision y
         double precision PDF(Row,2)
         integer Row
+        double precision Step
 
         !-- initialization
         LambdaPDF=0.0d0
         y=0.0d0
             
-        do i=1, Row
-            if((PDF(i,1)<=x).and.(x<PDF(i+1,1))) then
-                y = PDF(i,2)
-                exit
-            endif
-        end do
+        i = int(x/Step) + 1
+        y = PDF(i,2)
 
         LambdaPDF = y
     end function LambdaPDF
