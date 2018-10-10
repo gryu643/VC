@@ -7,9 +7,9 @@ program eigenvaluePDF
 
     !declatation
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=2
+    integer,parameter :: Npath=8
     integer,parameter :: PPLloop=500
-    integer,parameter :: trial=10000
+    integer,parameter :: trial=100000
 
     double precision Ampd(Npath,1)
     complex(kind(0d0)) Cpath(Npath,1)
@@ -22,13 +22,13 @@ program eigenvaluePDF
     double precision Eig(1,Nsybl)
     complex(kind(0d0)) Eig_diag(1,Nsybl)
 
-    double precision,parameter :: stride=0.000001d0
+    double precision,parameter :: stride=0.00001d0
     double precision output
     double precision,allocatable :: result(:,:)
     double precision,allocatable :: lambda(:)
     integer i,j,loop
     double precision,parameter :: start=0.0d0
-    double precision,parameter :: end=20.0d0
+    double precision,parameter :: end=25.0d0
     integer rank
     double precision avg
     double precision avgdB
@@ -53,7 +53,7 @@ program eigenvaluePDF
     OutPutRow=0
     output=0.0d0
     !ファイル出力の要素数
-    rank=nint((end-start)/stride)+1
+    rank=nint((end-start)/stride)
 
     !allocate
     allocate(result(Nsybl+1,rank))
@@ -67,7 +67,7 @@ program eigenvaluePDF
     call system_clock(t1)
 
     !file open
-    open(39,file='ev(s32p2)Ae-6.csv', status='replace')
+    open(39,file='ev(s32p8)Be-5.csv', status='replace')
 
     !implementation
     !channel gain parameter
@@ -81,7 +81,7 @@ program eigenvaluePDF
         if(mod(loop,int(trial/10.0d0))==0) then
             print *, loop
         endif
-
+        
         do i=1, Npath
             Cpath(i,1) = cmplx(normal(),normal(),kind(0d0))*sqrt(0.5d0)*Ampd(i,1)
         end do
@@ -116,7 +116,7 @@ program eigenvaluePDF
     
     !calculate lambda 1~Nsybl
     do i=1, rank
-        lambda(i) = stride*dble(i-1)
+        lambda(i) = stride*dble(i)
     end do
     
     !calculate p(lambda) average lambda
@@ -127,12 +127,12 @@ program eigenvaluePDF
     end do
 
     do j=1, rank
-        write(39,*) lambda(j), ',', result(Nsybl+1,j)
+        write(39,*) lambda(j), ',', result(33,j)
     end do
 
     !file close
     close(39)
-
+    
     !time measurement end
     call system_clock(t2,t_rate,t_max)
     print *, 'Elapsed time is...', (t2-t1)/dble(t_rate)
