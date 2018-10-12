@@ -3,19 +3,19 @@ program VC_cutoff
     use CALmod
     implicit none
 
-    !ifdef
+    !-- ifdef
     logical,parameter :: APPLY_PPL=.False.
 
-    !run time declaration
+    !-- run time declaration
     integer t1, t2, t_rate, t_max, diff
 
-    !declaration
+    !-- declaration
     integer,parameter :: Nsybl=32
     integer,parameter :: Npath=8
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=10
-    integer,parameter :: Nloop=10000
+    integer,parameter :: Nloop=1000
     integer,parameter :: PPLloop=500
 
     integer i,j
@@ -55,7 +55,7 @@ program VC_cutoff
     integer KRep
     complex(kind(0d0)) TMP(Nsybl)
 
-    !initialize
+    !-- initialize
     Ampd(:,:)=0.0d0
     Psig=0.0d0
     Pwgn=0.0d0
@@ -90,43 +90,14 @@ program VC_cutoff
     BER=0.0d0
     Eig=0.0d0
 
-    !time measurement start
+    !-- time measurement start
     call system_clock(t1)
 
     !file open
-    open (7, file='VCcutoff(s32p8)ch1.csv', status='replace')
-    open (8, file='VCcutoff(s32p8)ch2.csv', status='replace')
-    open (9, file='VCcutoff(s32p8)ch3.csv', status='replace')
-    open (10, file='VCcutoff(s32p8)ch4.csv', status='replace')
-    open (11, file='VCcutoff(s32p8)ch5.csv', status='replace')
-    open (12, file='VCcutoff(s32p8)ch6.csv', status='replace')
-    open (13, file='VCcutoff(s32p8)ch7.csv', status='replace')
-    open (14, file='VCcutoff(s32p8)ch8.csv', status='replace')
-    open (15, file='VCcutoff(s32p8)ch9.csv', status='replace')
-    open (16, file='VCcutoff(s32p8)ch10.csv', status='replace')
-    open (17, file='VCcutoff(s32p8)ch11.csv', status='replace')
-    open (18, file='VCcutoff(s32p8)ch12.csv', status='replace')
-    open (19, file='VCcutoff(s32p8)ch13.csv', status='replace')
-    open (20, file='VCcutoff(s32p8)ch14.csv', status='replace')
-    open (21, file='VCcutoff(s32p8)ch15.csv', status='replace')
-    open (22, file='VCcutoff(s32p8)ch16.csv', status='replace')
-    open (23, file='VCcutoff(s32p8)ch17.csv', status='replace')
-    open (24, file='VCcutoff(s32p8)ch18.csv', status='replace')
-    open (25, file='VCcutoff(s32p8)ch19.csv', status='replace')
-    open (26, file='VCcutoff(s32p8)ch20.csv', status='replace')
-    open (27, file='VCcutoff(s32p8)ch21.csv', status='replace')
-    open (28, file='VCcutoff(s32p8)ch22.csv', status='replace')
-    open (29, file='VCcutoff(s32p8)ch23.csv', status='replace')
-    open (30, file='VCcutoff(s32p8)ch24.csv', status='replace')
-    open (31, file='VCcutoff(s32p8)ch25.csv', status='replace')
-    open (32, file='VCcutoff(s32p8)ch26.csv', status='replace')
-    open (33, file='VCcutoff(s32p8)ch27.csv', status='replace')
-    open (34, file='VCcutoff(s32p8)ch28.csv', status='replace')
-    open (35, file='VCcutoff(s32p8)ch29.csv', status='replace')
-    open (36, file='VCcutoff(s32p8)ch30.csv', status='replace')
-    open (37, file='VCcutoff(s32p8)ch31.csv', status='replace')
-    open (38, file='VCcutoff(s32p8)ch32.csv', status='replace')
-    !implimentation pa
+    open (1, file='VCcutoff(s32p8)KRep.csv', status='replace')
+    open (2, file='VCcutoff(s32p8)dB.csv', status='replace')
+    
+    !-- implimentation
     !channel gain paramet
     do i=1, Npath
         Ampd(i,1) = sqrt(1.0d0/dble(Npath)) !Equal Gain
@@ -196,10 +167,9 @@ program VC_cutoff
             endif
 
             do KRep=1, Nsybl
-
                 !set information symbol
                 do i=1, KRep
-                    S(1,i) = cmplx(nint(rand())*2.0d0-1.0d0,0.0d0,kind(0d0)) !-1or1
+                    S(1,i) = cmplx(nint(rand())*2.0d0-1.0d0,nint(rand())*2.0d0-1.0d0,kind(0d0)) !-1or1
                 end do
                 do i=1, KRep
                     TdatI(1,i) = (real(S(1,i))+1)/2 !0or1
@@ -251,7 +221,7 @@ program VC_cutoff
                 RdatI = 0
                 RdatQ = 0
                 !Demodulation
-                do i=1, Nsybl
+                do i=1, KRep
                     do j=1, Nsybl
                         A(j,1) = V(j,i)
                     end do
@@ -273,7 +243,7 @@ program VC_cutoff
                 end do
 
                 !Bit Error Rate
-                do i=1, Nsybl
+                do i=1, KRep
                     if(RdatI(1,i)==TdatI(1,i)) then
                         Collect(1,KRep) = Collect(1,KRep) + 1
                     elseif(RdatI(1,i)/=TdatI(1,i)) then
@@ -289,24 +259,51 @@ program VC_cutoff
         end do
         
         do i=1,Nsybl
-            EbN0(1,i) = 10.0d0*dlog10(Psig(1,i)/Pwgn(1,i)) !QPSK rate = 1
-            BER(1,i) = dble(False(1,Nsybl)) / (dble(Collect(1,Nsybl)) + dble(False(1,Nsybl)))
+            EbN0(1,i) = 10.0d0*dlog10(Psig(1,i)/Pwgn(1,i)/2.0d0) !QPSK rate = 2
+            BER(1,i) = dble(False(1,i)) / (dble(Collect(1,i)) + dble(False(1,i)))
         end do
-        do i=1,Nsybl
+
+        !-- file output(KRep)
+        if(BER(1,Nsybl)>0.0) then
+            print *, 'EbN0=', EbN0(1,Nsybl)
+            print *, 'BER=', BER(1,Nsybl)
+        endif
+        
+        do i=1, Nsybl
             if(BER(1,i)>0.0) then
-                write(i+6,*) EbN0(1,i), ',', BER(1,i)
-                print *, 'Symbl=', i, 'EbN0=', EbN0(1,i)
-                print *, 'Symbl=', i, 'BER=', BER(1,i)
+                write(1,fmt='(f32.16)', advance='no') EbN0(1,i)
+                write(1,fmt='(a)', advance='no') ','
+                write(1,fmt='(f32.16)', advance='no') BER(1,i)
+                write(1,fmt='(a)', advance='no') ','
+                write(1,fmt='(a)', advance='no') ','
+            else
+                write(1,fmt='(a)', advance='no') ','
+                write(1,fmt='(a)', advance='no') ','
+                write(1,fmt='(a)', advance='no') ','
             endif
         end do
+        write(1,*)
+
+        !-- file output(dB)
+        do i=1, Nsybl
+            write(2,*) i, ',', BER(1,i)
+        end do
+        write(2,*)
+    end do
+    !-- file output(KRep)
+    do i=1, Nsybl
+        write(1,fmt='(a)', advance='no') 's='
+        write(1,fmt='(i2)', advance='no') i
+        write(1,fmt='(a)', advance='no') ','
+        write(1,fmt='(a)', advance='no') ','
+        write(1,fmt='(a)', advance='no') ','
     end do
 
-    !file close
-    do i=7, 39
-        close(i)
-    end do
+    !-- file close
+    close(1)
+    CLOSE(2)
 
-    !time measurement end
+    !-- time measurement end
     call system_clock(t2, t_rate, t_max)
     print *, 'Elapsed time is...', (t2-t1)/dble(t_rate)
 end program
