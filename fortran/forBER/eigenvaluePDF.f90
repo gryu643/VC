@@ -158,40 +158,10 @@ program eigenvaluePDF
         end do
     end do
 
-    do j=1, rank
-        write(7,*) lambda(j), ',', result(1,j)
-        write(8,*) lambda(j), ',', result(2,j)
-        write(9,*) lambda(j), ',', result(3,j)
-        write(10,*) lambda(j), ',', result(4,j)
-        write(11,*) lambda(j), ',', result(5,j)
-        write(12,*) lambda(j), ',', result(6,j)
-        write(13,*) lambda(j), ',', result(7,j)
-        write(14,*) lambda(j), ',', result(8,j)
-        write(15,*) lambda(j), ',', result(9,j)
-        write(16,*) lambda(j), ',', result(10,j)
-        write(17,*) lambda(j), ',', result(11,j)
-        write(18,*) lambda(j), ',', result(12,j)
-        write(19,*) lambda(j), ',', result(13,j)
-        write(20,*) lambda(j), ',', result(14,j)
-        write(21,*) lambda(j), ',', result(15,j)
-        write(22,*) lambda(j), ',', result(16,j)
-        write(23,*) lambda(j), ',', result(17,j)
-        write(24,*) lambda(j), ',', result(18,j)
-        write(25,*) lambda(j), ',', result(19,j)
-        write(26,*) lambda(j), ',', result(20,j)
-        write(27,*) lambda(j), ',', result(21,j)
-        write(28,*) lambda(j), ',', result(22,j)
-        write(29,*) lambda(j), ',', result(23,j)
-        write(30,*) lambda(j), ',', result(24,j)
-        write(31,*) lambda(j), ',', result(25,j)
-        write(32,*) lambda(j), ',', result(26,j)
-        write(33,*) lambda(j), ',', result(27,j)
-        write(34,*) lambda(j), ',', result(28,j)
-        write(35,*) lambda(j), ',', result(29,j)
-        write(36,*) lambda(j), ',', result(30,j)
-        write(37,*) lambda(j), ',', result(31,j)
-        write(38,*) lambda(j), ',', result(32,j)
-        write(39,*) lambda(j), ',', result(33,j)
+    do i=1, Nsybl+1
+        do j=1, rank
+            write(i+6,*) lambda(j), ',', result(i,j)
+        end do
     end do
 
     !file close
