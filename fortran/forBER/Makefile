@@ -15,6 +15,10 @@ usePPLmod: CALmod.o PPLmod.o usePPLmod.o
 vc: CALmod.o PPLmod.o VC.o
 	$(CC) $^ -o $@ $(LAPACK)
 
+.PHONY: cutoff
+cutoff: CALmod.o PPLmod.o VC_cutoff.o
+	$(CC) $^ -o $@ $(LAPACK)
+
 .PHONY: vc_ideal
 vc_ideal: VC_ideal.o
 	$(CC) $^ -o $@ $(LAPACK)
