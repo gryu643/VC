@@ -1,17 +1,13 @@
 program eigenvaluePDF
     use CALmod
-    use PPLmod
     implicit none
-
-    !ifdef
-    logical,parameter :: APPLY_PPL=.FALSE.
 
     !run time declaration
     integer t1, t2, t_rate, t_max, diff
 
     !declatation
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=1
+    integer,parameter :: Npath=8
     integer,parameter :: PPLloop=500
     integer,parameter :: trial=100000
 
@@ -26,14 +22,20 @@ program eigenvaluePDF
     double precision Eig(1,Nsybl)
     complex(kind(0d0)) Eig_diag(1,Nsybl)
 
-    double precision,parameter :: stride=0.01d0
+    double precision,parameter :: stride=0.0001d0
     double precision output
     double precision,allocatable :: result(:,:)
+    double precision,allocatable :: lambda(:)
     integer i,j,loop
-    double precision start,end
+    double precision,parameter :: start=0.0d0
+    double precision,parameter :: end=25.0d0
     integer rank
     double precision avg
     double precision avgdB
+    double precision x1
+    double precision x2
+    double precision lambdaP(1,Nsybl+1)
+    integer OutPutRow
 
     !initialization
     Ampd(:,:)=0.0d0
@@ -47,20 +49,57 @@ program eigenvaluePDF
     Eig(:,:)=0.0d0
     Eig_diag(:,:)=(0.0d0,0.0d0)
     avg=0.0d0
-
+    lambdaP=0.0d0
+    OutPutRow=0
     output=0.0d0
-    start=0.0d0
-    end=50.0d0
-    rank=nint((end-start)/stride)+1
+    !ファイル出力の要素数
+    rank=nint((end-start)/stride)
 
     !allocate
-    allocate(result(rank,2))
+    allocate(result(Nsybl+1,rank))
+    allocate(lambda(rank))
+
+    !allocate initialize
+    result=0.0d0
+    lambda=0.0d0
 
     !time measurement start
     call system_clock(t1)
 
     !file open
-        open(1,file='evPDFdecomp_s32p1.csv', status='replace')
+    open(7,file='ev(s32p8)1Le-4.csv', status='replace')
+    open(8,file='ev(s32p8)2Le-4.csv', status='replace')
+    open(9,file='ev(s32p8)3Le-4.csv', status='replace')
+    open(10,file='ev(s32p8)4Le-4.csv', status='replace')
+    open(11,file='ev(s32p8)5Le-4.csv', status='replace')
+    open(12,file='ev(s32p8)6Le-4.csv', status='replace')
+    open(13,file='ev(s32p8)7Le-4.csv', status='replace')
+    open(14,file='ev(s32p8)8Le-4.csv', status='replace')
+    open(15,file='ev(s32p8)9Le-4.csv', status='replace')
+    open(16,file='ev(s32p8)10Le-4.csv', status='replace')
+    open(17,file='ev(s32p8)11Le-4.csv', status='replace')
+    open(18,file='ev(s32p8)12Le-4.csv', status='replace')
+    open(19,file='ev(s32p8)13Le-4.csv', status='replace')
+    open(20,file='ev(s32p8)14Le-4.csv', status='replace')
+    open(21,file='ev(s32p8)15Le-4.csv', status='replace')
+    open(22,file='ev(s32p8)16Le-4.csv', status='replace')
+    open(23,file='ev(s32p8)17Le-4.csv', status='replace')
+    open(24,file='ev(s32p8)18Le-4.csv', status='replace')
+    open(25,file='ev(s32p8)19Le-4.csv', status='replace')
+    open(26,file='ev(s32p8)20Le-4.csv', status='replace')
+    open(27,file='ev(s32p8)21Le-4.csv', status='replace')
+    open(28,file='ev(s32p8)22Le-4.csv', status='replace')
+    open(29,file='ev(s32p8)23Le-4.csv', status='replace')
+    open(30,file='ev(s32p8)24Le-4.csv', status='replace')
+    open(31,file='ev(s32p8)25Le-4.csv', status='replace')
+    open(32,file='ev(s32p8)26Le-4.csv', status='replace')
+    open(33,file='ev(s32p8)27Le-4.csv', status='replace')
+    open(34,file='ev(s32p8)28Le-4.csv', status='replace')
+    open(35,file='ev(s32p8)29Le-4.csv', status='replace')
+    open(36,file='ev(s32p8)30Le-4.csv', status='replace')
+    open(37,file='ev(s32p8)31Le-4.csv', status='replace')
+    open(38,file='ev(s32p8)32Le-4.csv', status='replace')
+    open(39,file='ev(s32p8)e-4.csv', status='replace')
 
     !implementation
     !channel gain parameter
@@ -71,8 +110,12 @@ program eigenvaluePDF
 
 
 	do loop=1, trial
+        if(mod(loop,int(trial/10.0d0))==0) then
+            print *, loop
+        endif
+        
         do i=1, Npath
-            Cpath(i,1) = cmplx(normal(),normal(),kind(0d0))/sqrt(2.0d0)*Ampd(i,1)
+            Cpath(i,1) = cmplx(normal(),normal(),kind(0d0))*sqrt(0.5d0)*Ampd(i,1)
         end do
 
         !set H
@@ -82,63 +125,80 @@ program eigenvaluePDF
             end do
         end do
 
-        !set HE
-        do i=1, Nsybl+Npath-1
-            do j=1, Npath
-                HE(i+j-1,i) = Cpath(j,1)
-            end do
-        end do
-
         !set HH
         call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
 
         !set HHH
         call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
 
-        if(APPLY_PPL) then
-            !set Xppl
-            do i=1, Nsybl
-                do j=1, Nsybl
-                    Xppl(i,j) = cmplx(1.0d0, 0.0d0, kind(0d0))
-                end do
-            end do
+        call CSubstitute(V,HHH,Nsybl,Nsybl)
+!        call decomp_zheev(Nsybl,V,Eig)
+        call decomp_zheevd(Nsybl,V,Eig)
+!        call decomp_zgeev(Nsybl,V,Eig)
+!        call decomp_zhpev(Nsybl,V,Eig)
 
-            call PPL(H,HE,Xppl,Eig,Nsybl,Npath,PPLloop)
-        else
-            call CSubstitute(V,HHH,Nsybl,Nsybl)
-!            call decomp_zheev(Nsybl,V,Eig)
-!            call decomp_zheevd(Nsybl,V,Eig)
-!            call decomp_zgeev(Nsybl,V,Eig)
-            call decomp_zhpev(Nsybl,V,Eig)
-        endif
+        call sort(Eig,Nsybl)
 
 		do i=1, Nsybl
             output = Eig(1,i)
-            do j=1, rank
-                if((output.ge.(start+stride*(j-1))).and.(output.lt.(start+stride*j))) then
-                    result(j,2) = result(j,2) + 1.0
-                end if
-            end do
+            OutPutRow = int(output/stride) + 1
+            result(i,OutPutRow) = result(i,OutPutRow) + 1.0d0/trial
         end do
 	end do
-
+    
+    !calculate lambda 1~Nsybl
     do i=1, rank
-        result(i,1) = start + stride * (i-1)
-        result(i,2) = result(i,2) / (trial*Nsybl)
-        avg = avg + result(i,1) * result(i,2)
+        lambda(i) = stride*dble(i)
     end do
-    avgdB = 10.0d0*dlog10(avg)
-
+    
+    !calculate p(lambda) average lambda
     do i=1, rank
-        write(1,*) result(i,1), ',', result(i,2)
+        do j=1, Nsybl
+            result(Nsybl+1,i) = result(Nsybl+1,i) + result(j,i)/dble(Nsybl)
+        end do
+    end do
+
+    do j=1, rank
+        write(7,*) lambda(j), ',', result(1,j)
+        write(8,*) lambda(j), ',', result(2,j)
+        write(9,*) lambda(j), ',', result(3,j)
+        write(10,*) lambda(j), ',', result(4,j)
+        write(11,*) lambda(j), ',', result(5,j)
+        write(12,*) lambda(j), ',', result(6,j)
+        write(13,*) lambda(j), ',', result(7,j)
+        write(14,*) lambda(j), ',', result(8,j)
+        write(15,*) lambda(j), ',', result(9,j)
+        write(16,*) lambda(j), ',', result(10,j)
+        write(17,*) lambda(j), ',', result(11,j)
+        write(18,*) lambda(j), ',', result(12,j)
+        write(19,*) lambda(j), ',', result(13,j)
+        write(20,*) lambda(j), ',', result(14,j)
+        write(21,*) lambda(j), ',', result(15,j)
+        write(22,*) lambda(j), ',', result(16,j)
+        write(23,*) lambda(j), ',', result(17,j)
+        write(24,*) lambda(j), ',', result(18,j)
+        write(25,*) lambda(j), ',', result(19,j)
+        write(26,*) lambda(j), ',', result(20,j)
+        write(27,*) lambda(j), ',', result(21,j)
+        write(28,*) lambda(j), ',', result(22,j)
+        write(29,*) lambda(j), ',', result(23,j)
+        write(30,*) lambda(j), ',', result(24,j)
+        write(31,*) lambda(j), ',', result(25,j)
+        write(32,*) lambda(j), ',', result(26,j)
+        write(33,*) lambda(j), ',', result(27,j)
+        write(34,*) lambda(j), ',', result(28,j)
+        write(35,*) lambda(j), ',', result(29,j)
+        write(36,*) lambda(j), ',', result(30,j)
+        write(37,*) lambda(j), ',', result(31,j)
+        write(38,*) lambda(j), ',', result(32,j)
+        write(39,*) lambda(j), ',', result(33,j)
     end do
 
     !file close
-    close(1)
-
-    print *, 'avg[dB]=', avgdB
-    print *, 'avg=', avg
-
+    do i=7,Nsybl+7
+        close(i)
+    end do
+    
     !time measurement end
     call system_clock(t2,t_rate,t_max)
     print *, 'Elapsed time is...', (t2-t1)/dble(t_rate)

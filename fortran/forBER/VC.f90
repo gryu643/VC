@@ -4,18 +4,18 @@ program VC
     implicit none
 
     !ifdef
-    logical,parameter :: APPLY_PPL=.True.
+    logical,parameter :: APPLY_PPL=.False.
 
     !run time declaration
     integer t1, t2, t_rate, t_max, diff
 
     !declaration
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=8
+    integer,parameter :: Npath=4
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=10
-    integer,parameter :: Nloop=10000
+    integer,parameter :: Nloop=100000
     integer,parameter :: PPLloop=500
 
     integer i,j
@@ -92,7 +92,7 @@ program VC
     call system_clock(t1)
 
     !file open
-    open (1, file='VCs32p8PPL.csv', status='replace')
+    open (1, file='VC(s32p4).csv', status='replace')
     open (2, file='VCtrial.csv', status='replace')
 
     !implimentation part
@@ -148,10 +148,10 @@ program VC
                 call CSubstitute(V,Xppl,Nsybl,Nsybl)
             else
                 call CSubstitute(V,HHH,Nsybl,Nsybl)
-        !                call decomp_zheevd(Nsybl,V,Eig)
-        !                call decomp_zheev(Nsybl,V,Eig)
-        !                call decomp_zgeev(Nsybl,V,Eig)
-                call decomp_zhpev(Nsybl,V,Eig)
+                call decomp_zheevd(Nsybl,V,Eig)
+!                call decomp_zheev(Nsybl,V,Eig)
+!                call decomp_zgeev(Nsybl,V,Eig)
+!                call decomp_zhpev(Nsybl,V,Eig)
             endif
 
             !set information symbol
