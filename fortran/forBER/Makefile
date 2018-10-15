@@ -23,6 +23,10 @@ cutoff: CALmod.o PPLmod.o VC_cutoff.o
 vc_ideal: VC_ideal.o
 	$(CC) $^ -o $@ $(LAPACK)
 
+.PHONY: vc_ideal2
+vc_ideal2: CALmod.o PPLmod.o VC_ideal_v2.o
+	$(CC) $^ -o $@ $(LAPACK)
+
 .PHONY: vc_ideal_formula
 vc_ideal_formula: VC_ideal_formula.o
 	$(CC) $^ -o $@ $(LAPACK)
