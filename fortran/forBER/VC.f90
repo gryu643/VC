@@ -147,11 +147,18 @@ program VC
                 call PPL(H,HE,Xppl,Eig,Nsybl,Npath,PPLloop)
                 call CSubstitute(V,Xppl,Nsybl,Nsybl)
             else
-                call CSubstitute(V,HHH,Nsybl,Nsybl)
-                call decomp_zheevd(Nsybl,V,Eig)
-!                call decomp_zheev(Nsybl,V,Eig)
-!                call decomp_zgeev(Nsybl,V,Eig)
-!                call decomp_zhpev(Nsybl,V,Eig)
+                if(Npath==1) then
+                    do i=1, Nsybl
+                        Eig(1,i) = HHH(i,i)
+                        V(i,i) = cmplx(1.0d0,0.0d0,kind(0d0))
+                    end do
+                else
+                    call CSubstitute(V,HHH,Nsybl,Nsybl)
+                    call decomp_zheevd(Nsybl,V,Eig)
+    !                call decomp_zheev(Nsybl,V,Eig)
+    !                call decomp_zgeev(Nsybl,V,Eig)
+    !                call decomp_zhpev(Nsybl,V,Eig)
+                endif
             endif
 
             !set information symbol
