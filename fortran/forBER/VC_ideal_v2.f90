@@ -11,7 +11,7 @@ program VC_ideal_v2
 
     !declaration
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=1
+    integer,parameter :: Npath=2
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=10
@@ -57,7 +57,7 @@ program VC_ideal_v2
     call system_clock(t1)
 
     !file open
-    open (1, file='VC_ideal_v2(s32p1).csv', status='replace')
+    open (1, file='VC_ideal_v2(s32p2).csv', status='replace')
 
     !implimentation part
     !channel gain parameter
@@ -137,13 +137,13 @@ program VC_ideal_v2
         EbN0 = 10.0d0*dlog10(AvLambdaEbN0) !QPSK rate =2
         select case(Npath)
             case(1)
-                EbN0 = EbN0+0.07413924
+                EbN0 = EbN0+0.091891291
             case(2)
-                EbN0 = EbN0-0.232130275
+                EbN0 = EbN0-0.213893347
             case(4)
-                EbN0 = EbN0-0.387377639
+                EbN0 = EbN0-0.328150749
             case(8)
-                EbN0 = EbN0-0.886140814
+                EbN0 = EbN0-0.893632232
         end select
 
         if(BER>0.0) then
