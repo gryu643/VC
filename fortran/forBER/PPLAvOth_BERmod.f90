@@ -126,7 +126,6 @@ contains
 			end do
 			!この時点で配列LAMBDAの各行に固有値が入っている。
 
-
 			!減算部分の算出
 			call CSubstitute(LUUH_SET,Z,Nsybl,Nsybl)
 			do i=2, Nsybl
