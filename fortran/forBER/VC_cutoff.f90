@@ -52,6 +52,7 @@ program AvOth_BER
     double precision BER
     double precision Eig(1,Nsybl)
     double precision EbN0In
+    double precision AvRTNum
 
     !initialize
     Ampd(:,:)=0.0d0
@@ -89,6 +90,7 @@ program AvOth_BER
     RTNum=0
     UseChNum=0
     EbN0In=0.0d0
+    AvRTNum=0.0d0
 
     !time measurement start
     call system_clock(t1)
@@ -108,12 +110,13 @@ program AvOth_BER
         Pwgn = 0.0d0
         Collect = 0
         False = 0
+        AvRTNum=0.0d0
         EbN0In = 10.0**(dble(KEbN0)/10.0d0)
 
         do loop=1, Nloop !Monte calro loop
             RTNum=0
             UseChNum=0
-            
+
             do i=1, Npath
                 Cpath(i,1) = cmplx(normal(),normal(),kind(0d0))/sqrt(2.0d0)*Ampd(i,1)
             end do
@@ -149,15 +152,18 @@ program AvOth_BER
             call PPL(H,HE,Xppl,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,BERStandard)
             call CSubstitute(V,Xppl,Nsybl,Nsybl)
 
+            !update AvRTNum
+            AvRTNum = AvRTNum + dble(RTNum)/dble(Nloop)
+
             !set information symbol
-            do i=1, Nsybl
+            do i=1, UseChNum
                 S(1,i) = cmplx(nint(rand())*2.0d0-1.0d0,nint(rand())*2.0d0-1.0d0,kind(0d0)) !-1or1
             end do
-            do i=1, Nsybl
+            do i=1, UseChNum
                 TdatI(1,i) = (real(S(1,i))+1)/2 !0or1
                 TdatQ(1,i) = (aimag(S(1,i))+1)/2
             end do
-            do i=1, Nsybl
+            do i=1, UseChNum
                 do j=1, Nsybl
                     SU(j,i) = S(1,i) * V(j,i)
                 end do
@@ -179,6 +185,7 @@ program AvOth_BER
             X = X / sqrt(Pow)
             call CMultiply(H,X,Y,Nsybl+Npath-1,Nsybl,Nsybl,1) !pass H
 
+            !-------------------------- UseChNum tekiyou, kokomade---------------------------------!
             do i=1, Nsybl+Npath-1
                 Noise(i,1) = cmplx(normal(),normal(),kind(0d0))
             end do
