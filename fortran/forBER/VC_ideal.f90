@@ -15,7 +15,7 @@ program VC_ideal
     integer,parameter :: ELambda=20
     !入力する確率密度分布の、横軸刻み幅に合わせる
     double precision,parameter :: LStep=0.0001
-    double precision,parameter :: LLStep=0.0001
+        double precision,parameter :: LLStep=0.000001
 
     integer KLambda
     integer SSLambda,EELambda
@@ -53,40 +53,40 @@ program VC_ideal
     call system_clock(t1)
 
     !file open
-    open(7,file='ev(s32p8)1Le-4.csv', status='old')
-    open(8,file='ev(s32p8)2Le-4.csv', status='old')
-    open(9,file='ev(s32p8)3Le-4.csv', status='old')
-    open(10,file='ev(s32p8)4Le-4.csv', status='old')
-    open(11,file='ev(s32p8)5Le-4.csv', status='old')
-    open(12,file='ev(s32p8)6Le-4.csv', status='old')
-    open(13,file='ev(s32p8)7Le-4.csv', status='old')
-    open(14,file='ev(s32p8)8Le-4.csv', status='old')
-    open(15,file='ev(s32p8)9Le-4.csv', status='old')
-    open(16,file='ev(s32p8)10Le-4.csv', status='old')
-    open(17,file='ev(s32p8)11Le-4.csv', status='old')
-    open(18,file='ev(s32p8)12Le-4.csv', status='old')
-    open(19,file='ev(s32p8)13Le-4.csv', status='old')
-    open(20,file='ev(s32p8)14Le-4.csv', status='old')
-    open(21,file='ev(s32p8)15Le-4.csv', status='old')
-    open(22,file='ev(s32p8)16Le-4.csv', status='old')
-    open(23,file='ev(s32p8)17Le-4.csv', status='old')
-    open(24,file='ev(s32p8)18Le-4.csv', status='old')
-    open(25,file='ev(s32p8)19Le-4.csv', status='old')
-    open(26,file='ev(s32p8)20Le-4.csv', status='old')
-    open(27,file='ev(s32p8)21Le-4.csv', status='old')
-    open(28,file='ev(s32p8)22Le-4.csv', status='old')
-    open(29,file='ev(s32p8)23Le-4.csv', status='old')
-    open(30,file='ev(s32p8)24Le-4.csv', status='old')
-    open(31,file='ev(s32p8)25Le-4.csv', status='old')
-    open(32,file='ev(s32p8)26Le-4.csv', status='old')
-    open(33,file='ev(s32p8)27Le-4.csv', status='old')
-    open(34,file='ev(s32p8)28Le-4.csv', status='old')
-    open(35,file='ev(s32p8)29Le-4.csv', status='old')
-    open(36,file='ev(s32p8)30Le-4.csv', status='old')
-    open(37,file='ev(s32p8)31Le-4.csv', status='old')
-    open(38,file='ev(s32p8)32Le-4.csv', status='old')
+    open(7,file='ev(s32p8)L1e-4.csv', status='old')
+    open(8,file='ev(s32p8)L2e-4.csv', status='old')
+    open(9,file='ev(s32p8)L3e-4.csv', status='old')
+    open(10,file='ev(s32p8)L4e-4.csv', status='old')
+    open(11,file='ev(s32p8)L5e-4.csv', status='old')
+    open(12,file='ev(s32p8)L6e-4.csv', status='old')
+    open(13,file='ev(s32p8)L7e-4.csv', status='old')
+    open(14,file='ev(s32p8)L8e-4.csv', status='old')
+    open(15,file='ev(s32p8)L9e-4.csv', status='old')
+    open(16,file='ev(s32p8)L10e-4.csv', status='old')
+    open(17,file='ev(s32p8)L11e-4.csv', status='old')
+    open(18,file='ev(s32p8)L12e-4.csv', status='old')
+    open(19,file='ev(s32p8)L13e-4.csv', status='old')
+    open(20,file='ev(s32p8)L14e-4.csv', status='old')
+    open(21,file='ev(s32p8)L15e-4.csv', status='old')
+    open(22,file='ev(s32p8)L16e-4.csv', status='old')
+    open(23,file='ev(s32p8)L17e-4.csv', status='old')
+    open(24,file='ev(s32p8)L18e-4.csv', status='old')
+    open(25,file='ev(s32p8)L19e-4.csv', status='old')
+    open(26,file='ev(s32p8)L20e-4.csv', status='old')
+    open(27,file='ev(s32p8)L21e-4.csv', status='old')
+    open(28,file='ev(s32p8)L22e-4.csv', status='old')
+    open(29,file='ev(s32p8)L23e-4.csv', status='old')
+    open(30,file='ev(s32p8)L24e-4.csv', status='old')
+    open(31,file='ev(s32p8)L25e-4.csv', status='old')
+    open(32,file='ev(s32p8)L26e-4.csv', status='old')
+    open(33,file='ev(s32p8)L27e-4.csv', status='old')
+    open(34,file='ev(s32p8)L28e-4.csv', status='old')
+    open(35,file='ev(s32p8)L29e-4.csv', status='old')
+    open(36,file='ev(s32p8)L30e-4.csv', status='old')
+    open(37,file='ev(s32p8)L31e-4.csv', status='old')
+    open(38,file='ev(s32p8)L32e-4.csv', status='old')
     open(39,file='ev(s32p8)e-4.csv', status='old')
-    open (1, file='VC_ideal(s32p8)Be-4.csv', status='replace')
+    open (1, file='VC_ideal(s32p8)e-4.csv', status='replace')
 
     !file read
     do i=1, ReadFileRow
@@ -112,7 +112,7 @@ program VC_ideal
         end do
     end do
     do i=1, Nsybl
-        AL = AL + AvLambda(1,i)/Nsybl
+!        AL = AL + AvLambda(1,i)/Nsybl
     end do
 
     do KEbN0=SEbN0, EEbN0, Step
@@ -125,7 +125,7 @@ program VC_ideal
             ProbLambda = LambdaPDF(PDF,ReadFileRow,dble(Klambda)*LLStep,LStep)/SumPL
             InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
             BER = BER + ProbLambda*InstantBER
-!            AvLambdaEbN0 = AvLambdaEbN0 + LambdaEbN0*ProbLambda
+            AvLambdaEbN0 = AvLambdaEbN0 + LambdaEbN0*ProbLambda
         end do
 
         EbN0dB = 10.0d0*dlog10(AvLambdaEbN0)
@@ -136,7 +136,9 @@ program VC_ideal
 
     !file close
     close(1)
-    close(2)
+    do i=7, 39
+        close(i)
+    end do
 
     !time measurement end
     call system_clock(t2, t_rate, t_max)

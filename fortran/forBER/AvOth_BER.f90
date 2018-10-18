@@ -1,10 +1,7 @@
-program VC
-    use PPLmod
+program AvOth_BER
+    use PPLCUTOFFmod
     use CALmod
     implicit none
-
-    !ifdef
-    logical,parameter :: APPLY_PPL=.False.
 
     !run time declaration
     integer t1, t2, t_rate, t_max, diff
@@ -12,20 +9,21 @@ program VC
     !declaration
     integer,parameter :: Nsybl=32
     integer,parameter :: Npath=4
-    integer,parameter :: SEbN0=-10
-    integer,parameter :: EEbN0=40
+    integer,parameter :: KEbN0=10
+    integer,parameter :: Nloop=10000
+    double precision,parameter :: SAvOth=1
+    double precision,parameter :: EAvOth=10.0d-7
     integer,parameter :: Step=10
-    integer,parameter :: Nloop=100000
-    integer,parameter :: PPLloop=500
 
     integer i,j
+    integer RTNum, UseChNum
+    double precision Threshold
     double precision Ampd(Npath,1)
     double precision Psig
     double precision Pwgn
     integer Collect
     integer False
     integer loop
-    integer KEbN0
     complex(kind(0d0)) Cpath(Npath,1)
     complex(kind(0d0)) H(Nsybl+Npath-1,Nsybl)
     complex(kind(0d0)) HE(Nsybl+2*(Npath-1),Nsybl+Npath-1)
@@ -60,7 +58,6 @@ program VC
     Collect=0
     False=0
     loop=0
-    KEbN0=0
     Cpath(:,:)=(0.0d0,0.0d0)
     H(:,:)=(0.0d0,0.0d0)
     HE(:,:)=(0.0d0,0.0d0)
@@ -87,13 +84,15 @@ program VC
     EbN0=0.0d0
     BER=0.0d0
     Eig=0.0d0
+    RTNum=0
+    UseChNum=0
+    Threshold=0.0d0
 
     !time measurement start
     call system_clock(t1)
 
     !file open
-    open (1, file='VC(s32p4).csv', status='replace')
-    open (2, file='VCtrial.csv', status='replace')
+    open (1, file='AvOth_BER(10dB).csv', status='replace')
 
     !implimentation part
     !channel gain parameter
@@ -102,7 +101,13 @@ program VC
         !Ampd(i) = sqrt(1/(2**(i-1))) !Exp. atten.
     end do
 
-    do KEbN0=SEbN0, EEbN0, Step !Eb/N0 loop
+    !calculate EbN0
+    EbN0 = 10.0d0**(dble(KEbN0)/10.0d0)
+
+    Threshold = SAvOth*dble(Step)
+    do
+        Threshold=Threshold/dble(Step)
+        if(Threshold<EAvOth) exit
         Psig = 0.0d0
         Pwgn = 0.0d0
         Collect = 0
@@ -127,14 +132,12 @@ program VC
                 end do
             end do
 
-            if(APPLY_PPL) then
-                !set Xppl
-                do i=1, Nsybl
-                    do j=1, Nsybl
-                        Xppl(i,j) = cmplx(1.0d0, 0.0d0, kind(0d0))
-                    end do
+            !set Xppl
+            do i=1, Nsybl
+                do j=1, Nsybl
+                    Xppl(i,j) = cmplx(1.0d0, 0.0d0, kind(0d0))
                 end do
-            endif
+            end do
 
             !set HH
             call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
@@ -143,23 +146,8 @@ program VC
             call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
 
             !eigenvalue decomposition
-            if(APPLY_PPL) then
-                call PPL(H,HE,Xppl,Eig,Nsybl,Npath,PPLloop)
-                call CSubstitute(V,Xppl,Nsybl,Nsybl)
-            else
-                if(Npath==1) then
-                    do i=1, Nsybl
-                        Eig(1,i) = HHH(i,i)
-                        V(i,i) = cmplx(1.0d0,0.0d0,kind(0d0))
-                    end do
-                else
-                    call CSubstitute(V,HHH,Nsybl,Nsybl)
-                    call decomp_zheevd(Nsybl,V,Eig)
-    !                call decomp_zheev(Nsybl,V,Eig)
-    !                call decomp_zgeev(Nsybl,V,Eig)
-    !                call decomp_zhpev(Nsybl,V,Eig)
-                endif
-            endif
+            call PPL(H,HE,Xppl,Eig,Nsybl,Npath,EbN0,RTNum,UseChNum,Threshold)
+            call CSubstitute(V,Xppl,Nsybl,Nsybl)
 
             !set information symbol
             do i=1, Nsybl
@@ -249,23 +237,20 @@ program VC
                     False = False + 1
                 endif
             end do
-            write(2,*) loop, ',', dble(False)/(dble(Collect)+dble(False))
         end do
         
-        EbN0 = 10.0d0*dlog10(Psig/Pwgn/2.0d0) !QPSK rate =2
         BER = dble(False) / (dble(Collect) + dble(False))
         if(BER>0.0) then
-            write(1,*) EbN0, ',', BER
-            print *, 'EbN0=', EbN0
+            write(1,*) Threshold, ',', BER
+            print *, 'Threshold=', Threshold
             print *, 'BER=', BER
         endif
     end do
 
     !file close
     close(1)
-    close(2)
 
     !time measurement end
     call system_clock(t2, t_rate, t_max)
     print *, 'Elapsed time is...', (t2-t1)/dble(t_rate)
-end program
+end program AvOth_BER
