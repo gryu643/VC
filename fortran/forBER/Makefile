@@ -20,7 +20,7 @@ vc: CALmod.o PPLmod.o VC.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: cutoff
-cutoff: CALmod.o PPLmod.o VC_cutoff.o
+cutoff: CALmod.o PPLCutoffmod.o VC_cutoff.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: vc_ideal
