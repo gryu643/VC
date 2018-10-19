@@ -233,11 +233,11 @@ contains
                 end do
 
                 if(BER>BERStandard) then
-                    do i=1, Ksybl-1
+                    do i=1, Ksybl
                         Eig(1,i) = real(LAMBDA(i,1))
                     end do
                     RTnum = l
-                    UseChNum = Ksybl-1
+                    UseChNum = Ksybl
                     exit
                 else
 				    Ksybl = Ksybl + 1

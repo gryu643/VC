@@ -14,7 +14,7 @@ program AvOth_BER
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=10
     double precision,parameter :: ConvStandard=1.0d-6
-    double precision,parameter :: BERStandard=1.0d-1
+    double precision,parameter :: BERStandard=1.0d-3
 
     integer i,j
     integer RTNum, UseChNum
