@@ -9,12 +9,12 @@ program AvOth_BER
     !declaration
     integer,parameter :: Nsybl=32
     integer,parameter :: Npath=4
-    integer,parameter :: Nloop=10000
+    integer,parameter :: Nloop=10
     integer,parameter :: SEbN0=-10
-    integer,parameter :: EEbN0=30
+    integer,parameter :: EEbN0=40
     integer,parameter :: Step=10
     double precision,parameter :: ConvStandard=1.0d-6
-    double precision,parameter :: BERStandard=1.0d-3
+    double precision,parameter :: BERStandard=1.0d-1
 
     integer i,j
     integer RTNum, UseChNum
@@ -53,6 +53,8 @@ program AvOth_BER
     double precision Eig(1,Nsybl)
     double precision EbN0In
     double precision AvRTNum
+    double precision AvUseChNum
+    double precision AvTbitNum
 
     !initialize
     Ampd(:,:)=0.0d0
@@ -91,12 +93,20 @@ program AvOth_BER
     UseChNum=0
     EbN0In=0.0d0
     AvRTNum=0.0d0
+    AvUseChNum=0.0d0
+    AvTbitNum=0.0d0
 
     !time measurement start
     call system_clock(t1)
 
+    !print Standard
+    print *, '収束基準=', ConvStandard
+    print *, 'BER基準=', BERStandard
+    print *, ''
+
     !file open
     open (1, file='Cutoff.csv', status='replace')
+    write(1,*) 'EbN0', ',', 'BER', ',', 'AvRTNum', ',', 'AvUseChNum', ',', 'AvTbitNum'
 
     !implimentation part
     !channel gain parameter
@@ -111,6 +121,8 @@ program AvOth_BER
         Collect = 0
         False = 0
         AvRTNum=0.0d0
+        AvUseChNum=0.0d0
+        AvTbitNum=0.0d0
         EbN0In = 10.0**(dble(KEbN0)/10.0d0)
 
         do loop=1, Nloop !Monte calro loop
@@ -155,14 +167,24 @@ program AvOth_BER
             !update AvRTNum
             AvRTNum = AvRTNum + dble(RTNum)/dble(Nloop)
 
+            !update AvUseChNum
+            AvUseChNum = AvUseChNum + dble(UseChNum)/dble(Nloop)
+
+            !update AvTbitNum
+            AvTbitNum = AvTbitNum + dble(UseChNum*2)/dble(Nloop)
+
             !set information symbol
+            S=0.0d0
             do i=1, UseChNum
                 S(1,i) = cmplx(nint(rand())*2.0d0-1.0d0,nint(rand())*2.0d0-1.0d0,kind(0d0)) !-1or1
             end do
+            TdatI=0
+            TdatQ=0
             do i=1, UseChNum
                 TdatI(1,i) = (real(S(1,i))+1)/2 !0or1
                 TdatQ(1,i) = (aimag(S(1,i))+1)/2
             end do
+            SU=(0.0d0,0.0d0)
             do i=1, UseChNum
                 do j=1, Nsybl
                     SU(j,i) = S(1,i) * V(j,i)
@@ -171,7 +193,7 @@ program AvOth_BER
 
             !transmit vector
             X = (0.0d0,0.0d0)
-            do i=1,Nsybl
+            do i=1,UseChNum
                 do j=1,Nsybl
                     X(j,1) = X(j,1) + SU(j,i)
                 end do
@@ -185,7 +207,6 @@ program AvOth_BER
             X = X / sqrt(Pow)
             call CMultiply(H,X,Y,Nsybl+Npath-1,Nsybl,Nsybl,1) !pass H
 
-            !-------------------------- UseChNum tekiyou, kokomade---------------------------------!
             do i=1, Nsybl+Npath-1
                 Noise(i,1) = cmplx(normal(),normal(),kind(0d0))
             end do
@@ -209,7 +230,7 @@ program AvOth_BER
             RdatI = 0
             RdatQ = 0
             !Demodulation
-            do i=1, Nsybl
+            do i=1, UseChNum
                 do j=1, Nsybl
                     A(j,1) = V(j,i)
                 end do
@@ -232,7 +253,7 @@ program AvOth_BER
             end do
 
             !Bit Error Rate
-            do i=1, Nsybl
+            do i=1, UseChNum
                 if(RdatI(1,i)==TdatI(1,i)) then
                     Collect = Collect + 1
                 elseif(RdatI(1,i)/=TdatI(1,i)) then
@@ -246,12 +267,18 @@ program AvOth_BER
             end do
         end do
         
+        EbN0 = 10.0d0*dlog10(Psig/Pwgn/2.0d0)
         BER = dble(False) / (dble(Collect) + dble(False))
-        if(BER>0.0) then
-            write(1,*) Threshold, ',', BER
-            print *, 'Threshold=', Threshold
-            print *, 'BER=', BER
-        endif
+        AvTbitNum = AvTbitNum*(1.0d0-BER)
+
+        write(1,*) EbN0, ',', BER, ',', AvRTNum, ',', AvUseChNum, ',', AvTbitNum
+        print *, 'EbN0=', EbN0
+        print *, 'BER=', BER
+        print *, 'AvRTNum=', AvRTNum
+        print *, 'AvUseChNum=', AvUseChNum
+        print *, 'AvTbitNum=', AvTbitNum
+        print *, ''
+
     end do
 
     !file close

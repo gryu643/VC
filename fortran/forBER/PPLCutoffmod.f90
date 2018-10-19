@@ -51,8 +51,10 @@ contains
 		double precision NAISEKI_TMP
 		double precision sC2
 		double precision AVGOTH
-        double precision LLL(1,Nsybl)
         integer Ksybl
+		double precision BER
+		double precision InstantBER(1,Nsybl)
+		double precision LambdaEbN0(1,Nsybl)
 
 		!initialize
 		Z(:,:)=(0.0,0.0)
@@ -85,8 +87,10 @@ contains
 		D_ABS=0.0
 		D1_ABS=0.0
 		Eig(:,:)=0.0d0
-        LLL=0.0d0
         Ksybl=2
+		BER=0.0d0
+		InstantBER=0.0d0
+		LambdaEbN0=0.0d0
 
 		!行列Hの随伴行列HHの設定
 		call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
@@ -217,10 +221,13 @@ contains
 			sC2 = dble(Ksybl)*dble(Ksybl-1)/2.0d0
 			AVGOTH = NAISEKI_TMP / sC2
 
+		!	print *, l, AVGOTH
+
+			BER=0.0d0
 			if(AVGOTH<ConvStandard) then
                 !judge cutoff by ber
                 do i=1, Ksybl
-                    LambdaEbN0(1,i) = Eig(1,i)*EbN0In
+                    LambdaEbN0(1,i) = real(LAMBDA(i,1))*EbN0In
                     InstantBER(1,i) = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0(1,i)))
                     BER = BER + InstantBER(1,i)/dble(Ksybl)
                 end do
@@ -235,6 +242,15 @@ contains
                 else
 				    Ksybl = Ksybl + 1
                 endif
+
+				if(Ksybl==Nsybl+1) then
+                    do i=1, Ksybl-1
+                        Eig(1,i) = real(LAMBDA(i,1))
+                    end do
+                    RTnum = l
+                    UseChNum = Ksybl-1
+                    exit
+				endif
 			endif
 		end do
 	end subroutine
