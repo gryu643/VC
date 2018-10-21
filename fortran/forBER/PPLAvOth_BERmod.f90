@@ -1,4 +1,4 @@
-module PPLCUTOFFmod
+module PPLAvOth_BERmod
 	use CALmod
 	implicit none
 contains
@@ -229,4 +229,4 @@ contains
 			Eig(1,i) = real(LAMBDA(i,1))
 		end do
 	end subroutine
-end module PPLCUTOFFmod
+end module PPLAvOth_BERmod

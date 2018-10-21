@@ -12,7 +12,7 @@ usePPLmod: CALmod.o PPLCUTOFFmod.o usePPLmod.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: avoth_ber
-avoth_ber: CALmod.o PPLCUTOFFmod.o AvOth_BER.o
+avoth_ber: CALmod.o PPLAvOth_BERmod.o AvOth_BER.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: vc

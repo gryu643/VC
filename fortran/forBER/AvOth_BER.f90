@@ -1,5 +1,5 @@
 program AvOth_BER
-    use PPLCUTOFFmod
+    use PPLAvOth_BERmod
     use CALmod
     implicit none
 
@@ -8,11 +8,11 @@ program AvOth_BER
 
     !declaration
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=4
+    integer,parameter :: Npath=2
     integer,parameter :: KEbN0=10
-    integer,parameter :: Nloop=10000
-    double precision,parameter :: SAvOth=1
-    double precision,parameter :: EAvOth=10.0d-7
+    integer,parameter :: Nloop=1000
+    double precision,parameter :: SAvOth=1.0d0
+    double precision,parameter :: EAvOth=1.0d-7
     integer,parameter :: Step=10
 
     integer i,j
@@ -50,6 +50,7 @@ program AvOth_BER
     double precision EbN0
     double precision BER
     double precision Eig(1,Nsybl)
+    double precision AvRTNum
 
     !initialize
     Ampd(:,:)=0.0d0
@@ -92,7 +93,7 @@ program AvOth_BER
     call system_clock(t1)
 
     !file open
-    open (1, file='AvOth_BER(10dB).csv', status='replace')
+    open (1, file='AvOth_BER(10dB)s32p8.csv', status='replace')
 
     !implimentation part
     !channel gain parameter
@@ -112,6 +113,7 @@ program AvOth_BER
         Pwgn = 0.0d0
         Collect = 0
         False = 0
+        AvRTNum=0.0d0
 
         do loop=1, Nloop !Monte calro loop
             do i=1, Npath
@@ -148,6 +150,8 @@ program AvOth_BER
             !eigenvalue decomposition
             call PPL(H,HE,Xppl,Eig,Nsybl,Npath,EbN0,RTNum,UseChNum,Threshold)
             call CSubstitute(V,Xppl,Nsybl,Nsybl)
+
+            AvRTNum = AvRTNum + dble(RTNum)/dble(Nloop)
 
             !set information symbol
             do i=1, Nsybl
@@ -244,6 +248,7 @@ program AvOth_BER
             write(1,*) Threshold, ',', BER
             print *, 'Threshold=', Threshold
             print *, 'BER=', BER
+            print *, 'AvRTNum=', AvRTNum
         endif
     end do
 
