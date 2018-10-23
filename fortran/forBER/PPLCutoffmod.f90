@@ -53,8 +53,8 @@ contains
 		double precision AVGOTH
         integer Ksybl
 		double precision BER
-		double precision InstantBER(1,Nsybl)
-		double precision LambdaEbN0(1,Nsybl)
+		double precision InstantBER
+		double precision LambdaEbN0
 
 		!initialize
 		Z(:,:)=(0.0,0.0)
@@ -219,29 +219,37 @@ contains
 			sC2 = dble(Ksybl-1)
 			AVGOTH = NAISEKI_TMP / sC2
 
-			BER=0.0d0
+			!judge convergence by Average othogonality
 			if(AVGOTH<ConvStandard) then
                 !judge cutoff by ber
-                do i=1, Ksybl
-                    LambdaEbN0(1,i) = real(LAMBDA(i,1))*EbN0In
-                    InstantBER(1,i) = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0(1,i)))
-                    BER = BER + InstantBER(1,i)/dble(Ksybl)
-                end do
+				!when lambda1
+				if(Ksybl==2) then
+                    LambdaEbN0 = real(LAMBDA(1,1))*EbN0In
+                    InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
+                    BER = BER + InstantBER
 
+					if(BER>BERStandard) then
+						RTNum = l
+						UseChNum = 0
+						exit
+					endif
+				endif
+
+				!when lambda2~
+				BER=0.0d0
+                do i=1, Ksybl
+                    LambdaEbN0 = real(LAMBDA(i,1))*EbN0In
+                    InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
+                    BER = BER + InstantBER/dble(Ksybl)
+                end do
+				
                 if(BER>BERStandard) then
-					select case(Ksybl)
-						case(:2)
-							RTNum = l
-							UseChNum = 0
-							exit
-						case(3:)
-							do i=1, Ksybl-1
-								Eig(1,i) = real(LAMBDA(i,1))
-							end do
-							RTnum = l
-							UseChNum = Ksybl-1
-							exit
-					end select
+					do i=1, Ksybl-1
+						Eig(1,i) = real(LAMBDA(i,1))
+					end do
+					RTnum = l
+					UseChNum = Ksybl-1
+					exit
                 else
 				    Ksybl = Ksybl + 1
                 endif
