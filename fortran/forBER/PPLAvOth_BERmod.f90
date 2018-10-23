@@ -210,7 +210,7 @@ contains
 			end do
 
 			call CAbs(NAISEKI,NAISEKI_TMP,1,1)
-			sC2 = dble(Nsybl)-1.0d0
+			sC2 = dble(Nsybl-1)
 			AVGOTH = NAISEKI_TMP / sC2
 
 			if(AVGOTH<Threshold(1,ThrAdr)) then
