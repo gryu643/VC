@@ -2,17 +2,18 @@ module PPLAvOth_BERmod
 	use CALmod
 	implicit none
 contains
-	subroutine PPL(H,HE,X,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,Threshold)
+	subroutine PPL(H,HE,X,Nsybl,Npath,EbN0In,Threshold,Vsize,PVO,PEO)
 		implicit none
 
 		!argument
-		integer Nsybl,Npath,RTNum,UseChNum
+		integer Nsybl,Npath,Vsize
         double precision EbN0In
 		complex(kind(0d0)) X(Nsybl,Nsybl)
 		complex(kind(0d0)) H(Nsybl+Npath-1,Nsybl)
 		complex(kind(0d0)) HE(Nsybl+2*(Npath-1),Nsybl+Npath-1)
-		double precision Eig(1,Nsybl)
-		double precision Threshold
+		double precision Threshold(1,Vsize)
+		complex(kind(0d0)) PVO(Vsize,Nsybl,Nsybl)
+		double precision PEO(Vsize,Nsybl)
 
 		!declaration
 		integer i,j,k,l,m
@@ -51,7 +52,7 @@ contains
 		double precision NAISEKI_TMP
 		double precision sC2
 		double precision AVGOTH
-        double precision LLL(1,Nsybl)
+		integer ThrAdr
 
 		!initialize
 		Z(:,:)=(0.0,0.0)
@@ -83,8 +84,7 @@ contains
 		D1(:,:)=(0.0,0.0)
 		D_ABS=0.0
 		D1_ABS=0.0
-		Eig(:,:)=0.0d0
-        LLL=0.0d0
+		ThrAdr=1
 
 		!行列Hの随伴行列HHの設定
 		call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
@@ -213,18 +213,19 @@ contains
 			sC2 = dble(Nsybl)-1.0d0
 			AVGOTH = NAISEKI_TMP / sC2
 
-			if(AVGOTH<Threshold) then
+			if(AVGOTH<Threshold(1,ThrAdr)) then
 				do i=1, Nsybl
-					Eig(1,i) = real(LAMBDA(i,1))
+					PEO(ThrAdr,i) = real(LAMBDA(i,1))
 				end do
-				RTNum = l
-				exit
+				do i=1, Nsybl
+					do j=1, Nsybl
+						PVO(ThrAdr,j,i) = X(j,i)
+					end do
+				end do
+				ThrAdr = ThrAdr + 1
+				
+				if(ThrAdr==Vsize+1) exit
 			endif
-		end do
-
-		! return
-		do i=1, Nsybl
-			Eig(1,i) = real(LAMBDA(i,1))
 		end do
 	end subroutine
 end module PPLAvOth_BERmod
