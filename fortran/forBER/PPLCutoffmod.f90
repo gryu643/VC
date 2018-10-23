@@ -221,8 +221,6 @@ contains
 			sC2 = dble(Ksybl)*dble(Ksybl-1)/2.0d0
 			AVGOTH = NAISEKI_TMP / sC2
 
-		!	print *, l, AVGOTH
-
 			BER=0.0d0
 			if(AVGOTH<ConvStandard) then
                 !judge cutoff by ber
@@ -233,12 +231,19 @@ contains
                 end do
 
                 if(BER>BERStandard) then
-                    do i=1, Ksybl
-                        Eig(1,i) = real(LAMBDA(i,1))
-                    end do
-                    RTnum = l
-                    UseChNum = Ksybl
-                    exit
+					select case(Ksybl)
+						case(:2)
+							RTNum = l
+							UseChNum = 0
+							exit
+						case(3:)
+							do i=1, Ksybl-1
+								Eig(1,i) = real(LAMBDA(i,1))
+							end do
+							RTnum = l
+							UseChNum = Ksybl-1
+							exit
+					end select
                 else
 				    Ksybl = Ksybl + 1
                 endif
