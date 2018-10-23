@@ -151,7 +151,7 @@ program VCQ
             call CSubstitute(V,Xppl,Nsybl,Nsybl)
 
             !judge quality
-            do i=2, Nsybl
+            do i=1, Nsybl
                 BER_TMP=0.0d0
                 do j=1, i
                     LambdaEbN0 = Eig(1,j)*10.0d0**(dble(KEbN0)/10.0d0)
@@ -160,12 +160,7 @@ program VCQ
                 end do
 
                 if(BER_TMP>BERStandard) then
-                    select case(i)
-                        case(:2)
-                            AvUseChNum = AvUseChNum + 0.0d0
-                        case(3:)
-                            AvUseChNum = AvUseChNum + dble(i-1)/dble(Nloop)
-                    end select
+                    AvUseChNum = AvUseChNum + dble(i-1)/dble(Nloop)
                     exit
                 endif
                 
