@@ -9,12 +9,12 @@ program AvOth_BER
     !declaration
     integer,parameter :: Nsybl=32
     integer,parameter :: Npath=4
-    integer,parameter :: Nloop=10
+    integer,parameter :: Nloop=100
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=10
     double precision,parameter :: ConvStandard=1.0d-6
-    double precision,parameter :: BERStandard=1.0d-3
+    double precision,parameter :: BERStandard=1.0d-2
 
     integer i,j
     integer RTNum, UseChNum
@@ -54,7 +54,6 @@ program AvOth_BER
     double precision EbN0In
     double precision AvRTNum
     double precision AvUseChNum
-    double precision AvTbitNum
 
     !initialize
     Ampd(:,:)=0.0d0
@@ -94,7 +93,6 @@ program AvOth_BER
     EbN0In=0.0d0
     AvRTNum=0.0d0
     AvUseChNum=0.0d0
-    AvTbitNum=0.0d0
 
     !time measurement start
     call system_clock(t1)
@@ -106,7 +104,8 @@ program AvOth_BER
 
     !file open
     open (1, file='Cutoff.csv', status='replace')
-    write(1,*) 'EbN0', ',', 'BER', ',', 'AvRTNum', ',', 'AvUseChNum', ',', 'AvTbitNum'
+    open (2, file='Cutoff_UseChNum.csv', status='replace')
+    write(1,*) 'EbN0', ',', 'BER', ',', 'AvRTNum'
 
     !implimentation part
     !channel gain parameter
@@ -122,7 +121,6 @@ program AvOth_BER
         False = 0
         AvRTNum=0.0d0
         AvUseChNum=0.0d0
-        AvTbitNum=0.0d0
         EbN0In = 10.0**(dble(KEbN0)/10.0d0)
 
         do loop=1, Nloop !Monte calro loop
@@ -170,8 +168,7 @@ program AvOth_BER
             !update AvUseChNum
             AvUseChNum = AvUseChNum + dble(UseChNum)/dble(Nloop)
 
-            !update AvTbitNum
-            AvTbitNum = AvTbitNum + dble(UseChNum*2)/dble(Nloop)
+            if(UseChNum==0) cycle
 
             !set information symbol
             S=0.0d0
@@ -267,22 +264,27 @@ program AvOth_BER
             end do
         end do
         
-        EbN0 = 10.0d0*dlog10(Psig/Pwgn/2.0d0)
-        BER = dble(False) / (dble(Collect) + dble(False))
-        AvTbitNum = AvTbitNum*(1.0d0-BER)
+        if(AvUsechNum==0.0d0) then
+            EbN0 = dble(KEbN0)
+            BER = 0.0d0
+        else
+            EbN0 = 10.0d0*dlog10(Psig/Pwgn/2.0d0)
+            BER = dble(False) / (dble(Collect) + dble(False))
+        endif
 
-        write(1,*) EbN0, ',', BER, ',', AvRTNum, ',', AvUseChNum, ',', AvTbitNum
+        write(2,*) KEbN0, ',', AvUseChNum
+        write(1,*) EbN0, ',', BER, ',', AvRTNum
         print *, 'EbN0=', EbN0
         print *, 'BER=', BER
         print *, 'AvRTNum=', AvRTNum
         print *, 'AvUseChNum=', AvUseChNum
-        print *, 'AvTbitNum=', AvTbitNum
         print *, ''
 
     end do
 
     !file close
     close(1)
+    close(2)
 
     !time measurement end
     call system_clock(t2, t_rate, t_max)
