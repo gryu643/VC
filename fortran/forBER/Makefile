@@ -19,6 +19,10 @@ avoth_ber: CALmod.o PPLAvOth_BERmod.o AvOth_BER.o
 vc: CALmod.o PPLmod.o VC.o
 	$(CC) $^ -o $@ $(LAPACK)
 
+.PHONY: vcq
+vcq: CALmod.o PPLVCQmod.o VCQ.o
+	$(CC) $^ -o $@ $(LAPACK)
+
 .PHONY: cutoff
 cutoff: CALmod.o PPLCutoffmod.o VC_cutoff.o
 	$(CC) $^ -o $@ $(LAPACK)
