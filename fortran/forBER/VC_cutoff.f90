@@ -9,7 +9,7 @@ program AvOth_BER
     !declaration
     integer,parameter :: Nsybl=32
     integer,parameter :: Npath=4
-    integer,parameter :: Nloop=100
+    integer,parameter :: Nloop=10
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=5
@@ -96,11 +96,6 @@ program AvOth_BER
 
     !time measurement start
     call system_clock(t1)
-
-    !print Standard
-    print *, '収束基準=', ConvStandard
-    print *, 'BER基準=', BERStandard
-    print *, ''
 
     !file open
     open (1, file='Cutoff.csv', status='replace')
