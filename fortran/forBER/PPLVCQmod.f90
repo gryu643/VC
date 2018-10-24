@@ -2,7 +2,7 @@ module PPLVCQmod
 	use CALmod
 	implicit none
 contains
-	subroutine PPLVCQ(H,HE,X,Eig,Nsybl,Npath,ConvStandard)
+	subroutine PPLVCQ(H,HE,X,Eig,Nsybl,Npath,RTNum,ConvStandard)
 		implicit none
 
 		!argument
@@ -13,6 +13,7 @@ contains
 		complex(kind(0d0)) HE(Nsybl+2*(Npath-1),Nsybl+Npath-1)
 		double precision Eig(1,Nsybl)
 		double precision ConvStandard
+		integer RTNum
 
 		!declaration
 		integer i,j,k,l,m
@@ -217,6 +218,7 @@ contains
                 do i=1, Nsybl
                     Eig(1,i) = real(LAMBDA(i,1))
                 end do
+				RTNum = l
                 exit
 			endif
 		end do

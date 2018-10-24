@@ -11,8 +11,8 @@ program VCQ
     integer,parameter :: Npath=4
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
-    integer,parameter :: Step=5
-    integer,parameter :: Nloop=100
+    integer,parameter :: Step=10
+    integer,parameter :: Nloop=10000
     double precision,parameter :: BERStandard=1.0d-2
 
     integer i,j
@@ -54,6 +54,8 @@ program VCQ
     double precision InstantBER
     double precision LambdaEbN0
     double precision ConvStandard
+    integer RTNum
+    double precision AvRTNum
 
     !initialize
     Ampd(:,:)=0.0d0
@@ -113,6 +115,7 @@ program VCQ
         Collect = 0
         False = 0
         AvUseChNum=0.0d0
+        AvRTNum=0.0d0
         !setup Convergence standard
         if(KEbN0<0) then
             ConvStandard = 0.1d0
@@ -153,8 +156,10 @@ program VCQ
             call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
 
             !eigenvalue decomposition
-            call PPLVCQ(H,HE,Xppl,Eig,Nsybl,Npath,ConvStandard)
+            call PPLVCQ(H,HE,Xppl,Eig,Nsybl,Npath,RTNum,ConvStandard)
             call CSubstitute(V,Xppl,Nsybl,Nsybl)
+
+            AvRTNum = AvRTNum + dble(RTNum)/dble(Nloop)
 
             !judge quality
             do i=1, Nsybl
@@ -268,11 +273,10 @@ program VCQ
         
         EbN0 = 10.0d0*dlog10(Psig/Pwgn/2.0d0) !QPSK rate =2
         BER = dble(False) / (dble(Collect) + dble(False))
-        if(BER>0.0) then
-            write(1,*) EbN0, ',', BER
-            print *, 'EbN0=', EbN0
-            print *, 'BER=', BER
-        endif
+        write(1,*) EbN0, ',', BER, ',', RTNum
+        print *, 'EbN0=', EbN0
+        print *, 'BER=', BER
+        print *, 'AvRTNum=', AvRTNum
         write(3,*) KEbN0, ',', AvUseChNum
     end do
 
