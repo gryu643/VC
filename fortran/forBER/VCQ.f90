@@ -11,9 +11,8 @@ program VCQ
     integer,parameter :: Npath=4
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
-    integer,parameter :: Step=10
-    integer,parameter :: Nloop=10
-    double precision,parameter :: ConvStandard=1.0d-6
+    integer,parameter :: Step=5
+    integer,parameter :: Nloop=100
     double precision,parameter :: BERStandard=1.0d-2
 
     integer i,j
@@ -54,6 +53,7 @@ program VCQ
     double precision AvUseChNum
     double precision InstantBER
     double precision LambdaEbN0
+    double precision ConvStandard
 
     !initialize
     Ampd(:,:)=0.0d0
@@ -113,6 +113,12 @@ program VCQ
         Collect = 0
         False = 0
         AvUseChNum=0.0d0
+        !setup Convergence standard
+        if(KEbN0<0) then
+            ConvStandard = 0.1d0
+        else
+            ConvStandard = 0.1d0*dexp(-0.461*dble(KEbN0))
+        endif
 
         do loop=1, Nloop !Monte calro loop
             do i=1, Npath

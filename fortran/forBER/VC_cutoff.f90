@@ -12,8 +12,7 @@ program AvOth_BER
     integer,parameter :: Nloop=100
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
-    integer,parameter :: Step=10
-    double precision,parameter :: ConvStandard=1.0d-6
+    integer,parameter :: Step=5
     double precision,parameter :: BERStandard=1.0d-2
 
     integer i,j
@@ -54,6 +53,7 @@ program AvOth_BER
     double precision EbN0In
     double precision AvRTNum
     double precision AvUseChNum
+    double precision ConvStandard
 
     !initialize
     Ampd(:,:)=0.0d0
@@ -122,6 +122,12 @@ program AvOth_BER
         AvRTNum=0.0d0
         AvUseChNum=0.0d0
         EbN0In = 10.0**(dble(KEbN0)/10.0d0)
+        !setup Convergence standard
+        if(KEbN0<0) then
+            ConvStandard = 0.1d0
+        else
+            ConvStandard = 0.1d0*dexp(-0.461*dble(KEbN0))
+        endif
 
         do loop=1, Nloop !Monte calro loop
             RTNum=0
