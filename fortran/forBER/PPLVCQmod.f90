@@ -55,36 +55,36 @@ contains
 		double precision BER
 
 		!initialize
-		Z(:,:)=(0.0,0.0)
-		Xpre(:,:)=(0.0,0.0)
-		HH(:,:)=(0.0,0.0)
-		HHH(:,:)=(0.0,0.0)
-		HX(:,:)=(0.0,0.0)
-		HXarI(:,:)=(0.0,0.0)
-		HHHXbrJ(:,:)=(0.0,0.0)
-		HHHX(:,:)=(0.0,0.0)
-		LAMBDA(:,:)=(0.0,0.0)
-		Xn(:,:)=(0.0,0.0)
-		U(:,:)=(0.0,0.0)
-		UH(:,:)=(0.0,0.0)
-		LUUH(:,:)=(0.0,0.0)
-		LUUH_SET(:,:)=(0.0,0.0)
-		LU(:,:)=(0.0,0.0)
-		LUUHXn(:,:)=(0.0,0.0)
-		SUB_PART(:,:)=(0.0,0.0)
-		arSUB(:,:)=(0.0,0.0)
-		NORM(:,:)=(0.0,0.0)
-		LAMBDA_MATRIX(:,:)=(0.0,0.0)
-		XH(:,:)=(0.0,0.0)
-		XLM(:,:)=(0.0,0.0)
-		XLMXH(:,:)=(0.0,0.0)
-		S(:,:)=(0.0,0.0)
+		Z=(0.0,0.0)
+		Xpre=(0.0,0.0)
+		HH=(0.0,0.0)
+		HHH=(0.0,0.0)
+		HX=(0.0,0.0)
+		HXarI=(0.0,0.0)
+		HHHXbrJ=(0.0,0.0)
+		HHHX=(0.0,0.0)
+		LAMBDA=(0.0,0.0)
+		Xn=(0.0,0.0)
+		U=(0.0,0.0)
+		UH=(0.0,0.0)
+		LUUH=(0.0,0.0)
+		LUUH_SET=(0.0,0.0)
+		LU=(0.0,0.0)
+		LUUHXn=(0.0,0.0)
+		SUB_PART=(0.0,0.0)
+		arSUB=(0.0,0.0)
+		NORM=(0.0,0.0)
+		LAMBDA_MATRIX=(0.0,0.0)
+		XH=(0.0,0.0)
+		XLM=(0.0,0.0)
+		XLMXH=(0.0,0.0)
+		S=(0.0,0.0)
 		LAMBDA_TMP=0.0
-		D(:,:)=(0.0,0.0)
-		D1(:,:)=(0.0,0.0)
+		D=(0.0,0.0)
+		D1=(0.0,0.0)
 		D_ABS=0.0
 		D1_ABS=0.0
-		Eig(:,:)=0.0d0
+		Eig=0.0d0
 		BER=0.0d0
 
 		!行列Hの随伴行列HHの設定
@@ -152,8 +152,8 @@ contains
 				call CMultiply(LU,UH,LUUH,Nsybl,1,1,Nsybl)
 
 				!λUUHの集合を格納
-				do j=1, Nsybl
-					do k=1, Nsybl
+				do k=1, Nsybl
+					do j=1, Nsybl
 						LUUH_SET(j,k) = LUUH_SET(j,k) + LUUH(j,k)
 					end do
 				end do
@@ -170,7 +170,6 @@ contains
 
 			!減算
 			call CSubtract(HHHX,SUB_PART,arSUB,Nsybl,Nsybl,Nsybl,Nsybl)
-
 
 			!正規化
 			do i=1, Nsybl
@@ -210,7 +209,7 @@ contains
 					UHN(1,1) = cmplx(abs(real(UHN(1,1))),abs(aimag(UHN(1,1))),kind(0d0))
 
 					!計算した内積を足し合わせる
-					call CAdd(NAISEKI,UHN,NAISEKI,1,1,1,1)
+					NAISEKI(1,1) = NAISEKI(1,1) + UHN(1,1)
 				end do
 			end do
 
