@@ -8,11 +8,11 @@ program AvOth_BER
 
     !-- declaration
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=4
+    integer,parameter :: Npath=8
     integer,parameter :: KEbN0=10
     integer,parameter :: Nloop=10000
-    double precision,parameter :: SAvOth=1.0d0
-    double precision,parameter :: EAvOth=1.0d-7
+    double precision,parameter :: SAvOth=100.0d0
+    double precision,parameter :: EAvOth=1.0d-5
     integer,parameter :: Step=10
     integer,parameter :: Vsize=8
 
@@ -48,6 +48,7 @@ program AvOth_BER
     double precision EbN0
     double precision BER(Vsize)
     double precision PEO(Vsize,Nsybl)
+    double precision ThrTMP
 
     !-- initialize
     Ampd(:,:)=0.0d0
@@ -79,12 +80,13 @@ program AvOth_BER
     Threshold=10.0d0
     PVO=(0.0d0,0.0d0)
     PEO=0.0d0
+    ThrTMP=0.0d0
 
     !-- time measurement start
     call system_clock(t1)
 
     !-- file open
-    open (1, file='AvOth_BER(10dB)s32p4.csv', status='replace')
+    open (1, file='AvOth_BER(10dB)s32p8.csv', status='replace')
 
     !-- implimentation part
     !channel gain parameter
@@ -96,10 +98,10 @@ program AvOth_BER
     !calculate EbN0
     EbN0 = 10.0d0**(dble(KEbN0)/10.0d0)
 
+    ThrTMP = SAvOth
     do i=1, Vsize
-        do j=1, i
-            Threshold(1,i) = Threshold(1,i)/10.0d0
-        end do
+        Threshold(1,i) = ThrTMP
+        ThrTMP = ThrTMP *0.1d0
     end do
 
     Collect = 0
