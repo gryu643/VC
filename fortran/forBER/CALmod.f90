@@ -6,17 +6,14 @@ contains
     subroutine CMultiply(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
         integer A_ROW,A_COL,B_ROW,B_COL,i,j,k
         complex(kind(0d0)) A(:,:), B(:,:),C(:,:)
+        complex(kind(0d0)) db
+        C=(0.0d0,0.0d0)
 
-        if(A_COL.ne.B_ROW) then
-            print *, "can't calculate (Multiply)"
-            stop
-        end if
-
-        do i=1, A_ROW
-            do j=1, B_COL
-                C(i,j) = cmplx(0.0,0.0,kind(0d0))
-                do k=1, A_COL
-                    C(i,j) = C(i,j)+A(i,k)*B(k,j)
+        do j=1, B_COL
+            do k=1, B_ROW
+                db = B(k,j)
+                do i=1, A_ROW
+                    C(i,j) = C(i,j)+A(i,k)*db
                 end do
             end do
         end do
@@ -27,17 +24,13 @@ contains
     subroutine RMultiply(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
         integer A_ROW,A_COL,B_ROW,B_COL,i,j,k
         double precision A(:,:), B(:,:),C(:,:)
+        double precision db
 
-        if(A_COL.ne.B_ROW) then
-            print *, "can't calculate (Multiply)"
-            stop
-        end if
-
-        do i=1, A_ROW
-            do j=1, B_COL
-                C(i,j) = 0.0d0
-                do k=1, A_COL
-                    C(i,j) = C(i,j)+A(i,k)*B(k,j)
+        do j=1, B_COL
+            do k=1, B_ROW
+                db = B(k,j)
+                do i=1, A_ROW
+                    C(i,j) = C(i,j)+A(i,k)*db
                 end do
             end do
         end do
@@ -50,13 +43,8 @@ contains
         integer A_ROW,A_COL,B_ROW,B_COL,i,j
         complex(kind(0d0)) A(:,:),B(:,:),C(:,:)
 
-        if((A_ROW.ne.B_ROW).or.(A_COL.ne.B_COL)) then
-            print *, "can't calculate (Add)"
-            stop
-        end if
-
-        do i=1, A_ROW
-            do j=1, A_COL
+        do j=1, A_COL
+            do i=1, A_ROW
                 C(i,j) = A(i,j) + B(i,j)
             end do
         end do 
@@ -69,13 +57,8 @@ contains
         integer A_ROW,A_COL,B_ROW,B_COL,i,j
         complex(kind(0d0)) A(:,:),B(:,:),C(:,:)
 
-        if((A_ROW.ne.B_ROW).or.(A_COL.ne.B_COL)) then
-            print *, "can't calculate (Subtract)"
-            stop
-        end if
-
-        do i=1, A_ROW
-            do j=1, A_COL
+        do j=1, A_COL
+            do i=1, A_ROW
                 C(i,j) = A(i,j) - B(i,j)
             end do
         end do 
@@ -88,8 +71,8 @@ contains
         integer A_ROW,A_COL,i,j
         complex(kind(0d0)) A(:,:),AH(:,:)
 
-        do i=1, A_ROW
-            do j=1, A_COL
+        do j=1, A_COL
+            do i=1, A_ROW
                 AH(j,i) = conjg(A(i,j))
             end do
         end do
@@ -130,8 +113,8 @@ contains
         integer A_ROW,A_COL,i,j
         complex(kind(0d0)) A(:,:),B(:,:)
 
-        do i=1, A_ROW
-            do j=1, A_COL
+        do j=1, A_COL
+            do i=1, A_ROW
                 A(i,j) = B(i,j)
             end do
         end do
@@ -241,8 +224,8 @@ contains
 
 
         x = sqrt(-2.0d0*dlog(r1)*var)*dcos(2.0d0*pi*r2)+m
-        y = sqrt(-2.0d0*dlog(r1)*var)*dsin(2.0d0*pi*r2)+m
-        r = sqrt(x**2 + y**2)
+!        y = sqrt(-2.0d0*dlog(r1)*var)*dsin(2.0d0*pi*r2)+m
+!        r = sqrt(x**2 + y**2)
 
         normal = x
     end function
