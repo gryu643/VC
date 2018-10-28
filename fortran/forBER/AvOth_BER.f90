@@ -8,7 +8,7 @@ program AvOth_BER
 
     !-- declaration
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npath=8
+    integer,parameter :: Npath=4
     integer,parameter :: KEbN0=10
     integer,parameter :: Nloop=10000
     double precision,parameter :: SAvOth=100.0d0
