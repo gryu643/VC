@@ -12,7 +12,7 @@ program VCQ
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=5
-    integer,parameter :: Nloop=10
+    integer,parameter :: Nloop=1000
     double precision,parameter :: BERStandard=1.0d-2
 
     integer i,j
@@ -137,7 +137,7 @@ program VCQ
 
         print *, 'KEbN0=', KEbN0
         print *, 'AvRTNum=', AvRTNum
-        write(3,*) KEbN0, ',', AvUseChNum
+        write(3,*) KEbN0, ',', AvUseChNum, ',', AvRTNum
     end do
 
     !file close
