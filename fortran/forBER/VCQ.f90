@@ -11,7 +11,7 @@ program VCQ
     integer,parameter :: Npath=4
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
-    integer,parameter :: Step=10
+    integer,parameter :: Step=5
     integer,parameter :: Nloop=10000
     double precision,parameter :: BERStandard=1.0d-2
 
@@ -58,35 +58,35 @@ program VCQ
     double precision AvRTNum
 
     !initialize
-    Ampd(:,:)=0.0d0
+    Ampd=0.0d0
     Psig=0.0d0
     Pwgn=0.0d0
     Collect=0
     False=0
     loop=0
     KEbN0=0
-    Cpath(:,:)=(0.0d0,0.0d0)
-    H(:,:)=(0.0d0,0.0d0)
-    HE(:,:)=(0.0d0,0.0d0)
-    Xppl(:,:)=(0.0d0,0.0d0)
-    HH(:,:)=(0.0d0,0.0d0)
-    HHH(:,:)=(0.0d0,0.0d0)
-    S(:,:)=0.0d0
+    Cpath=(0.0d0,0.0d0)
+    H=(0.0d0,0.0d0)
+    HE=(0.0d0,0.0d0)
+    Xppl=(0.0d0,0.0d0)
+    HH=(0.0d0,0.0d0)
+    HHH=(0.0d0,0.0d0)
+    S=0.0d0
     TdatI=0
     TdatQ=0
-    V(:,:)=(0.0d0,0.0d0)
-    SU(:,:)=(0.0d0,0.0d0)
-    X(:,:)=(0.0d0,0.0d0)
+    V=(0.0d0,0.0d0)
+    SU=(0.0d0,0.0d0)
+    X=(0.0d0,0.0d0)
     Pow=0.0d0
-    Y(:,:)=(0.0d0,0.0d0)
-    Noise(:,:)=(0.0d0,0.0d0)
-    Yn(:,:)=(0.0d0,0.0d0)
-    Y2(:,:)=(0.0d0,0.0d0)
+    Y=(0.0d0,0.0d0)
+    Noise=(0.0d0,0.0d0)
+    Yn=(0.0d0,0.0d0)
+    Y2=(0.0d0,0.0d0)
     RdatI=0
     RdatQ=0
-    A(:,:)=(0.0d0,0.0d0)
-    Y2H(:,:)=(0.0d0,0.0d0)
-    R(:,:)=(0.0d0,0.0d0)
+    A=(0.0d0,0.0d0)
+    Y2H=(0.0d0,0.0d0)
+    R=(0.0d0,0.0d0)
     R2=(0.0d0,0.0d0)
     EbN0=0.0d0
     BER=0.0d0
@@ -118,9 +118,9 @@ program VCQ
         AvRTNum=0.0d0
         !setup Convergence standard
         if(KEbN0<0) then
-            ConvStandard = 0.1d0
+            ConvStandard = 1.0d0
         else
-            ConvStandard = 0.1d0*dexp(-0.461*dble(KEbN0))
+            ConvStandard = 1.0d0*dexp(-0.23*dble(KEbN0))
         endif
 
         do loop=1, Nloop !Monte calro loop
