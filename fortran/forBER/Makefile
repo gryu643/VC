@@ -15,6 +15,10 @@ usePPLmod: CALmod.o PPLCUTOFFmod.o usePPLmod.o
 avoth_ber: CALmod.o PPLAvOth_BERmod.o AvOth_BER.o
 	$(CC) $^ -o $@ $(LAPACK)
 
+.PHONY: tsym
+tsym: CALmod.o PPLTSYMmod.o AVOth_BER_TSYM.o
+	$(CC) $^ -o $@ $(LAPACK)
+
 .PHONY: vc
 vc: CALmod.o PPLmod.o VC.o
 	$(CC) $^ -o $@ $(LAPACK)
