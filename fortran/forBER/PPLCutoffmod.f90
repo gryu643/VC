@@ -18,8 +18,6 @@ contains
 		integer i,j,k,l,m
 		complex(kind(0d0)) Z(Nsybl,Nsybl)
 		complex(kind(0d0)) Xpre(Nsybl,Nsybl)
-		complex(kind(0d0)) HH(Nsybl,Nsybl+Npath-1)
-		complex(kind(0d0)) HHH(Nsybl,Nsybl)
 		complex(kind(0d0)) HX(Nsybl+Npath-1,Nsybl)
 		complex(kind(0d0)) HXarI(Nsybl+Npath-1,Nsybl)
 		complex(kind(0d0)) HHHXbrJ(Nsybl+2*(Npath-1),Nsybl)
@@ -55,16 +53,11 @@ contains
 		double precision BER
 		double precision InstantBER
 		double precision LambdaEbN0
-		double precision C1
-		double precision C2
-		double precision C2C1
-		double precision KStandard
+		complex(kind(0d0)) V1(Nsybl),V2(Nsybl)
 
 		!initialize
 		Z=(0.0,0.0)
 		Xpre=(0.0,0.0)
-		HH=(0.0,0.0)
-		HHH=(0.0,0.0)
 		HX=(0.0,0.0)
 		HXarI=(0.0,0.0)
 		HHHXbrJ=(0.0,0.0)
@@ -95,14 +88,6 @@ contains
 		BER=0.0d0
 		InstantBER=0.0d0
 		LambdaEbN0=0.0d0
-		C1=0.0d0
-		C2=0.0d0
-
-		!行列Hの随伴行列HHの設定
-		call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
-
-		!合成チャネル行列HHHの設定
-		call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
 
 		l = 0
 		do
@@ -163,11 +148,7 @@ contains
 				call CMultiply(LU,UH,LUUH,Nsybl,1,1,Nsybl)
 
 				!λUUHの集合を格納
-				do k=1, Nsybl
-					do j=1, Nsybl
-						LUUH_SET(j,k) = LUUH_SET(j,k) + LUUH(j,k)
-					end do
-				end do
+				call CAdd(LUUH_SET,LUUH,LUUH_SET,Nsybl,Nsybl,Nsybl,Nsybl)
 
 				!LUUH_SET*Xn(Nsybl,1) iの次ループで足し合わせる
 				call CMultiply(LUUH_SET,Xn,LUUHXn,Nsybl,Nsybl,Nsybl,1)
@@ -205,23 +186,13 @@ contains
 				do j=i+1, Ksybl
 					!固有ベクトル群を１列のベクトルに格納
 					do k=1, Nsybl
-						U(k,1) = X(k,i)
+						V1(k) = X(k,i)
 					end do
 					!内積を取る固有ベクトルを格納
 					do k=1, Nsybl
-						N(k,1) = X(k,j)
+						V2(k) = X(k,j)
 					end do
-
-					!随伴行列
-					call CAdjoint(U,UH,Nsybl,1)
-
-					!内積の計算
-					call CMultiply(UH,N,UHN,1,Nsybl,Nsybl,1)
-
-					UHN(1,1) = cmplx(abs(real(UHN(1,1))),abs(aimag(UHN(1,1))),kind(0d0))
-
-					!計算した内積を足し合わせる
-					call CAdd(NAISEKI,UHN,NAISEKI,1,1,1,1)
+					NAISEKI(1,1) = NAISEKI(1,1) + abs(dot_product(V1,V2))
 				end do
 			end do
 
@@ -259,6 +230,7 @@ contains
 						Eig(1,i) = real(LAMBDA(i,1))
 					end do
 					RTnum = l
+
 					UseChNum = Ksybl-1
 					exit
                 else
