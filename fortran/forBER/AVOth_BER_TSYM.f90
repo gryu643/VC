@@ -1,41 +1,38 @@
-program VC
-    use PPLmod
+program AvOth_BER_TSYM
+    use PPLTSYMmod
     use CALmod
     implicit none
 
-    !ifdef
-    logical,parameter :: APPLY_PPL=.False.
-
-    !run time declaration
+    !-- run time declaration
     integer t1, t2, t_rate, t_max, diff
 
-    !declaration
+    !-- declaration
     integer,parameter :: Nsybl=32
     integer,parameter :: Npath=4
-    integer,parameter :: SEbN0=-10
-    integer,parameter :: EEbN0=40
+    integer,parameter :: KEbN0=-10
+    integer,parameter :: Nloop=10000
+    double precision,parameter :: SAvOth=100.0d0
+    double precision,parameter :: EAvOth=1.0d-5
     integer,parameter :: Step=10
-    integer,parameter :: Nloop=100000
-    integer,parameter :: PPLloop=500
+    integer,parameter :: Vsize=8
+    integer,parameter :: SYM=16
 
-    integer i,j
+    integer i,j,k
+    double precision Threshold(1,Vsize)
     double precision Ampd(Npath,1)
-    double precision Psig
-    double precision Pwgn
-    integer Collect
-    integer False
+    integer Collect(Vsize)
+    integer False(Vsize)
     integer loop
-    integer KEbN0
     complex(kind(0d0)) Cpath(Npath,1)
     complex(kind(0d0)) H(Nsybl+Npath-1,Nsybl)
     complex(kind(0d0)) HE(Nsybl+2*(Npath-1),Nsybl+Npath-1)
     complex(kind(0d0)) Xppl(Nsybl,Nsybl)
+    complex(kind(0d0)) PVO(Vsize,Nsybl,Nsybl)
     complex(kind(0d0)) HH(Nsybl,Nsybl+Npath-1)
     complex(kind(0d0)) HHH(Nsybl,Nsybl)
     complex(kind(0d0)) S(1,Nsybl)
     integer TdatI(1,Nsybl)
     integer TdatQ(1,Nsybl)
-    complex(kind(0d0)) V(Nsybl,Nsybl)
     complex(kind(0d0)) SU(Nsybl,Nsybl)
     complex(kind(0d0)) X(Nsybl,Nsybl)
     double precision Pow
@@ -50,17 +47,13 @@ program VC
     complex(kind(0d0)) R(1,1)
     complex(kind(0d0)) R2
     double precision EbN0
-    double precision BER
-    double precision Eig(1,Nsybl)
+    double precision BER(Vsize)
+    double precision PEO(Vsize,Nsybl)
+    double precision ThrTMP
 
-    !initialize
+    !-- initialize
     Ampd(:,:)=0.0d0
-    Psig=0.0d0
-    Pwgn=0.0d0
-    Collect=0
-    False=0
     loop=0
-    KEbN0=0
     Cpath(:,:)=(0.0d0,0.0d0)
     H(:,:)=(0.0d0,0.0d0)
     HE(:,:)=(0.0d0,0.0d0)
@@ -70,7 +63,6 @@ program VC
     S(:,:)=0.0d0
     TdatI=0
     TdatQ=0
-    V(:,:)=(0.0d0,0.0d0)
     SU(:,:)=(0.0d0,0.0d0)
     X(:,:)=(0.0d0,0.0d0)
     Pow=0.0d0
@@ -86,98 +78,88 @@ program VC
     R2=(0.0d0,0.0d0)
     EbN0=0.0d0
     BER=0.0d0
-    Eig=0.0d0
+    Threshold=10.0d0
+    PVO=(0.0d0,0.0d0)
+    PEO=0.0d0
+    ThrTMP=0.0d0
 
-    !time measurement start
+    !-- time measurement start
     call system_clock(t1)
 
-    !file open
-    open (1, file='VC(s32p4).csv', status='replace')
-    open (2, file='VCtrial.csv', status='replace')
+    !-- file open
+    open (1, file='AvOth_BER_TSYM(-10dB)s16p4.csv', status='replace')
 
-    !implimentation part
+    !-- implimentation part
     !channel gain parameter
     do i=1, Npath
         Ampd(i,1) = sqrt(1.0d0/dble(Npath)) !Equal Gain
         !Ampd(i) = sqrt(1/(2**(i-1))) !Exp. atten.
     end do
 
-    do KEbN0=SEbN0, EEbN0, Step !Eb/N0 loop
-        Psig = 0.0d0
-        Pwgn = 0.0d0
-        Collect = 0
-        False = 0
+    !calculate EbN0
+    EbN0 = 10.0d0**(dble(KEbN0)/10.0d0)
 
-        do loop=1, Nloop !Monte calro loop
-            do i=1, Npath
-                Cpath(i,1) = cmplx(normal(),normal(),kind(0d0))/sqrt(2.0d0)*Ampd(i,1)
+    ThrTMP = SAvOth
+    do i=1, Vsize
+        Threshold(1,i) = ThrTMP
+        ThrTMP = ThrTMP *0.1d0
+    end do
+
+    Collect = 0
+    False = 0
+    do loop=1, Nloop !Monte calro loop
+        do i=1, Npath
+            Cpath(i,1) = cmplx(normal(),normal(),kind(0d0))/sqrt(2.0d0)*Ampd(i,1)
+        end do
+
+        !set H
+        do i=1, Nsybl
+            do j=1, Npath
+                H(i+j-1,i) = Cpath(j,1)
             end do
+        end do
 
-            !set H
-            do i=1, Nsybl
-                do j=1, Npath
-                    H(i+j-1,i) = Cpath(j,1)
-                end do
+        !set HE
+        do i=1, Nsybl+Npath-1
+            do j=1, Npath
+                HE(i+j-1,i) = Cpath(j,1)
             end do
+        end do
 
-            !set HE
-            do i=1, Nsybl+Npath-1
-                do j=1, Npath
-                    HE(i+j-1,i) = Cpath(j,1)
-                end do
+        !set Xppl
+        do i=1, Nsybl
+            do j=1, Nsybl
+                Xppl(i,j) = cmplx(1.0d0, 0.0d0, kind(0d0))
             end do
+        end do
 
-            if(APPLY_PPL) then
-                !set Xppl
-                do i=1, Nsybl
-                    do j=1, Nsybl
-                        Xppl(i,j) = cmplx(1.0d0, 0.0d0, kind(0d0))
-                    end do
-                end do
-            endif
+        !set HH
+        call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
 
-            !set HH
-            call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
+        !set HHH
+        call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
 
-            !set HHH
-            call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
+        !eigenvalue decomposition
+        call PPL(H,HE,Xppl,Nsybl,Npath,EbN0,Threshold,Vsize,PVO,PEO,SYM)
 
-            !eigenvalue decomposition
-            if(APPLY_PPL) then
-                call PPL(H,HE,Xppl,Eig,Nsybl,Npath,PPLloop)
-                call CSubstitute(V,Xppl,Nsybl,Nsybl)
-            else
-                if(Npath==1) then
-                    do i=1, Nsybl
-                        Eig(1,i) = HHH(i,i)
-                        V(i,i) = cmplx(1.0d0,0.0d0,kind(0d0))
-                    end do
-                else
-                    call CSubstitute(V,HHH,Nsybl,Nsybl)
-                    call decomp_zheevd(Nsybl,V,Eig)
-    !                call decomp_zheev(Nsybl,V,Eig)
-    !                call decomp_zgeev(Nsybl,V,Eig)
-    !                call decomp_zhpev(Nsybl,V,Eig)
-                endif
-            endif
-
+        do k=1, Vsize
             !set information symbol
-            do i=1, Nsybl
+            do i=1, SYM
                 S(1,i) = cmplx(nint(rand())*2.0d0-1.0d0,nint(rand())*2.0d0-1.0d0,kind(0d0)) !-1or1
             end do
-            do i=1, Nsybl
+            do i=1, SYM
                 TdatI(1,i) = (real(S(1,i))+1)/2 !0or1
                 TdatQ(1,i) = (aimag(S(1,i))+1)/2
             end do
-            do i=1, Nsybl
+            do i=1, SYM
                 do j=1, Nsybl
-                    SU(j,i) = S(1,i) * V(j,i)
+                    SU(j,i) = S(1,i) * PVO(k,j,i)
                 end do
             end do
 
             !transmit vector
             X = (0.0d0,0.0d0)
-            do i=1,Nsybl
+            do i=1,SYM
                 do j=1,Nsybl
                     X(j,1) = X(j,1) + SU(j,i)
                 end do
@@ -197,11 +179,6 @@ program VC
             !正規乱数の分散＝１＝雑音電力なので、正規乱数に雑音電力をかける（√２で割っているのはIとQの両方合わせて雑音電力とするため）
             Noise = Noise / sqrt(2.0d0) * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)
 
-            do i=1, Nsybl+Npath-1
-                Psig = Psig + (abs(Y(i,1))**2.0d0)
-                Pwgn = Pwgn + abs(Noise(i,1))**2.0d0
-            end do
-
             !add noise
             call CAdd(Y,Noise,Y,Nsybl+Npath-1,1,Nsybl+Npath-1,1)
 
@@ -214,9 +191,9 @@ program VC
             RdatI = 0
             RdatQ = 0
             !Demodulation
-            do i=1, Nsybl
+            do i=1, SYM
                 do j=1, Nsybl
-                    A(j,1) = V(j,i)
+                    A(j,1) = PVO(k,j,i)
                 end do
                 !inner product
                 call CAdjoint(Y2,Y2H,Nsybl,1)
@@ -237,35 +214,37 @@ program VC
             end do
 
             !Bit Error Rate
-            do i=1, Nsybl
+            do i=1, SYM
                 if(RdatI(1,i)==TdatI(1,i)) then
-                    Collect = Collect + 1
+                    Collect(k) = Collect(k) + 1
                 elseif(RdatI(1,i)/=TdatI(1,i)) then
-                    False = False + 1
+                    False(k) = False(k) + 1
                 endif
                 if(RdatQ(1,i)==TdatQ(1,i)) then
-                    Collect = Collect + 1
+                    Collect(k) = Collect(k) + 1
                 elseif(RdatQ(1,i)/=TdatQ(1,i)) then
-                    False = False + 1
+                    False(k) = False(k) + 1
                 endif
             end do
-            write(2,*) loop, ',', dble(False)/(dble(Collect)+dble(False))
         end do
-        
-        EbN0 = 10.0d0*dlog10(Psig/Pwgn/2.0d0) !QPSK rate =2
-        BER = dble(False) / (dble(Collect) + dble(False))
-        if(BER>0.0) then
-            write(1,*) EbN0, ',', BER
-            print *, 'EbN0=', EbN0
-            print *, 'BER=', BER
+    end do
+    
+    do i=1, Vsize
+        BER(i) = dble(False(i)) / dble(Collect(i)+False(i))
+    end do
+
+    do i=1, Vsize
+        if(BER(i)>0.0) then
+            write(1,*) Threshold(1,i), ',', BER(i)
+            print *, 'Threshold=', Threshold(1,i)
+            print *, 'BER=', BER(i)
         endif
     end do
 
     !file close
     close(1)
-    close(2)
 
     !time measurement end
     call system_clock(t2, t_rate, t_max)
     print *, 'Elapsed time is...', (t2-t1)/dble(t_rate)
-end program
+end program AvOth_BER_TSYM

@@ -8,15 +8,35 @@ MOD = *.mod
 LAPACK = -llapack -lblas
 
 .PHONY: usePPLmod
-usePPLmod: CALmod.o PPLmod.o usePPLmod.o
+usePPLmod: CALmod.o PPLCUTOFFmod.o usePPLmod.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+.PHONY: avoth_ber
+avoth_ber: CALmod.o PPLAvOth_BERmod.o AvOth_BER.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+.PHONY: tsym
+tsym: CALmod.o PPLTSYMmod.o AVOth_BER_TSYM.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: vc
 vc: CALmod.o PPLmod.o VC.o
 	$(CC) $^ -o $@ $(LAPACK)
 
+.PHONY: vcq
+vcq: CALmod.o PPLVCQmod.o VCQ.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+.PHONY: cutoff
+cutoff: CALmod.o PPLCutoffmod.o VC_cutoff.o
+	$(CC) $^ -o $@ $(LAPACK)
+
 .PHONY: vc_ideal
 vc_ideal: VC_ideal.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+.PHONY: vc_ideal2
+vc_ideal2: CALmod.o PPLmod.o VC_ideal_v2.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: vc_ideal_formula
