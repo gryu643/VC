@@ -216,7 +216,9 @@ contains
 			call CAbs(NAISEKI,NAISEKI_TMP,1,1)
 			AVGOTH = NAISEKI_TMP
 
-			if(AVGOTH<Threshold(1,ThrAdr)) then
+			if(AVGOTH>Threshold(1,ThrAdr)) then
+				cycle
+			else
 				do i=1, Nsybl
 					PEO(ThrAdr,i) = real(LAMBDA(i,1))
 				end do
