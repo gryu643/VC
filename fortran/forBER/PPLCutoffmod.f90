@@ -2,17 +2,18 @@ module PPLCutoffmod
 	use CALmod
 	implicit none
 contains
-	subroutine PPL(H,HE,X,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,BERStandard)
+	subroutine PPL(H,HE,X,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,ConvSize,BERStandard,V)
 		implicit none
 
 		!argument
-		integer Nsybl,Npath,RTNum,UseChNum
-        double precision EbN0In
+		integer ConvSize,Nsybl,Npath,RTNum(ConvSize),UseChNum(ConvSize)
+        double precision EbN0In(ConvSize)
 		complex(kind(0d0)) X(Nsybl,Nsybl)
 		complex(kind(0d0)) H(Nsybl+Npath-1,Nsybl)
 		complex(kind(0d0)) HE(Nsybl+2*(Npath-1),Nsybl+Npath-1)
 		double precision Eig(1,Nsybl)
-		double precision ConvStandard,BERStandard
+		double precision ConvStandard(ConvSize),BERStandard
+		complex(kind(0d0)) V(ConvSize,Nsybl,Nsybl)
 
 		!declaration
 		integer i,j,k,l,m
@@ -48,12 +49,14 @@ contains
 		complex(kind(0d0)) UHN(1,1)
 		double precision NAISEKI_TMP
 		double precision sC2
-		double precision AVGOTH
-        integer Ksybl
+		double precision AVGOTH(ConvSize)
+        integer Ksybl(ConvSize)
 		double precision BER
 		double precision InstantBER
 		double precision LambdaEbN0
 		complex(kind(0d0)) V1(Nsybl),V2(Nsybl)
+		logical BERFlag(ConvSize)
+		integer ExitFlag
 
 		!initialize
 		Z=(0.0,0.0)
@@ -88,6 +91,8 @@ contains
 		BER=0.0d0
 		InstantBER=0.0d0
 		LambdaEbN0=0.0d0
+		ExitFlag=0
+		BERFlag=.False.
 
 		l = 0
 		do
@@ -157,7 +162,6 @@ contains
 				do k=1, Nsybl
 					SUB_PART(k,i) = LUUHXn(k,1)
 				end do
-
 			end do
 
 			!減算
@@ -180,72 +184,95 @@ contains
 				end do
 			end do
             
-			!average othogonality of eiven vector
-			NAISEKI(1,1) = cmplx(0.0,0.0,kind(0d0))
-			do i=1, Ksybl-1
-				do j=i+1, Ksybl
-					!固有ベクトル群を１列のベクトルに格納
-					do k=1, Nsybl
-						V1(k) = X(k,i)
+			do m=1, ConvSize
+				if(BERFlag(m)) cycle
+			
+				!average othogonality of eiven vector
+				NAISEKI(1,1) = cmplx(0.0,0.0,kind(0d0))
+				do i=1, Ksybl(m)-1
+					do j=i+1, Ksybl(m)
+						!固有ベクトル群を１列のベクトルに格納
+						do k=1, Nsybl
+							V1(k) = X(k,i)
+						end do
+						!内積を取る固有ベクトルを格納
+						do k=1, Nsybl
+							V2(k) = X(k,j)
+						end do
+						NAISEKI(1,1) = NAISEKI(1,1) + abs(dot_product(V1,V2))
 					end do
-					!内積を取る固有ベクトルを格納
-					do k=1, Nsybl
-						V2(k) = X(k,j)
-					end do
-					NAISEKI(1,1) = NAISEKI(1,1) + abs(dot_product(V1,V2))
 				end do
+				call CAbs(NAISEKI,NAISEKI_TMP,1,1)
+				AVGOTH(m) = NAISEKI_TMP
 			end do
 
-			call CAbs(NAISEKI,NAISEKI_TMP,1,1)
-			AVGOTH = NAISEKI_TMP
+			do j=1, ConvSize
+				if(BERFlag(j)) cycle
 
-			!judge convergence by Average othogonality
-			if(AVGOTH>ConvStandard) then
-				cycle
-			else
-                !judge cutoff by ber
-				!when lambda1
-				if(Ksybl==2) then
-                    LambdaEbN0 = real(LAMBDA(1,1))*EbN0In
-                    InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
-                    BER = BER + InstantBER
+				!judge convergence by Average othogonality
+				if(AVGOTH(j)>ConvStandard(j)) then
+					cycle
+				else
+					!judge cutoff by ber
+					!when lambda1
+					BER=0.0d0
+					if(Ksybl(j)==2) then
+						LambdaEbN0 = real(LAMBDA(1,1))*EbN0In(j)
+						InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
+						BER = BER + InstantBER
+						
+						if(BER>BERStandard) then
+							RTNum(j) = l
+							UseChNum(j) = 0
+							BERFlag(j) = .True.
+							ExitFlag = ExitFlag + 1
+							cycle
+						endif
+					endif
 
+					!when lambda2~
+					BER=0.0d0
+					do i=1, Ksybl(j)
+						LambdaEbN0 = real(LAMBDA(i,1))*EbN0In(j)
+						InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
+						BER = BER + InstantBER/dble(Ksybl(j))
+					end do
+					
 					if(BER>BERStandard) then
-						RTNum = l
-						UseChNum = 0
-						exit
+						do i=1, Ksybl(j)-1
+							Eig(i,j) = real(LAMBDA(i,1))
+							do k=1, Nsybl
+								V(j,k,i) = X(k,i)
+							end do
+						end do
+						RTnum(j) = l
+						UseChNum(j) = Ksybl(j)-1
+						BERFlag(j) = .True.
+						ExitFlag = ExitFlag + 1
+						cycle
+					else
+						Ksybl(j) = Ksybl(j) + 1
+					endif
+
+					if(Ksybl(j)==Nsybl+1) then
+						do i=1, Ksybl(j)-1
+							Eig(i,j) = real(LAMBDA(i,1))
+							do k=1, Nsybl
+								V(j,k,i) = X(k,i)
+							end do
+						end do
+
+						RTnum(j) = l
+						UseChNum(j) = Ksybl(j)-1
+						BERFlag(j) = .True.
+						ExitFlag = ExitFlag + 1
+						cycle
 					endif
 				endif
-
-				!when lambda2~
-				BER=0.0d0
-                do i=1, Ksybl
-                    LambdaEbN0 = real(LAMBDA(i,1))*EbN0In
-                    InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
-                    BER = BER + InstantBER/dble(Ksybl)
-                end do
-				
-                if(BER>BERStandard) then
-					do i=1, Ksybl-1
-						Eig(1,i) = real(LAMBDA(i,1))
-					end do
-					RTnum = l
-
-					UseChNum = Ksybl-1
-					exit
-                else
-				    Ksybl = Ksybl + 1
-                endif
-
-				if(Ksybl==Nsybl+1) then
-                    do i=1, Ksybl-1
-                        Eig(1,i) = real(LAMBDA(i,1))
-                    end do
-                    RTnum = l
-                    UseChNum = Ksybl-1
-                    exit
-				endif
-			endif
+			end do
+			
+			!judge PPL exit
+			if(ExitFlag==ConvSize) exit
 		end do
 	end subroutine
 end module PPLCutoffmod
