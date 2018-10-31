@@ -53,6 +53,7 @@ contains
 		double precision sC2
 		double precision AVGOTH
 		integer ThrAdr
+		complex(kind(0d0)) V1(Nsybl),V2(Nsybl)
 
 		!initialize
 		Z(:,:)=(0.0,0.0)
@@ -190,26 +191,16 @@ contains
 			!average othogonality of eiven vector
 			NAISEKI(1,1) = cmplx(0.0,0.0,kind(0d0))
 			do i=1, Nsybl-1
+				!固有ベクトル群を１列のベクトルに格納
+				do k=1, Nsybl
+					V1(k,1) = X(k,i)
+				end do
 				do j=i+1, Nsybl
-					!固有ベクトル群を１列のベクトルに格納
-					do k=1, Nsybl
-						U(k,1) = X(k,i)
-					end do
 					!内積を取る固有ベクトルを格納
 					do k=1, Nsybl
-						N(k,1) = X(k,Nsybl)
+						V2(k,1) = X(k,j)
 					end do
-
-					!随伴行列
-					call CAdjoint(U,UH,Nsybl,1)
-
-					!内積の計算
-					call CMultiply(UH,N,UHN,1,Nsybl,Nsybl,1)
-
-					UHN(1,1) = cmplx(abs(real(UHN(1,1))),abs(aimag(UHN(1,1))),kind(0d0))
-
-					!計算した内積を足し合わせる
-					NAISEKI(1,1) = NAISEKI(1,1) + UHN(1,1)
+					NAISEKI(1,1) = NAISEKI(1,1) + abs(dot_product(V1,V2))
 				end do
 			end do
 

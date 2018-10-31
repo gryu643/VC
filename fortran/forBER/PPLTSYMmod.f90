@@ -54,6 +54,7 @@ contains
 		double precision sC2
 		double precision AVGOTH
 		integer ThrAdr
+		complex(kind(0d0)) V1(Nsybl),V2(Nsybl)
 
 		!initialize
 		Z(:,:)=(0.0,0.0)
@@ -86,12 +87,6 @@ contains
 		D_ABS=0.0
 		D1_ABS=0.0
 		ThrAdr=1
-
-		!行列Hの随伴行列HHの設定
-		call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
-
-		!合成チャネル行列HHHの設定
-		call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
 
 		l = 0
 		do
@@ -152,11 +147,7 @@ contains
 				call CMultiply(LU,UH,LUUH,Nsybl,1,1,Nsybl)
 
 				!λUUHの集合を格納
-				do j=1, Nsybl
-					do k=1, Nsybl
-						LUUH_SET(j,k) = LUUH_SET(j,k) + LUUH(j,k)
-					end do
-				end do
+				call CAdd(LUUH_SET,LUUH,LUUH_SET,Nsybl,Nsybl,Nsybl,Nsybl)
 
 				!LUUH_SET*Xn(Nsybl,1) iの次ループで足し合わせる
 				call CMultiply(LUUH_SET,Xn,LUUHXn,Nsybl,Nsybl,Nsybl,1)
@@ -165,7 +156,6 @@ contains
 				do k=1, Nsybl
 					SUB_PART(k,i) = LUUHXn(k,1)
 				end do
-
 			end do
 
 			!減算
@@ -191,33 +181,25 @@ contains
 			!average othogonality of eiven vector
 			NAISEKI(1,1) = cmplx(0.0,0.0,kind(0d0))
 			do i=1, SYM-1
+				!固有ベクトル群を１列のベクトルに格納
+				do k=1, Nsybl
+					V1(k) = X(k,i)
+				end do
 				do j=i+1, SYM
-					!固有ベクトル群を１列のベクトルに格納
-					do k=1, Nsybl
-						U(k,1) = X(k,i)
-					end do
 					!内積を取る固有ベクトルを格納
 					do k=1, Nsybl
-						N(k,1) = X(k,Nsybl)
+						V2(k) = X(k,j)
 					end do
-
-					!随伴行列
-					call CAdjoint(U,UH,Nsybl,1)
-
-					!内積の計算
-					call CMultiply(UH,N,UHN,1,Nsybl,Nsybl,1)
-
-					UHN(1,1) = cmplx(abs(real(UHN(1,1))),abs(aimag(UHN(1,1))),kind(0d0))
-
-					!計算した内積を足し合わせる
-					NAISEKI(1,1) = NAISEKI(1,1) + UHN(1,1)
+					NAISEKI(1,1) = NAISEKI(1,1) + abs(dot_product(V1,V2))
 				end do
 			end do
 
 			call CAbs(NAISEKI,NAISEKI_TMP,1,1)
 			AVGOTH = NAISEKI_TMP
 
-			if(AVGOTH<Threshold(1,ThrAdr)) then
+			if(AVGOTH>Threshold(1,ThrAdr)) then
+				cycle
+			else
 				do i=1, Nsybl
 					PEO(ThrAdr,i) = real(LAMBDA(i,1))
 				end do

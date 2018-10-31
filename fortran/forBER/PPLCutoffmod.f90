@@ -183,11 +183,11 @@ contains
 			!average othogonality of eiven vector
 			NAISEKI(1,1) = cmplx(0.0,0.0,kind(0d0))
 			do i=1, Ksybl-1
+				!固有ベクトル群を１列のベクトルに格納
+				do k=1, Nsybl
+					V1(k) = X(k,i)
+				end do
 				do j=i+1, Ksybl
-					!固有ベクトル群を１列のベクトルに格納
-					do k=1, Nsybl
-						V1(k) = X(k,i)
-					end do
 					!内積を取る固有ベクトルを格納
 					do k=1, Nsybl
 						V2(k) = X(k,j)
