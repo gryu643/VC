@@ -12,10 +12,11 @@ program VCQ
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=5
-    integer,parameter :: Nloop=1000
+    integer,parameter :: Nloop=100
     double precision,parameter :: BERStandard=1.0d-2
+    integer,parameter :: ConvSize=(int((EEbN0-SEbN0)/Step)+1)
 
-    integer i,j
+    integer i,j,k
     double precision Ampd(Npath,1)
     integer loop
     integer KEbN0
@@ -26,16 +27,15 @@ program VCQ
     complex(kind(0d0)) HH(Nsybl,Nsybl+Npath-1)
     complex(kind(0d0)) HHH(Nsybl,Nsybl)
     complex(kind(0d0)) V(Nsybl,Nsybl)
-    double precision EbN0
-    double precision BER
-    double precision Eig(1,Nsybl)
+    double precision Eig(ConvSize,Nsybl)
     double precision BER_TMP
-    double precision AvUseChNum
+    double precision AvUseChNum(ConvSize)
     double precision InstantBER
     double precision LambdaEbN0
-    double precision ConvStandard
-    integer RTNum
-    double precision AvRTNum
+    double precision ConvStandard(ConvSize)
+    integer RTNum(ConvSize)
+    double precision AvRTNum(ConvSize)
+    double precision EbN0In(ConvSize)
 
     !initialize
     Ampd=0.0d0
@@ -48,8 +48,6 @@ program VCQ
     HH=(0.0d0,0.0d0)
     HHH=(0.0d0,0.0d0)
     V=(0.0d0,0.0d0)
-    EbN0=0.0d0
-    BER=0.0d0
     Eig=0.0d0
     InstantBER=0.0d0
     LambdaEbN0=0.0d0
@@ -67,77 +65,85 @@ program VCQ
         !Ampd(i) = sqrt(1/(2**(i-1))) !Exp. atten.
     end do
 
-    do KEbN0=SEbN0, EEbN0, Step !Eb/N0 loop
-        AvUseChNum=0.0d0
-        AvRTNum=0.0d0
-        !setup Convergence standard
+    !setup Convergence standard
+    i=1
+    do KEbN0=SEbN0, EEbN0, Step
+        EbN0In(i) = 10.0**(dble(KEbN0)/10.0d0)
         if(KEbN0<0) then
-            ConvStandard = 1.0d0
+            ConvStandard(i) = 1.0d0
         else
-            ConvStandard = 1.0d0*dexp(-0.23*dble(KEbN0))
+            ConvStandard(i) = 1.0d0*dexp(-0.23*dble(KEbN0))
         endif
+        i=i+1
+    end do
 
-        do loop=1, Nloop !Monte calro loop
-            do i=1, Npath
-                Cpath(i,1) = cmplx(normal(),normal(),kind(0d0))/sqrt(2.0d0)*Ampd(i,1)
-            end do
+    do loop=1, Nloop !Monte calro loop
+        if(mod(loop,(Nloop)/10)==0) print *, loop
 
-            !set H
-            do i=1, Nsybl
-                do j=1, Npath
-                    H(i+j-1,i) = Cpath(j,1)
-                end do
-            end do
+        do i=1, Npath
+            Cpath(i,1) = cmplx(normal(),normal(),kind(0d0))/sqrt(2.0d0)*Ampd(i,1)
+        end do
 
-            !set HE
-            do i=1, Nsybl+Npath-1
-                do j=1, Npath
-                    HE(i+j-1,i) = Cpath(j,1)
-                end do
-            end do
-
-            !set Xppl
-            do i=1, Nsybl
-                do j=1, Nsybl
-                    Xppl(i,j) = cmplx(1.0d0, 0.0d0, kind(0d0))
-                end do
-            end do
-
-            !set HH
-            call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
-
-            !set HHH
-            call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
-
-            !eigenvalue decomposition
-            call PPLVCQ(H,HE,Xppl,Eig,Nsybl,Npath,RTNum,ConvStandard)
-            call CSubstitute(V,Xppl,Nsybl,Nsybl)
-
-            AvRTNum = AvRTNum + dble(RTNum)/dble(Nloop)
-
-            !judge quality
-            do i=1, Nsybl
-                BER_TMP=0.0d0
-                do j=1, i
-                    LambdaEbN0 = Eig(1,j)*10.0d0**(dble(KEbN0)/10.0d0)
-                    InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
-                    BER_TMP = BER_TMP + InstantBER/dble(i)
-                end do
-
-                if(BER_TMP>BERStandard) then
-                    AvUseChNum = AvUseChNum + dble(i-1)/dble(Nloop)
-                    exit
-                endif
-                
-                if(i==Nsybl) then
-                    AvUseChNum = AvUseChNum + dble(Nsybl)/dble(Nloop)
-                endif
+        !set H
+        do i=1, Nsybl
+            do j=1, Npath
+                H(i+j-1,i) = Cpath(j,1)
             end do
         end do
 
-        print *, 'KEbN0=', KEbN0
-        print *, 'AvRTNum=', AvRTNum
-        write(3,*) KEbN0, ',', AvUseChNum, ',', AvRTNum
+        !set HE
+        do i=1, Nsybl+Npath-1
+            do j=1, Npath
+                HE(i+j-1,i) = Cpath(j,1)
+            end do
+        end do
+
+        !set Xppl
+        do i=1, Nsybl
+            do j=1, Nsybl
+                Xppl(i,j) = cmplx(1.0d0, 0.0d0, kind(0d0))
+            end do
+        end do
+
+        !set HH
+        call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
+
+        !set HHH
+        call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
+
+        !eigenvalue decomposition
+        call PPLVCQ(H,HE,Xppl,Eig,Nsybl,Npath,RTNum,ConvStandard,ConvSize)
+
+        do i=1, ConvSize
+            !update AvRTNum
+            AvRTNum(i) = AvRTNum(i) + dble(RTNum(i))/dble(Nloop)
+        end do
+
+        do k=1, ConvSize
+            !judge quality
+            BER_TMP=0.0d0
+            do j=1, Nsybl
+                LambdaEbN0 = Eig(k,j)*EbN0In(k)
+                InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
+                BER_TMP = BER_TMP + InstantBER
+
+                if((BER_TMP/dble(j))>BERStandard) then
+                    AvUseChNum(k) = AvUseChNum(k) + dble(j-1)/dble(Nloop)
+                    exit
+                endif
+
+                if(j==Nsybl) then
+                    AvUseChNum(k) = AvUseChNum(k) + dble(Nsybl)/dble(Nloop)
+                    exit
+                endif
+            end do
+        end do
+    end do
+
+    do k=1, ConvSize
+        print *, 'KEbN0=', nint(10.0d0*dlog10(EbN0In(k)))
+        print *, 'AvRTNum=', AvRTNum(k)
+        write(3,*) nint(10.0d0*dlog10(EbN0In(k))), ',', AvUseChNum(k), ',', AvRTNum(k)
     end do
 
     !file close

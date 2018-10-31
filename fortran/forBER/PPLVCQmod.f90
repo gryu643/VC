@@ -2,18 +2,17 @@ module PPLVCQmod
 	use CALmod
 	implicit none
 contains
-	subroutine PPLVCQ(H,HE,X,Eig,Nsybl,Npath,RTNum,ConvStandard)
+	subroutine PPLVCQ(H,HE,X,Eig,Nsybl,Npath,RTNum,ConvStandard,ConvSize)
 		implicit none
 
 		!argument
-		integer Nsybl,Npath
-        double precision EbN0In
+		integer Nsybl,Npath,ConvSize
 		complex(kind(0d0)) X(Nsybl,Nsybl)
 		complex(kind(0d0)) H(Nsybl+Npath-1,Nsybl)
 		complex(kind(0d0)) HE(Nsybl+2*(Npath-1),Nsybl+Npath-1)
-		double precision Eig(1,Nsybl)
-		double precision ConvStandard
-		integer RTNum
+		double precision Eig(ConvSize,Nsybl)
+		double precision ConvStandard(ConvSize)
+		integer RTNum(ConvSize)
 
 		!declaration
 		integer i,j,k,l,m
@@ -52,6 +51,8 @@ contains
 		double precision AVGOTH
 		double precision BER
 		complex(kind(0d0)) V1(Nsybl),V2(Nsybl)
+		logical BERFlag(ConvSize)
+		integer ExitFlag		
 
 		!initialize
 		Z=(0.0,0.0)
@@ -83,6 +84,8 @@ contains
 		D1_ABS=0.0
 		Eig=0.0d0
 		BER=0.0d0
+		ExitFlag=0
+		BERFlag=.False.
 
 		l = 0
 		do
@@ -194,15 +197,24 @@ contains
 			call CAbs(NAISEKI,NAISEKI_TMP,1,1)
 			AVGOTH = NAISEKI_TMP
 
-			if(AVGOTH>ConvStandard) then
-				cycle
-			else
-                do i=1, Nsybl
-                    Eig(1,i) = real(LAMBDA(i,1))
-                end do
-				RTNum = l
-                exit
-			endif
+			do k=1, ConvSize
+				if(BERFlag(k)) cycle
+
+				if(AVGOTH>ConvStandard(k)) then
+					cycle
+				else
+					do i=1, Nsybl
+						Eig(k,i) = real(LAMBDA(i,1))
+					end do
+					RTNum(k) = l
+					BERFlag(k) = .True.
+					ExitFlag = ExitFlag + 1
+					cycle
+				endif
+			end do
+
+			!judge PPL exit
+			if(ExitFlag==ConvSize) exit
 		end do
 	end subroutine
 end module PPLVCQmod
