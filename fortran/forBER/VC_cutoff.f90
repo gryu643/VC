@@ -120,7 +120,6 @@ program AvOth_BER
         else
             ConvStandard(i) = 1.0d0*dexp(-0.23*dble(KEbN0))
         endif
-        !print *, i, ConvStandard(i)
         i=i+1
     end do
 
