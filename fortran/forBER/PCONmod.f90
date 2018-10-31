@@ -20,6 +20,7 @@ contains
         C=0.0d0
 
         !--implementation
+        !AX=B
         !set A
         do i=1, Nsymbl
             A(i,i) = lambda(1,i)*EbN0
@@ -28,6 +29,7 @@ contains
         end do
 
         !set B
+        
         do i=1, Nsymbl
             B(i,1) = dlog(lambda(1,i)/Nsymbl*EbN0)
         end do
