@@ -57,6 +57,7 @@ contains
 		complex(kind(0d0)) V1(Nsybl),V2(Nsybl)
 		logical BERFlag(ConvSize)
 		integer ExitFlag
+		double precision NCS(ConvSize)
 
 		!initialize
 		Z=(0.0,0.0)
@@ -206,11 +207,19 @@ contains
 				AVGOTH(m) = NAISEKI_TMP
 			end do
 
+			do k=1, ConvSize
+				if(Ksybl(k)<=Nsybl/8) then
+					NCS(k) = ConvStandard(k)/10.0d0
+				else
+					NCS(K) = ConvStandard(k)
+				endif
+			end do
+
 			do j=1, ConvSize
 				if(BERFlag(j)) cycle
 
 				!judge convergence by Average othogonality
-				if(AVGOTH(j)>ConvStandard(j)) then
+				if(AVGOTH(j)>NCS(j)) then
 					cycle
 				else
 					!judge cutoff by ber
