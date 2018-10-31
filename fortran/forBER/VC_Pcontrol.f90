@@ -95,7 +95,7 @@ program VC_Pcontrol
     call system_clock(t1)
 
     !file open
-    open (1, file='VC_Pcon(s32p2).csv', status='replace')
+    open (1, file='VC_Pcon(s32p4).csv', status='replace')
     open (2, file='VC_Pcontrial.csv', status='replace')
 
     !implimentation part
@@ -167,7 +167,7 @@ program VC_Pcontrol
 
             !transmit power control
             call Pcontroll(Eig,10**(KEbN0/10.0d0),Pt,Nsybl)
-            print *, pt
+
             do i=1, Nsybl
 !                S(1,i) = sqrt(Pt(1,i))*S(1,i)/sqrt(2.0d0)
             end do

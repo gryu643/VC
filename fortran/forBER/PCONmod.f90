@@ -20,6 +20,7 @@ contains
         C=0.0d0
 
         !--implementation
+        !AX=B
         !set A
         do i=1, Nsymbl
             A(i,i) = lambda(1,i)*EbN0
