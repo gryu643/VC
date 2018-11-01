@@ -11,7 +11,7 @@ contains
 		complex(kind(0d0)) X(Nsybl,Nsybl)
 		complex(kind(0d0)) H(Nsybl+Npath-1,Nsybl)
 		complex(kind(0d0)) HE(Nsybl+2*(Npath-1),Nsybl+Npath-1)
-		double precision Eig(1,Nsybl)
+		double precision Eig(Nsybl,ConvSize)
 		double precision ConvStandard(ConvSize),BERStandard
 		complex(kind(0d0)) V(ConvSize,Nsybl,Nsybl)
 
@@ -58,6 +58,7 @@ contains
 		logical BERFlag(ConvSize)
 		integer ExitFlag
 		double precision NCS(ConvSize)
+		double precision AVGOTHN
 
 		!initialize
 		Z=(0.0,0.0)
@@ -185,27 +186,32 @@ contains
 				end do
 			end do
             
-			do m=1, ConvSize
-				if(BERFlag(m)) cycle
-			
-				!average othogonality of eiven vector
-				NAISEKI(1,1) = cmplx(0.0,0.0,kind(0d0))
-				do i=1, Ksybl(m)-1
-					do j=i+1, Ksybl(m)
-						!固有ベクトル群を１列のベクトルに格納
-						do k=1, Nsybl
-							V1(k) = X(k,i)
-						end do
-						!内積を取る固有ベクトルを格納
-						do k=1, Nsybl
-							V2(k) = X(k,j)
-						end do
-						NAISEKI(1,1) = NAISEKI(1,1) + abs(dot_product(V1,V2))
+			!average othogonality of eiven vector
+			NAISEKI(1,1) = cmplx(0.0,0.0,kind(0d0))
+			do i=2, Nsybl
+				do j=1, i-1
+					!固有ベクトル群を１列のベクトルに格納
+					do k=1, Nsybl
+						V1(k) = X(k,i)
+					end do
+					!内積を取る固有ベクトルを格納
+					do k=1, Nsybl
+						V2(k) = X(k,j)
+					end do
+					NAISEKI(1,1) = NAISEKI(1,1) + abs(dot_product(V1,V2))
+
+					call CAbs(NAISEKI,NAISEKI_TMP,1,1)
+					do m=1, ConvSize
+						if(BERFlag(m)) cycle
+
+						if(i==Ksybl(m)) then
+							AVGOTH(m) = NAISEKI_TMP
+						endif
 					end do
 				end do
-				call CAbs(NAISEKI,NAISEKI_TMP,1,1)
-				AVGOTH(m) = NAISEKI_TMP
 			end do
+			call CAbs(NAISEKI,NAISEKI_TMP,1,1)
+			AVGOTHN = NAISEKI_TMP
 
 			do k=1, ConvSize
 				if(Ksybl(k)<=Nsybl/8) then
@@ -213,70 +219,70 @@ contains
 				else
 					NCS(K) = ConvStandard(k)
 				endif
+				!NCS(K) = ConvStandard(k)
 			end do
 
 			do j=1, ConvSize
 				if(BERFlag(j)) cycle
 
-				!judge convergence by Average othogonality
-				if(AVGOTH(j)>NCS(j)) then
-					cycle
-				else
-					!judge cutoff by ber
-					!when lambda1
+				if(AVGOTHN<=ConvStandard(j)) then
 					BER=0.0d0
-					if(Ksybl(j)==2) then
-						LambdaEbN0 = real(LAMBDA(1,1))*EbN0In(j)
-						InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
-						BER = BER + InstantBER
-						
-						if(BER>BERStandard) then
-							RTNum(j) = l
-							UseChNum(j) = 0
-							BERFlag(j) = .True.
-							ExitFlag = ExitFlag + 1
-							cycle
-						endif
-					endif
-
-					!when lambda2~
-					BER=0.0d0
-					do i=1, Ksybl(j)
+					do i=1, Nsybl
 						LambdaEbN0 = real(LAMBDA(i,1))*EbN0In(j)
 						InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
-						BER = BER + InstantBER/dble(Ksybl(j))
+						BER = BER + InstantBER
 					end do
-					
-					if(BER>BERStandard) then
-						do i=1, Ksybl(j)-1
-							Eig(i,j) = real(LAMBDA(i,1))
-							do k=1, Nsybl
-								V(j,k,i) = X(k,i)
-							end do
-						end do
-						RTnum(j) = l
-						UseChNum(j) = Ksybl(j)-1
+					if(BER/dble(Nsybl)<=BERStandard) then
 						BERFlag(j) = .True.
-						ExitFlag = ExitFlag + 1
+						UseChNum(j) = Nsybl
+					endif
+				endif
+
+				!judge convergence by Average othogonality
+				if(BERFlag(j).neqv..True.) then
+					if(AVGOTH(j)>NCS(j)) then
 						cycle
 					else
-						Ksybl(j) = Ksybl(j) + 1
-					endif
+						!judge ber
+						BER=0.0d0
+						do i=1, Ksybl(j)
+							LambdaEbN0 = real(LAMBDA(i,1))*EbN0In(j)
+							InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
+							BER = BER + InstantBER
 
-					if(Ksybl(j)==Nsybl+1) then
-						do i=1, Ksybl(j)-1
-							Eig(i,j) = real(LAMBDA(i,1))
-							do k=1, Nsybl
-								V(j,k,i) = X(k,i)
-							end do
+							if(Ksybl(j)>2.and.i<Ksybl(j)) cycle
+
+							if(BER/dble(i)>BERStandard) then
+								BERFlag(j) = .True.
+								UseChNum(j) = i-1
+								exit
+							else
+								Ksybl(j) = Ksybl(j) + 1
+								if(Ksybl(j)==Nsybl+1) then
+									BERFlag(j) = .True.
+									UseChNum(j) = Nsybl
+									exit
+								endif
+							endif
 						end do
-
-						RTnum(j) = l
-						UseChNum(j) = Ksybl(j)-1
-						BERFlag(j) = .True.
-						ExitFlag = ExitFlag + 1
-						cycle
 					endif
+				endif
+				
+				!output result 
+				if(BERFlag(j)) then
+					RTNum(j) = l
+					ExitFlag = ExitFlag + 1
+					
+					select case(UseChNum(j))
+						case(1)
+						case(2:)
+							do m=1, UseChNum(j)
+								Eig(m,j) = real(LAMBDA(m,1))
+								do k=1, Nsybl
+									V(j,k,m) = X(k,m)
+								end do
+							end do
+					end select
 				endif
 			end do
 			

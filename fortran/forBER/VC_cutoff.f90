@@ -9,7 +9,7 @@ program AvOth_BER
     !declaration
     integer,parameter :: Nsybl=32
     integer,parameter :: Npath=4
-    integer,parameter :: Nloop=100
+    integer,parameter :: Nloop=100000
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=5
