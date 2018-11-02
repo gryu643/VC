@@ -29,6 +29,7 @@ contains
         end do
 
         !set B
+        
         do i=1, Nsymbl
             B(i,1) = dlog(lambda(1,i)/Nsymbl*EbN0)
         end do
