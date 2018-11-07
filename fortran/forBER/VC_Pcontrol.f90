@@ -2,6 +2,7 @@ program VC_Pcontrol
     use PPLmod
     use CALmod
     use PCONmod
+!    use SQPmod
     implicit none
 
     !ifdef
@@ -16,7 +17,7 @@ program VC_Pcontrol
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=10
-    integer,parameter :: Nloop=100
+    integer,parameter :: Nloop=1000
     integer,parameter :: PPLloop=500
 
     integer i,j
@@ -54,6 +55,11 @@ program VC_Pcontrol
     double precision BER
     double precision Eig(1,Nsybl)
     double precision Pt(1,Nsybl)
+    complex(kind(0d0)) TMP
+    double precision EbN0t
+    double precision BERMin
+    double precision UsePt(1,Nsybl)
+    integer info
 
     !initialize
     Ampd(:,:)=0.0d0
@@ -90,6 +96,9 @@ program VC_Pcontrol
     BER=0.0d0
     Eig=0.0d0
     Pt=0.0d0
+    TMP=0.0d0
+    UsePt=0.0d0
+    info=1
 
     !time measurement start
     call system_clock(t1)
@@ -151,10 +160,10 @@ program VC_Pcontrol
                 call CSubstitute(V,Xppl,Nsybl,Nsybl)
             else
                 call CSubstitute(V,HHH,Nsybl,Nsybl)
-        !                call decomp_zheevd(Nsybl,V,Eig)
-        !                call decomp_zheev(Nsybl,V,Eig)
-        !                call decomp_zgeev(Nsybl,V,Eig)
-                call decomp_zhpev(Nsybl,V,Eig)
+                call decomp_zheevd(Nsybl,V,Eig)
+!                call decomp_zheev(Nsybl,V,Eig)
+!                call decomp_zgeev(Nsybl,V,Eig)
+!                call decomp_zhpev(Nsybl,V,Eig)
             endif
 
             !set information symbol
@@ -164,13 +173,31 @@ program VC_Pcontrol
 
             !sort Eig descending order
             call sort(Eig,Nsybl)
+            do i=1,Nsybl
+                do j=1, Nsybl
+                    TMP = V(j,i)
+                    V(j,i) = V(j,Nsybl+1-i)
+                    V(j,Nsybl+1-i) = TMP
+                end do
+            end do
 
             !transmit power control
-            call Pcontroll(Eig,10**(KEbN0/10.0d0),Pt,Nsybl)
-
-            do i=1, Nsybl
-!                S(1,i) = sqrt(Pt(1,i))*S(1,i)/sqrt(2.0d0)
+            EbN0t = 10**(KEbN0/10.0d0)
+            BERMin=1.0d0
+            do i=Nsybl, 1, -1
+                Pt=0.0d0
+                info=1
+                call Pcontroll(Eig,EbN0t,Pt,i,Nsybl,info)
+                if(info==1) then
+                    do j=1, Nsybl
+                        UsePt(1,j) = Pt(1,j)
+                    end do
+                    !print *, KEbN0, loop, i
+                    exit
+                endif
             end do
+            if(info==-1) cycle
+!            call SQP(Eig,10**(KEbN0/10.0d0),Pt,Nsybl)
 
             do i=1, Nsybl
                 TdatI(1,i) = (real(S(1,i))+1)/2 !0or1
@@ -178,7 +205,7 @@ program VC_Pcontrol
             end do
             do i=1, Nsybl
                 do j=1, Nsybl
-                    SU(j,i) = S(1,i) * V(j,i)
+                    SU(j,i) = S(1,i) * V(j,i) *sqrt(UsePt(1,i))
                 end do
             end do
 
@@ -196,9 +223,6 @@ program VC_Pcontrol
                 Pow = Pow + (abs(X(i,1))**2.0d0)/Nsybl
             end do
             X = X / sqrt(Pow)
-            do i=1, Nsybl
-                X(i,1) = X(i,1) * sqrt(Pt(1,i)) / sqrt(2.0d0)
-            end do
 
             call CMultiply(H,X,Y,Nsybl+Npath-1,Nsybl,Nsybl,1) !pass H
 
