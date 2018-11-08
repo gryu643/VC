@@ -2,7 +2,7 @@ program VC_Pcontrol
     use PPLmod
     use CALmod
     use PCONmod
-!    use SQPmod
+    use PCONmod2
     implicit none
 
     !ifdef
@@ -16,7 +16,7 @@ program VC_Pcontrol
     integer,parameter :: Npath=4
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
-    integer,parameter :: Step=10
+    integer,parameter :: Step=5
     integer,parameter :: Nloop=1000
     integer,parameter :: PPLloop=500
 
@@ -60,6 +60,12 @@ program VC_Pcontrol
     double precision BERMin
     double precision UsePt(1,Nsybl)
     integer info
+    integer TNum
+    double precision AvTNum
+    double precision Sum
+    double precision BER2
+    double precision AvBER
+    double precision AvBER2
 
     !initialize
     Ampd(:,:)=0.0d0
@@ -119,6 +125,9 @@ program VC_Pcontrol
         Pwgn = 0.0d0
         Collect = 0
         False = 0
+        AvTNum=0.0d0
+        AvBER=0.0d0
+        AvBER2=0.0d0
 
         do loop=1, Nloop !Monte calro loop
             do i=1, Npath
@@ -166,11 +175,6 @@ program VC_Pcontrol
 !                call decomp_zhpev(Nsybl,V,Eig)
             endif
 
-            !set information symbol
-            do i=1, Nsybl
-                S(1,i) = cmplx(nint(rand())*2.0d0-1.0d0,nint(rand())*2.0d0-1.0d0,kind(0d0)) !-1or1
-            end do
-
             !sort Eig descending order
             call sort(Eig,Nsybl)
             do i=1,Nsybl
@@ -180,34 +184,68 @@ program VC_Pcontrol
                     V(j,Nsybl+1-i) = TMP
                 end do
             end do
-
             !transmit power control
             EbN0t = 10**(KEbN0/10.0d0)
-            BERMin=1.0d0
             do i=Nsybl, 1, -1
                 Pt=0.0d0
                 info=1
-                call Pcontroll(Eig,EbN0t,Pt,i,Nsybl,info)
+                call Pcontrol(Eig,EbN0t,Pt,i,Nsybl,info)
                 if(info==1) then
                     do j=1, Nsybl
                         UsePt(1,j) = Pt(1,j)
                     end do
-                    !print *, KEbN0, loop, i
+                    TNum=i
                     exit
                 endif
             end do
+            AvTNum = AvTNum + dble(TNum)/dble(Nloop)
             if(info==-1) cycle
-!            call SQP(Eig,10**(KEbN0/10.0d0),Pt,Nsybl)
+            !-- Pcontrol2
+!            UsePt=0.0d0
+!            info = 1
+!            call Pcontrol2(Eig,EbN0t,UsePt,Nsybl,Nsybl,info)
+!            if(info==-1) cycle
+!            TNum = info
 
-            do i=1, Nsybl
+            !set information symbol
+            S=(0.0d0,0.0d0)
+            do i=1, TNum
+                S(1,i) = cmplx(nint(rand())*2.0d0-1.0d0,nint(rand())*2.0d0-1.0d0,kind(0d0)) !-1or1
+            end do
+
+            TdatI=0
+            TdatQ=0
+            do i=1, TNum
                 TdatI(1,i) = (real(S(1,i))+1)/2 !0or1
                 TdatQ(1,i) = (aimag(S(1,i))+1)/2
             end do
-            do i=1, Nsybl
+            SU=(0.0d0,0.0d0)
+            do i=1, TNum
                 do j=1, Nsybl
-                    SU(j,i) = S(1,i) * V(j,i) *sqrt(UsePt(1,i))
+                    SU(j,i) = S(1,i) * V(j,i) * sqrt(UsePt(1,i))
                 end do
             end do
+
+            BER=0.0d0
+            do i=1, Nsybl
+                BER=BER+1.0d0/2.0d0*erfc(sqrt(EbN0t*Eig(1,i)))/dble(Nsybl)
+            end do
+            AvBER = AvBER + BER/dble(Nloop)
+
+            BER2=0.0d0
+            do i=1, TNum
+                BER2=BER2+1.0d0/2.0d0*erfc(sqrt(EbN0t*Eig(1,i)*UsePt(1,i)))/dble(TNum)
+            end do
+            AvBER2 = AvBER2 + BER2/dble(Nloop)
+
+            if(BER>=BER2) then
+                !print *, 'KEbN0, BER1, BER2=', KEbN0, BER, BER2
+            else
+                !print *, 'KEbN0, BER1, BER2=', KEbN0, BER, BER2, 'BER1<BER2'
+                do i=1, TNum
+                    !print *, i, UsePt(1,i)
+                end do
+            endif
 
             !transmit vector
             X = (0.0d0,0.0d0)
@@ -220,10 +258,10 @@ program VC_Pcontrol
             !power
             Pow = 0.0d0
             do i=1, Nsybl
-                Pow = Pow + (abs(X(i,1))**2.0d0)/Nsybl
+                Pow = Pow + (abs(X(i,1))**2.0d0)/dble(Nsybl)
             end do
             X = X / sqrt(Pow)
-
+            
             call CMultiply(H,X,Y,Nsybl+Npath-1,Nsybl,Nsybl,1) !pass H
 
             do i=1, Nsybl+Npath-1
@@ -249,7 +287,7 @@ program VC_Pcontrol
             RdatI = 0
             RdatQ = 0
             !Demodulation
-            do i=1, Nsybl
+            do i=1, TNum
                 do j=1, Nsybl
                     A(j,1) = V(j,i)
                 end do
@@ -290,9 +328,10 @@ program VC_Pcontrol
         EbN0 = 10.0d0*dlog10(Psig/Pwgn/2.0d0) !QPSK rate =2
         BER = dble(False) / (dble(Collect) + dble(False))
         if(BER>0.0) then
-            write(1,*) EbN0, ',', BER
+            write(1,*) EbN0, ',', BER, ',', AvBER, ',', AvBER2, ',', AvTNum
             print *, 'EbN0=', EbN0
             print *, 'BER=', BER
+            print *, 'IdealBER=', AvBER
         endif
     end do
 
