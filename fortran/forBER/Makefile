@@ -52,7 +52,7 @@ fixedH: CALmod.o PPLmod.o VC_fixedH.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: pcon
-pcon: CALmod.o PPLmod.o PCONmod.o VC_Pcontrol.o
+pcon: CALmod.o PPLmod.o PCONmod.o PCONmod2.o VC_Pcontrol.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: vc_nonfading
