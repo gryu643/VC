@@ -1,7 +1,7 @@
 module PCONmod
     implicit none
 contains
-    subroutine Pcontroll(lambda,EbN0,Pcon,Rep,Nsybl,info)
+    subroutine Pcontrol(lambda,EbN0,Pcon,Rep,Nsybl,info)
         use CALmod
         implicit none
 
@@ -37,7 +37,7 @@ contains
         do i=1, Rep
             B(i,1) = dlog(lambda(1,i)/dble(Rep)*EbN0)
         end do
-        B(Rep+1,1) = 1.0d0
+        B(Rep+1,1) = dble(Nsybl)
 
         !calculate inverse matrix of A
         call InverseMat(A,Rep+1)
@@ -55,5 +55,5 @@ contains
         do i=1, Rep
             Pcon(1,i) = C(i,1)
         end do
-    end subroutine Pcontroll
+    end subroutine Pcontrol
 end module PCONmod
