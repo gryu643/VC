@@ -16,8 +16,8 @@ program VC_Pcontrol
     integer,parameter :: Npath=4
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
-    integer,parameter :: Step=5
-    integer,parameter :: Nloop=1000
+    integer,parameter :: Step=10
+    integer,parameter :: Nloop=10000
     integer,parameter :: PPLloop=500
 
     integer i,j
@@ -66,6 +66,8 @@ program VC_Pcontrol
     double precision BER2
     double precision AvBER
     double precision AvBER2
+    double precision AvEbN0
+    double precision AvEbN02
 
     !initialize
     Ampd(:,:)=0.0d0
@@ -111,7 +113,7 @@ program VC_Pcontrol
 
     !file open
     open (1, file='VC_Pcon(s32p4).csv', status='replace')
-    open (2, file='VC_Pcontrial.csv', status='replace')
+    open (2, file='VC_Pcon(s32p4)ideal.csv', status='replace')
 
     !implimentation part
     !channel gain parameter
@@ -128,6 +130,8 @@ program VC_Pcontrol
         AvTNum=0.0d0
         AvBER=0.0d0
         AvBER2=0.0d0
+        AvEbN0=0.0d0
+        AvEbN02=0.0d0
 
         do loop=1, Nloop !Monte calro loop
             do i=1, Npath
@@ -224,6 +228,14 @@ program VC_Pcontrol
                 do j=1, Nsybl
                     SU(j,i) = S(1,i) * V(j,i) * sqrt(UsePt(1,i))
                 end do
+            end do
+
+            do i=1, Nsybl
+                AvEbN0 = AvEbN0 + EbN0t*Eig(1,i)/dble(Nsybl)/dble(Nloop)
+            end do
+
+            do i=1, TNum
+                AvEbN02 = AvEbN02 + EbN0t*Eig(1,i)*UsePt(1,i)/dble(TNum)/dble(Nloop)
             end do
 
             BER=0.0d0
@@ -327,8 +339,10 @@ program VC_Pcontrol
         
         EbN0 = 10.0d0*dlog10(Psig/Pwgn/2.0d0) !QPSK rate =2
         BER = dble(False) / (dble(Collect) + dble(False))
+        AvEbN0 = 10.0d0*dlog10(AvEbN0)
+        AvEbN02 = 10.0d0*dlog10(AvEbN02)
         if(BER>0.0) then
-            write(1,*) EbN0, ',', BER, ',', AvBER, ',', AvBER2, ',', AvTNum
+            write(1,*) AvEbN0, ',', AvBER, ',', AvEbN02, ',', AvBER2, ',', AvTNum
             print *, 'EbN0=', EbN0
             print *, 'BER=', BER
             print *, 'IdealBER=', AvBER
