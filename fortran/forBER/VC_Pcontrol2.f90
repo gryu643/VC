@@ -59,7 +59,6 @@ program VC_Pcontrol
     double precision BERMin
     double precision UsePt(1,Nsybl)
     integer info
-    integer TNum
     double precision AvTNum
     double precision Sum
     double precision BER2
@@ -112,7 +111,7 @@ program VC_Pcontrol
 
     !file open
     open (1, file='VC_Pcon2(s32p4).csv', status='replace')
-    open (2, file='VC_Pcon2(s32p4)ideal.csv', status='replace')
+    open (2, file='VC_Pcon2(s32p4)convergence.csv', status='replace')
 
     !implimentation part
     !channel gain parameter
@@ -190,42 +189,34 @@ program VC_Pcontrol
             !transmit power control
             EbN0t = 10**(KEbN0/10.0d0)
             Pt=0.0d0
-            info=1
             call Pcontrol3(Eig,EbN0t,Pt,Nsybl,Nsybl,info)
-
-            TNum=Nsybl
-            !-- Pcontrol2
-!            UsePt=0.0d0
-!            info = 1
-!            call Pcontrol2(Eig,EbN0t,UsePt,Nsybl,Nsybl,info)
-!            if(info==-1) cycle
-!            TNum = info
 
             !set information symbol
             S=(0.0d0,0.0d0)
-            do i=1, TNum
+            do i=1, Nsybl
                 S(1,i) = cmplx(nint(rand())*2.0d0-1.0d0,nint(rand())*2.0d0-1.0d0,kind(0d0)) !-1or1
             end do
 
             TdatI=0
             TdatQ=0
-            do i=1, TNum
+            do i=1, Nsybl
                 TdatI(1,i) = (real(S(1,i))+1)/2 !0or1
                 TdatQ(1,i) = (aimag(S(1,i))+1)/2
             end do
             SU=(0.0d0,0.0d0)
-            do i=1, TNum
+            do i=1, Nsybl
                 do j=1, Nsybl
-                    SU(j,i) = S(1,i) * V(j,i) * sqrt(UsePt(1,i))
+                    SU(j,i) = S(1,i) * V(j,i) * sqrt(Pt(1,i))
                 end do
             end do
 
+            !calculate ideal value
             do i=1, Nsybl
                 AvEbN0 = AvEbN0 + EbN0t*Eig(1,i)/dble(Nsybl)/dble(Nloop)
             end do
 
-            do i=1, TNum
-                AvEbN02 = AvEbN02 + EbN0t*Eig(1,i)*Pt(1,i)/dble(TNum)/dble(Nloop)
+            do i=1, Nsybl
+                AvEbN02 = AvEbN02 + EbN0t*Eig(1,i)*Pt(1,i)/dble(Nsybl)/dble(Nloop)
             end do
 
             BER=0.0d0
@@ -235,19 +226,20 @@ program VC_Pcontrol
             AvBER = AvBER + BER/dble(Nloop)
 
             BER2=0.0d0
-            do i=1, TNum
-                BER2=BER2+1.0d0/2.0d0*erfc(sqrt(EbN0t*Eig(1,i)*Pt(1,i)))/dble(TNum)
+            do i=1, Nsybl
+                BER2=BER2+1.0d0/2.0d0*erfc(sqrt(EbN0t*Eig(1,i)*Pt(1,i)))/dble(Nsybl)
             end do
             AvBER2 = AvBER2 + BER2/dble(Nloop)
 
-            if(BER>=BER2) then
-                !print *, 'KEbN0, BER1, BER2=', KEbN0, BER, BER2
-            else
-                !print *, 'KEbN0, BER1, BER2=', KEbN0, BER, BER2, 'BER1<BER2'
-                do i=1, TNum
-                    !print *, i, UsePt(1,i)
-                end do
-            endif
+            !check realationship between BER2 and BER
+!            if(BER>=BER2) then
+!                print *, 'KEbN0, BER1, BER2=', KEbN0, BER, BER2
+!            else
+!                print *, 'KEbN0, BER1, BER2=', KEbN0, BER, BER2, 'BER1<BER2'
+!                do i=1, Nsybl
+!                    print *, i, UsePt(1,i)
+!                end do
+!            endif
 
             !transmit vector
             X = (0.0d0,0.0d0)
@@ -289,7 +281,7 @@ program VC_Pcontrol
             RdatI = 0
             RdatQ = 0
             !Demodulation
-            do i=1, TNum
+            do i=1, Nsybl
                 do j=1, Nsybl
                     A(j,1) = V(j,i)
                 end do
@@ -333,8 +325,8 @@ program VC_Pcontrol
         AvEbN02 = 10.0d0*dlog10(AvEbN02)
         if(BER>0.0) then
             write(1,*) AvEbN0, ',', AvBER, ',', AvEbN02, ',', AvBER2, ',', AvTNum
-            print *, 'EbN0=', AvEbN0
-            print *, 'BER=', AvBER
+            print *, 'EbN0=', EbN0
+            print *, 'BER=', BER
         endif
     end do
 

@@ -1,4 +1,5 @@
 module PCONmod3
+    !-- PCONmod3: when Pt>0.0 Teansmit Power Control Program --!
     implicit none
 contains
     subroutine Pcontrol3(lambda,EbN0,Pcon,Rep,Nsybl,info)
@@ -23,6 +24,7 @@ contains
         C=0.0d0
         Min=0.0d0
         Sum=0.0d0
+        info=1
 
         !--implementation
         !AX=B
@@ -46,18 +48,18 @@ contains
         call RMultiply(A,B,C,Rep+1,Rep+1,Rep+1,1)
 
         do i=1, Nsybl
-            if(0.0d0>C(i,1)) then
-                if(C(i,1)<Min) then
-                    Min=C(i,1)
-                    info=-1
-                endif
+            if(0.0d0>C(i,1).and.C(i,1)<Min) then
+                Min=C(i,1)
+                info=-1
             endif
         end do
 
+        !set 0.01 for minimum value when minimum value is negative.
         if(info==-1) then
             do i=1, Nsybl
                 Pcon(i,1) = C(i,1) - (Min-0.01d0)
             end do
+            !normalize Pcon
             do i=1, Nsybl
                 Sum = Sum + Pcon(i,1)
             end do
