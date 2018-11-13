@@ -57,18 +57,18 @@ contains
         !set 0.01 for minimum value when minimum value is negative.
         if(info==-1) then
             do i=1, Rep
-                Pcon(i,1) = C(i,1) - (Min-0.01d0)
+                Pcon(1,i) = C(i,1) - (Min-0.01d0)
             end do
             !normalize Pcon
             do i=1, Rep
-                Sum = Sum + Pcon(i,1)
+                Sum = Sum + Pcon(1,i)
             end do
             do i=1, Rep
-                Pcon(i,1) = Pcon(i,1) / Sum * dble(Nsybl)
+                Pcon(1,i) = Pcon(1,i) / Sum * dble(Rep)
             end do
         else
             do i=1, Rep
-                Pcon(i,1) = C(i,1)
+                Pcon(1,i) = C(i,1)
             end do
         endif
 
