@@ -39,7 +39,7 @@ contains
         do i=1, Rep
             B(i,1) = dlog(lambda(1,i)/dble(Rep)*EbN0)
         end do
-        B(Rep+1,1) = dble(Nsybl)
+        B(Rep+1,1) = dble(Rep)
 
         !calculate inverse matrix of A
         call InverseMat(A,Rep+1)
@@ -47,7 +47,7 @@ contains
         !calculete Pcon
         call RMultiply(A,B,C,Rep+1,Rep+1,Rep+1,1)
 
-        do i=1, Nsybl
+        do i=1, Rep
             if(0.0d0>C(i,1).and.C(i,1)<Min) then
                 Min=C(i,1)
                 info=-1
@@ -56,18 +56,18 @@ contains
 
         !set 0.01 for minimum value when minimum value is negative.
         if(info==-1) then
-            do i=1, Nsybl
+            do i=1, Rep
                 Pcon(i,1) = C(i,1) - (Min-0.01d0)
             end do
             !normalize Pcon
-            do i=1, Nsybl
+            do i=1, Rep
                 Sum = Sum + Pcon(i,1)
             end do
-            do i=1, Nsybl
+            do i=1, Rep
                 Pcon(i,1) = Pcon(i,1) / Sum * dble(Nsybl)
             end do
         else
-            do i=1, Nsybl
+            do i=1, Rep
                 Pcon(i,1) = C(i,1)
             end do
         endif
