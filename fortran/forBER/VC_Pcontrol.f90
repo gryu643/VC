@@ -204,12 +204,6 @@ program VC_Pcontrol
             end do
             AvTNum = AvTNum + dble(TNum)/dble(Nloop)
             if(info==-1) cycle
-            !-- Pcontrol2
-!            UsePt=0.0d0
-!            info = 1
-!            call Pcontrol2(Eig,EbN0t,UsePt,Nsybl,Nsybl,info)
-!            if(info==-1) cycle
-!            TNum = info
 
             !set information symbol
             S=(0.0d0,0.0d0)
