@@ -1,6 +1,7 @@
 program VC_Pcontrol
     use PPLmod
     use CALmod
+    use PCONmod2
     use PCONmod3
     implicit none
 
@@ -16,7 +17,7 @@ program VC_Pcontrol
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=10
-    integer,parameter :: Nloop=10000
+    integer,parameter :: Nloop=100000
     integer,parameter :: PPLloop=500
 
     integer i,j
@@ -57,7 +58,6 @@ program VC_Pcontrol
     complex(kind(0d0)) TMP
     double precision EbN0t
     double precision BERMin
-    double precision UsePt(1,Nsybl)
     integer info
     double precision AvTNum
     double precision Sum
@@ -66,6 +66,7 @@ program VC_Pcontrol
     double precision AvBER2
     double precision AvEbN0
     double precision AvEbN02
+    double precision Min
 
     !initialize
     Ampd(:,:)=0.0d0
@@ -103,15 +104,13 @@ program VC_Pcontrol
     Eig=0.0d0
     Pt=0.0d0
     TMP=0.0d0
-    UsePt=0.0d0
-    info=1
 
     !time measurement start
     call system_clock(t1)
 
     !file open
-    open (1, file='VC_Pcon2(s32p4).csv', status='replace')
-    open (2, file='VC_Pcon2(s32p4)convergence.csv', status='replace')
+    open (1, file='VC_Pcon2(s32p4)B.csv', status='replace')
+    open (2, file='VC_Pcon2(s32p4)convergenceB.csv', status='replace')
 
     !implimentation part
     !channel gain parameter
@@ -189,8 +188,10 @@ program VC_Pcontrol
             !transmit power control
             EbN0t = 10**(KEbN0/10.0d0)
             Pt=0.0d0
-            call Pcontrol3(Eig,EbN0t,Pt,Nsybl,Nsybl,info)
-
+!           call Pcontrol3(Eig,EbN0t,Pt,Nsybl,Nsybl,info)
+            !2 no hou ga kousoku
+            call Pcontrol2(Eig,EbN0t,Pt,2,Nsybl,info)
+            
             !set information symbol
             S=(0.0d0,0.0d0)
             do i=1, Nsybl
@@ -230,16 +231,6 @@ program VC_Pcontrol
                 BER2=BER2+1.0d0/2.0d0*erfc(sqrt(EbN0t*Eig(1,i)*Pt(1,i)))/dble(Nsybl)
             end do
             AvBER2 = AvBER2 + BER2/dble(Nloop)
-
-            !check realationship between BER2 and BER
-!            if(BER>=BER2) then
-!                print *, 'KEbN0, BER1, BER2=', KEbN0, BER, BER2
-!            else
-!                print *, 'KEbN0, BER1, BER2=', KEbN0, BER, BER2, 'BER1<BER2'
-!                do i=1, Nsybl
-!                    print *, i, UsePt(1,i)
-!                end do
-!            endif
 
             !transmit vector
             X = (0.0d0,0.0d0)
@@ -324,7 +315,7 @@ program VC_Pcontrol
         AvEbN0 = 10.0d0*dlog10(AvEbN0)
         AvEbN02 = 10.0d0*dlog10(AvEbN02)
         if(BER>0.0) then
-            write(1,*) AvEbN0, ',', AvBER, ',', AvEbN02, ',', AvBER2, ',', AvTNum
+            write(1,*) AvEbN0, ',', AvBER, ',', AvEbN02, ',', AvBER2
             print *, 'EbN0=', EbN0
             print *, 'BER=', BER
         endif
