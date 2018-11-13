@@ -56,7 +56,7 @@ pcon: CALmod.o PPLmod.o PCONmod.o PCONmod2.o VC_Pcontrol.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: pcon2
-pcon2: CALmod.o PPLmod.o PCONmod3.o VC_Pcontrol2.o
+pcon2: CALmod.o PPLmod.o PCONmod2.o PCONmod3.o VC_Pcontrol2.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: vc_nonfading
