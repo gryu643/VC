@@ -225,6 +225,7 @@ contains
 			do j=1, ConvSize
 				if(BERFlag(j)) cycle
 
+				!judge convergence for Nsybl
 				if(AVGOTHN<=ConvStandard(j)) then
 					BER=0.0d0
 					do i=1, Nsybl
@@ -238,7 +239,7 @@ contains
 					endif
 				endif
 
-				!judge convergence by Average othogonality
+				!judge convergence for Ksybl
 				if(BERFlag(j).neqv..True.) then
 					if(AVGOTH(j)>NCS(j)) then
 						cycle
@@ -250,6 +251,7 @@ contains
 							InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
 							BER = BER + InstantBER
 
+							!skip judgement to BER of Ksybl when Ksybl>2
 							if(Ksybl(j)>2.and.i<Ksybl(j)) cycle
 
 							if(BER/dble(i)>BERStandard) then
@@ -257,6 +259,7 @@ contains
 								UseChNum(j) = i-1
 								exit
 							else
+								if(Ksybl(j)==2.and.i==1) cycle
 								Ksybl(j) = Ksybl(j) + 1
 								if(Ksybl(j)==Nsybl+1) then
 									BERFlag(j) = .True.
