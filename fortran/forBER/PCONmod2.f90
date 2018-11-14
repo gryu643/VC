@@ -24,6 +24,12 @@ contains
         Sum=0.0d0
 
         !--implementation
+        !when Rep=1
+        if(Rep==1) then
+            Pcon(1,1) = 1.0d0
+            return
+        end if
+
         do i=1, Rep
             p1 = p1 + 1.0d0/lambda(1,i)
             p2 = p2 + 1.0d0/lambda(1,i)*dlog(dble(Rep)/lambda(1,i)/EbN0)
