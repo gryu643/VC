@@ -31,6 +31,10 @@ vcq: CALmod.o PPLVCQmod.o VCQ.o
 cutoff: CALmod.o PPLCutoffmod.o VC_cutoff.o
 	$(CC) $^ -o $@ $(LAPACK)
 
+.PHONY: comb
+comb: CALmod.o PPLCombmod.o PCONmod2.o VC_comb.o
+	$(CC) $^ -o $@ $(LAPACK)
+
 .PHONY: vc_ideal
 vc_ideal: VC_ideal.o
 	$(CC) $^ -o $@ $(LAPACK)
