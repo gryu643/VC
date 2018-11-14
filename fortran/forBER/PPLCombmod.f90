@@ -1,9 +1,9 @@
-module PPLCutoffmod
+module PPLCombmod
 	use CALmod
     use PCONmod2
 	implicit none
 contains
-	subroutine PPL(H,HE,X,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,ConvSize,BERStandard,V)
+	subroutine PPL(H,HE,X,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,ConvSize,BERStandard,V,Pt)
 		implicit none
 
 		!argument
@@ -15,6 +15,7 @@ contains
 		double precision Eig(Nsybl,ConvSize)
 		double precision ConvStandard(ConvSize),BERStandard
 		complex(kind(0d0)) V(ConvSize,Nsybl,Nsybl)
+		double precision Pt(ConvSize,Nsybl)
 
 		!declaration
 		integer i,j,k,l,m
@@ -60,6 +61,9 @@ contains
 		integer ExitFlag
 		double precision NCS(ConvSize)
 		double precision AVGOTHN
+		double precision Pt_TMP1(1,Nsybl)
+		integer info
+		double precision EbN0Pcon
 
 		!initialize
 		Z=(0.0,0.0)
@@ -96,6 +100,7 @@ contains
 		LambdaEbN0=0.0d0
 		ExitFlag=0
 		BERFlag=.False.
+		info=1
 
 		l = 0
 		do
@@ -250,8 +255,11 @@ contains
 						do i=1, Ksybl(j)
                             !-----------------------------------------------------------------------------------------------!
                             !送信電力分配実装
+							Pt_TMP1=0.0d0
+							EbN0Pcon = EbN0In(j)
+							call Pcontrol2(Eig,EbN0Pcon,Pt_TMP1,i,Nsybl,info)
                             !-----------------------------------------------------------------------------------------------!
-							LambdaEbN0 = real(LAMBDA(i,1))*EbN0In(j)
+							LambdaEbN0 = real(LAMBDA(i,1))*EbN0In(j)*Pt_TMP1(1,i)
 							InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
 							BER = BER + InstantBER
 
@@ -263,6 +271,11 @@ contains
 								UseChNum(j) = i-1
 								exit
 							else
+								!save taransmit Power
+								Pt=0.0d0
+								do k=1, i
+									Pt(j,k) = Pt_TMP1(1,k)
+								end do
 								if(Ksybl(j)==2.and.i==1) cycle
 								Ksybl(j) = Ksybl(j) + 1
 								if(Ksybl(j)==Nsybl+1) then
@@ -297,4 +310,4 @@ contains
 			if(ExitFlag==ConvSize) exit
 		end do
 	end subroutine
-end module PPLCutoffmod
+end module PPLCombmod

@@ -1,5 +1,5 @@
 program AvOth_BER
-    use PPLCUTOFFmod
+    use PPLCombmod
     use CALmod
     implicit none
 
@@ -15,7 +15,6 @@ program AvOth_BER
     integer,parameter :: Step=5
     double precision,parameter :: BERStandard=1.0d-2
     integer,parameter :: ConvSize=(int((EEbN0-SEbN0)/Step)+1)
-    integer,parameter :: NInloop=100
 
     integer i,j,k,Inloop
     integer RTNum(ConvSize), UseChNum(ConvSize)
@@ -52,11 +51,17 @@ program AvOth_BER
     complex(kind(0d0)) R2
     double precision EbN0(ConvSize)
     double precision BER(ConvSize)
+    double precision BER2(ConvSize)
     double precision Eig(1,Nsybl)
     double precision EbN0In(ConvSize)
     double precision AvRTNum(ConvSize)
     double precision AvUseChNum(ConvSize)
     double precision ConvStandard(ConvSize)
+    double precision Pt(ConvSize,Nsybl)
+    double precision AvEbN02(ConvSize)
+    double precision AvEbN0(ConvSize)
+    double precision AvBER(ConvSize)
+    double precision AvBER2(ConvSize)
 
     !initialize
     Ampd=0.0d0
@@ -96,13 +101,17 @@ program AvOth_BER
     EbN0In=0.0d0
     AvRTNum=0.0d0
     AvUseChNum=0.0d0
+    AvEbN0=0.0d0
+    AvEbN02=0.0d0
+    AvBER=0.0d0
+    AvBER2=0.0d0
 
     !time measurement start
     call system_clock(t1)
 
     !file open
-    open (1, file='Cutoff.csv', status='replace')
-    open (2, file='Cutoff_UseChNum.csv', status='replace')
+    open (1, file='Comb_BER.csv', status='replace')
+    open (2, file='Comb_UseChNum.csv', status='replace')
     write(1,*) 'EbN0', ',', 'BER', ',', 'AvRTNum'
 
     !implimentation part
@@ -159,7 +168,7 @@ program AvOth_BER
         call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
 
         !eigenvalue decomposition
-        call PPL(H,HE,Xppl,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,ConvSize,BERStandard,PV)
+        call PPL(H,HE,Xppl,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,ConvSize,BERStandard,PV,Pt)
 
         do i=1, ConvSize
             !update AvRTNum
@@ -168,102 +177,134 @@ program AvOth_BER
             AvUseChNum(i) = AvUseChNum(i) + dble(UseChNum(i))/dble(Nloop)
         end do
 
-        do Inloop=1, NInloop
-            !set information symbol
-            S=0.0d0
+        !calculate ideal EbN0
+        do j=1, ConvSize
             do i=1, Nsybl
-                S(1,i) = cmplx(nint(rand())*2.0d0-1.0d0,nint(rand())*2.0d0-1.0d0,kind(0d0)) !-1or1
+                AvEbN0(j) = AvEbN0(j) + EbN0In(j)*Eig(1,i)/dble(Nsybl)/dble(Nloop)
             end do
-            TdatI=0
-            TdatQ=0
+        end do
+
+        do j=1, ConvSize
+            do i=1, UseChNum(j)
+                AvEbN02(j) = AvEbN02(j) + EbN0In(j)*Eig(1,i)*Pt(j,i)/dble(UseChNum(j))/dble(Nloop)
+            end do
+        end do
+
+        !calculate ideal BER
+        BER=0.0d0
+        do j=1, ConvSize
             do i=1, Nsybl
-                TdatI(i) = (real(S(1,i))+1)/2 !0or1
-                TdatQ(i) = (aimag(S(1,i))+1)/2
+                BER(j)=BER(j)+1.0d0/2.0d0*erfc(sqrt(EbN0In(j)*Eig(1,i)))/dble(Nsybl)
+            end do
+        end do
+        do j=1, ConvSize
+            AvBER(j) = AvBER(j) + BER(j)/dble(Nloop)
+        end do
+
+        BER2=0.0d0
+        do j=1, ConvSize
+            do i=1, UseChNum(j)
+                BER2(j)=BER2(j)+1.0d0/2.0d0*erfc(sqrt(EbN0In(j)*Eig(1,i)*Pt(j,i)))/dble(UseChNum(j))
+            end do
+        end do
+        do j=1, ConvSize
+            AvBER2(j) = AvBER2(j) + BER2(j)/dble(Nloop)
+        end do
+
+        !set information symbol
+        S=0.0d0
+        do i=1, Nsybl
+            S(1,i) = cmplx(nint(rand())*2.0d0-1.0d0,nint(rand())*2.0d0-1.0d0,kind(0d0)) !-1or1
+        end do
+        TdatI=0
+        TdatQ=0
+        do i=1, Nsybl
+            TdatI(i) = (real(S(1,i))+1)/2 !0or1
+            TdatQ(i) = (aimag(S(1,i))+1)/2
+        end do
+
+        do k=1, ConvSize
+            if(UseChNum(k)==0) cycle
+
+            SU=(0.0d0,0.0d0)
+            do i=1, UseChNum(k)
+                do j=1, Nsybl
+                    SU(j,i) = S(1,i) * PV(k,j,i)
+                end do
             end do
 
-            do k=1, ConvSize
-                if(UseChNum(k)==0) cycle
-
-                SU=(0.0d0,0.0d0)
-                do i=1, UseChNum(k)
-                    do j=1, Nsybl
-                        SU(j,i) = S(1,i) * PV(k,j,i)
-                    end do
+            !transmit vector
+            X = (0.0d0,0.0d0)
+            do i=1,UseChNum(k)
+                do j=1,Nsybl
+                    X(j,1) = X(j,1) + SU(j,i)
                 end do
+            end do
 
-                !transmit vector
-                X = (0.0d0,0.0d0)
-                do i=1,UseChNum(k)
-                    do j=1,Nsybl
-                        X(j,1) = X(j,1) + SU(j,i)
-                    end do
-                end do
+            !power
+            Pow = 0.0d0
+            do i=1, Nsybl
+                Pow = Pow + (abs(X(i,1))**2.0d0)/Nsybl
+            end do
+            X = X / sqrt(Pow)
+            call CMultiply(H,X,Y,Nsybl+Npath-1,Nsybl,Nsybl,1) !pass H
 
-                !power
-                Pow = 0.0d0
-                do i=1, Nsybl
-                    Pow = Pow + (abs(X(i,1))**2.0d0)/Nsybl
-                end do
-                X = X / sqrt(Pow)
-                call CMultiply(H,X,Y,Nsybl+Npath-1,Nsybl,Nsybl,1) !pass H
+            do i=1, Nsybl+Npath-1
+                Noise(i,1) = cmplx(normal(),normal(),kind(0d0))
+            end do
+            !正規乱数の分散＝１＝雑音電力なので、正規乱数に雑音電力をかける（√２で割っているのはIとQの両方合わせて雑音電力とするため）
+            Noise = Noise / sqrt(2.0d0) * sqrt(1.0d0/EbN0In(k)/2.0d0)
 
-                do i=1, Nsybl+Npath-1
-                    Noise(i,1) = cmplx(normal(),normal(),kind(0d0))
-                end do
-                !正規乱数の分散＝１＝雑音電力なので、正規乱数に雑音電力をかける（√２で割っているのはIとQの両方合わせて雑音電力とするため）
-                Noise = Noise / sqrt(2.0d0) * sqrt(1.0d0/EbN0In(k)/2.0d0)
+            do i=1, Nsybl+Npath-1
+                Psig(k) = Psig(k) + (abs(Y(i,1))**2.0d0)
+                Pwgn(k) = Pwgn(k) + abs(Noise(i,1))**2.0d0
+            end do
 
-                do i=1, Nsybl+Npath-1
-                    Psig(k) = Psig(k) + (abs(Y(i,1))**2.0d0)
-                    Pwgn(k) = Pwgn(k) + abs(Noise(i,1))**2.0d0
-                end do
+            !add noise
+            call CAdd(Y,Noise,Y,Nsybl+Npath-1,1,Nsybl+Npath-1,1)
 
-                !add noise
-                call CAdd(Y,Noise,Y,Nsybl+Npath-1,1,Nsybl+Npath-1,1)
+            !Matched Filter
+            call CMultiply(HH,Y,Yn,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,1)
+        
+            do i=1, Nsybl
+                Y2(i,1) = Yn(i,1)
+            end do
+            RdatI = 0
+            RdatQ = 0
+            !Demodulation
+            do i=1, UseChNum(k)
+                do j=1, Nsybl
+                    A(j,1) = PV(k,j,i)
+                end do
+                !inner product
+                call CAdjoint(Y2,Y2H,Nsybl,1)
+                call CMultiply(Y2H,A,R,1,Nsybl,Nsybl,1)
+                R(1,1) = conjg(R(1,1))
+                R2 = R(1,1)
+                if(real(R2)>0.0) then
+                    RdatI(i) = 1
+                elseif(real(R2)<0.0) then
+                    RdatI(i) = 0
+                endif
+                if(aimag(R2)>0.0) then
+                    RdatQ(i) = 1
+                elseif(aimag(R2)<0.0) then
+                    RdatQ(i) = 0
+                endif
+            end do
 
-                !Matched Filter
-                call CMultiply(HH,Y,Yn,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,1)
-            
-                do i=1, Nsybl
-                    Y2(i,1) = Yn(i,1)
-                end do
-                RdatI = 0
-                RdatQ = 0
-                !Demodulation
-                do i=1, UseChNum(k)
-                    do j=1, Nsybl
-                        A(j,1) = PV(k,j,i)
-                    end do
-                    !inner product
-                    call CAdjoint(Y2,Y2H,Nsybl,1)
-                    call CMultiply(Y2H,A,R,1,Nsybl,Nsybl,1)
-                    R(1,1) = conjg(R(1,1))
-                    R2 = R(1,1)
-                    if(real(R2)>0.0) then
-                        RdatI(i) = 1
-                    elseif(real(R2)<0.0) then
-                        RdatI(i) = 0
-                    endif
-                    if(aimag(R2)>0.0) then
-                        RdatQ(i) = 1
-                    elseif(aimag(R2)<0.0) then
-                        RdatQ(i) = 0
-                    endif
-                end do
-
-                !Bit Error Rate
-                do i=1, UseChNum(k)
-                    if(RdatI(i)==TdatI(i)) then
-                        Collect(k) = Collect(k) + 1
-                    elseif(RdatI(i)/=TdatI(i)) then
-                        False(k) = False(k) + 1
-                    endif
-                    if(RdatQ(i)==TdatQ(i)) then
-                        Collect(k) = Collect(k) + 1
-                    elseif(RdatQ(i)/=TdatQ(i)) then
-                        False(k) = False(k) + 1
-                    endif
-                end do
+            !Bit Error Rate
+            do i=1, UseChNum(k)
+                if(RdatI(i)==TdatI(i)) then
+                    Collect(k) = Collect(k) + 1
+                elseif(RdatI(i)/=TdatI(i)) then
+                    False(k) = False(k) + 1
+                endif
+                if(RdatQ(i)==TdatQ(i)) then
+                    Collect(k) = Collect(k) + 1
+                elseif(RdatQ(i)/=TdatQ(i)) then
+                    False(k) = False(k) + 1
+                endif
             end do
         end do
     end do
@@ -280,7 +321,7 @@ program AvOth_BER
 
     do k=1, ConvSize
         write(2,*) nint(10.0d0*dlog10(EbN0In(k))), ',', AvUseChNum(k)
-        write(1,*) EbN0(k), ',', BER(k), ',', AvRTNum(k)
+        write(1,*) AvEbN0(k), ',', AvBER(k), ',', AvEbN02(k), ',', AvBER2(k), ',', AvRTNum(k)
 
         print *, 'EbN0=', EbN0(k)
         print *, 'BER=', BER(k)
