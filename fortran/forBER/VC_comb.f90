@@ -9,7 +9,7 @@ program AvOth_BER
     !declaration
     integer,parameter :: Nsybl=32
     integer,parameter :: Npath=4
-    integer,parameter :: Nloop=1000
+    integer,parameter :: Nloop=100
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=5
@@ -135,6 +135,8 @@ program AvOth_BER
         i=i+1
     end do
 
+    BER=0.0d0
+    BER2=0.0d0
     do loop=1, Nloop !Monte calro loop
         if(mod(loop,(Nloop)/10)==0) print *, loop
 
@@ -193,8 +195,6 @@ program AvOth_BER
         end do
 
         !calculate ideal BER
-        BER=0.0d0
-        BER2=0.0d0
         do j=1, ConvSize
             if(UseChNum(j)==0) cycle
             do i=1, UseChNum(j)
@@ -220,7 +220,7 @@ program AvOth_BER
             SU=(0.0d0,0.0d0)
             do i=1, UseChNum(k)
                 do j=1, Nsybl
-                    SU(j,i) = S(1,i) * PV(k,j,i)
+                    SU(j,i) = S(1,i) * PV(k,j,i) * Pt(k,j)
                 end do
             end do
 
@@ -303,6 +303,7 @@ program AvOth_BER
     do j=1, ConvSize
 !        AvEbN0(j) = AvEbN0(j)/dble(Nloop)
 !        AvBER(j) = BER(j)/dble(Nloop)
+        if(Pconloop(j)==0) cycle
         AvEbN02(j) = AvEbN02(j)/dble(Pconloop(j))
         AvBER2(j) = BER2(j)/dble(Pconloop(j))
     end do
