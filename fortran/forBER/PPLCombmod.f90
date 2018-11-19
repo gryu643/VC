@@ -3,7 +3,7 @@ module PPLCombmod
     use PCONmod2
 	implicit none
 contains
-	subroutine PPL(H,HE,X,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,ConvSize,BERStandard,V,Pt)
+	subroutine PPLComb(H,HE,X,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,ConvSize,BERStandard,V,Pt)
 		implicit none
 
 		!argument
@@ -62,8 +62,10 @@ contains
 		double precision NCS(ConvSize)
 		double precision AVGOTHN
 		double precision Pt_TMP1(1,Nsybl)
+		double precision Pt_TMP2(1,Nsybl)
 		integer info
 		double precision EbN0Pcon
+		double precision EigPcon(1,Nsybl)
 
 		!initialize
 		Z=(0.0,0.0)
@@ -101,6 +103,7 @@ contains
 		ExitFlag=0
 		BERFlag=.False.
 		info=1
+		Pt_TMP1=0.0d0
 
 		l = 0
 		do
@@ -233,71 +236,96 @@ contains
 
 				!judge convergence for Nsybl
 				if(AVGOTHN<=ConvStandard(j)) then
+					!Transmit power control
+					Pt_TMP1=0.0d0
+					do k=1, Nsybl
+						EigPcon(1,k) = real(LAMBDA(k,1))
+					end do
+					EbN0Pcon = EbN0In(j)
+					call Pcontrol2(EigPcon,EbN0Pcon,Pt_TMP1,Nsybl,Nsybl,info)
+
+					!judge ber
 					BER=0.0d0
-					do i=1, Nsybl
-						LambdaEbN0 = real(LAMBDA(i,1))*EbN0In(j)
+					do k=1, Nsybl
+						LambdaEbN0 = real(LAMBDA(k,1))*EbN0In(j)*Pt_TMP1(1,k)
 						InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
 						BER = BER + InstantBER
 					end do
 					if(BER/dble(Nsybl)<=BERStandard) then
+						!output
 						BERFlag(j) = .True.
 						UseChNum(j) = Nsybl
+						do k=1, Nsybl
+							Pt(j,k) = Pt_TMP1(1,k)
+						end do
 					endif
 				endif
 
 				!judge convergence for Ksybl
-				if(BERFlag(j).neqv..True.) then
+				if(BERFlag(j).eqv..False.) then
 					if(AVGOTH(j)>NCS(j)) then
 						cycle
 					else
 						!judge ber
 						BER=0.0d0
 						do i=1, Ksybl(j)
-                            !-----------------------------------------------------------------------------------------------!
-                            !送信電力分配実装
+							!transmit power control
+							!save taransmit Power
+							do k=1, Nsybl
+								Pt(j,k) = Pt_TMP1(1,k)
+							end do
 							Pt_TMP1=0.0d0
+							do k=1, Nsybl
+								EigPcon(1,k) = real(LAMBDA(k,1))
+							end do
 							EbN0Pcon = EbN0In(j)
-							call Pcontrol2(Eig,EbN0Pcon,Pt_TMP1,i,Nsybl,info)
-                            !-----------------------------------------------------------------------------------------------!
+							call Pcontrol2(EigPcon,EbN0Pcon,Pt_TMP1,i,Nsybl,info)
+
 							LambdaEbN0 = real(LAMBDA(i,1))*EbN0In(j)*Pt_TMP1(1,i)
 							InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
 							BER = BER + InstantBER
-
+							if(BER/dble(i)>1.0d0/2.0d0*erfc(sqrt(real(LAMBDA(i,1))*EbN0In(j)))/dble(i)) then
+								print *, Ksybl(j),i,BER/dble(i), 1.0d0/2.0d0*erfc(sqrt(real(LAMBDA(i,1))*EbN0In(j)))/dble(i)
+							endif
+							
 							!skip judgement to BER of Ksybl when Ksybl>2
 							if(Ksybl(j)>2.and.i<Ksybl(j)) cycle
 
 							if(BER/dble(i)>BERStandard) then
+								!output and exit
 								BERFlag(j) = .True.
 								UseChNum(j) = i-1
 								exit
 							else
-								!save taransmit Power
-								Pt=0.0d0
-								do k=1, i
-									Pt(j,k) = Pt_TMP1(1,k)
-								end do
 								if(Ksybl(j)==2.and.i==1) cycle
+
 								Ksybl(j) = Ksybl(j) + 1
 								if(Ksybl(j)==Nsybl+1) then
+									!output and exit
 									BERFlag(j) = .True.
 									UseChNum(j) = Nsybl
+									do k=1, Nsybl
+										Pt(j,k) = Pt_TMP1(1,k)
+									end do
 									exit
 								endif
 							endif
 						end do
 					endif
 				endif
-				
+
 				!output result 
 				if(BERFlag(j)) then
 					RTNum(j) = l
 					ExitFlag = ExitFlag + 1
-					
+					do m=1, Nsybl
+						Eig(m,j) = real(LAMBDA(m,1))
+					end do
+			
 					select case(UseChNum(j))
-						case(1)
-						case(2:)
+						case(0)
+						case(1:)
 							do m=1, UseChNum(j)
-								Eig(m,j) = real(LAMBDA(m,1))
 								do k=1, Nsybl
 									V(j,k,m) = X(k,m)
 								end do

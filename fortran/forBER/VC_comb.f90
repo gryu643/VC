@@ -9,7 +9,7 @@ program AvOth_BER
     !declaration
     integer,parameter :: Nsybl=32
     integer,parameter :: Npath=4
-    integer,parameter :: Nloop=100
+    integer,parameter :: Nloop=1000
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=5
@@ -52,7 +52,7 @@ program AvOth_BER
     double precision EbN0(ConvSize)
     double precision BER(ConvSize)
     double precision BER2(ConvSize)
-    double precision Eig(1,Nsybl)
+    double precision Eig(Nsybl,ConvSize)
     double precision EbN0In(ConvSize)
     double precision AvRTNum(ConvSize)
     double precision AvUseChNum(ConvSize)
@@ -62,6 +62,7 @@ program AvOth_BER
     double precision AvEbN0(ConvSize)
     double precision AvBER(ConvSize)
     double precision AvBER2(ConvSize)
+    integer Pconloop(ConvSize)
 
     !initialize
     Ampd=0.0d0
@@ -105,6 +106,7 @@ program AvOth_BER
     AvEbN02=0.0d0
     AvBER=0.0d0
     AvBER2=0.0d0
+    Pconloop=0
 
     !time measurement start
     call system_clock(t1)
@@ -168,7 +170,7 @@ program AvOth_BER
         call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
 
         !eigenvalue decomposition
-        call PPL(H,HE,Xppl,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,ConvSize,BERStandard,PV,Pt)
+        call PPLComb(H,HE,Xppl,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,ConvSize,BERStandard,PV,Pt)
 
         do i=1, ConvSize
             !update AvRTNum
@@ -179,36 +181,25 @@ program AvOth_BER
 
         !calculate ideal EbN0
         do j=1, ConvSize
-            do i=1, Nsybl
-                AvEbN0(j) = AvEbN0(j) + EbN0In(j)*Eig(1,i)/dble(Nsybl)/dble(Nloop)
-            end do
-        end do
+            if(UseChNum(j)==0) then
+                cycle
+            else
+                Pconloop(j)=Pconloop(j)+1
+            endif
 
-        do j=1, ConvSize
             do i=1, UseChNum(j)
-                AvEbN02(j) = AvEbN02(j) + EbN0In(j)*Eig(1,i)*Pt(j,i)/dble(UseChNum(j))/dble(Nloop)
+                AvEbN02(j) = AvEbN02(j) + EbN0In(j)*Eig(i,j)*Pt(j,i)/dble(UseChNum(j))
             end do
         end do
 
         !calculate ideal BER
         BER=0.0d0
-        do j=1, ConvSize
-            do i=1, Nsybl
-                BER(j)=BER(j)+1.0d0/2.0d0*erfc(sqrt(EbN0In(j)*Eig(1,i)))/dble(Nsybl)
-            end do
-        end do
-        do j=1, ConvSize
-            AvBER(j) = AvBER(j) + BER(j)/dble(Nloop)
-        end do
-
         BER2=0.0d0
         do j=1, ConvSize
+            if(UseChNum(j)==0) cycle
             do i=1, UseChNum(j)
-                BER2(j)=BER2(j)+1.0d0/2.0d0*erfc(sqrt(EbN0In(j)*Eig(1,i)*Pt(j,i)))/dble(UseChNum(j))
+                BER2(j)=BER2(j)+1.0d0/2.0d0*erfc(sqrt(EbN0In(j)*Eig(i,j)*Pt(j,i)))/dble(UseChNum(j))
             end do
-        end do
-        do j=1, ConvSize
-            AvBER2(j) = AvBER2(j) + BER2(j)/dble(Nloop)
         end do
 
         !set information symbol
@@ -308,6 +299,13 @@ program AvOth_BER
             end do
         end do
     end do
+
+    do j=1, ConvSize
+!        AvEbN0(j) = AvEbN0(j)/dble(Nloop)
+!        AvBER(j) = BER(j)/dble(Nloop)
+        AvEbN02(j) = AvEbN02(j)/dble(Pconloop(j))
+        AvBER2(j) = BER2(j)/dble(Pconloop(j))
+    end do
         
     do k=1, ConvSize
         if(AvUseChNum(k)==0.0d0) then
@@ -320,14 +318,16 @@ program AvOth_BER
     end do
 
     do k=1, ConvSize
-        write(2,*) nint(10.0d0*dlog10(EbN0In(k))), ',', AvUseChNum(k)
-        write(1,*) AvEbN0(k), ',', AvBER(k), ',', AvEbN02(k), ',', AvBER2(k), ',', AvRTNum(k)
-
-        print *, 'EbN0=', EbN0(k)
-        print *, 'BER=', BER(k)
-        print *, 'AvRTNum=', AvRTNum(k)
-        print *, 'UseChNum=', AvUseChNum(k)
-        print *, ''
+        if(AvUseChNum(k)/=0.0d0) then
+            write(2,*) nint(10.0d0*dlog10(EbN0In(k))), ',', AvUseChNum(k)
+            write(1,*) 10.0d0*dlog10(AvEbN02(k)), ',', AvBER2(k), ',', AvRTNum(k)
+            print *
+            print *, 'EbN0=', EbN0(k)
+            print *, 'BER=', BER(k)
+            print *, 'AvRTNum=', AvRTNum(k)
+            print *, 'UseChNum=', AvUseChNum(k)
+            print *, ''
+        endif
     end do
 
     !file close
