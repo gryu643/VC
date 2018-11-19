@@ -284,9 +284,6 @@ contains
 							LambdaEbN0 = real(LAMBDA(i,1))*EbN0In(j)*Pt_TMP1(1,i)
 							InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
 							BER = BER + InstantBER
-							if(BER/dble(i)>1.0d0/2.0d0*erfc(sqrt(real(LAMBDA(i,1))*EbN0In(j)))/dble(i)) then
-								print *, Ksybl(j),i,BER/dble(i), 1.0d0/2.0d0*erfc(sqrt(real(LAMBDA(i,1))*EbN0In(j)))/dble(i)
-							endif
 							
 							!skip judgement to BER of Ksybl when Ksybl>2
 							if(Ksybl(j)>2.and.i<Ksybl(j)) cycle
