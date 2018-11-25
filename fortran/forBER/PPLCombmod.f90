@@ -3,7 +3,7 @@ module PPLCombmod
     use PCONmod2
 	implicit none
 contains
-	subroutine PPLComb(H,HE,X,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,ConvSize,BERStandard,V,Pt)
+	subroutine PPLComb(H,HE,X,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,ConvSize,BERStandard,V,Pt,MaxPconLoop)
 		implicit none
 
 		!argument
@@ -16,6 +16,7 @@ contains
 		double precision ConvStandard(ConvSize),BERStandard
 		complex(kind(0d0)) V(ConvSize,Nsybl,Nsybl)
 		double precision Pt(ConvSize,Nsybl)
+		integer MaxPconLoop
 
 		!declaration
 		integer i,j,k,l,m
@@ -108,6 +109,7 @@ contains
 		l = 0
 		do
 			l = l + 1
+
 			!次ループでの固有値算出のため、Xを退避
 			call CSubstitute(Xpre,X,Nsybl,Nsybl)
 
@@ -331,6 +333,37 @@ contains
 				endif
 			end do
 			
+			if(l==MaxPconLoop) then
+				do j=1, ConvSize
+					if(BERFlag(j)) cycle
+
+					BERFlag(j) = .True.
+					UseChNum(j) = Nsybl
+					RTNum(j) = MaxPconLoop
+					do m=1, Nsybl
+						Eig(m,j) = real(LAMBDA(m,1))
+					end do
+
+					!Transmit power control
+					!Pt_TMP1=0.0d0
+					!do k=1, Nsybl
+					!	EigPcon(1,k) = real(LAMBDA(k,1))
+					!end do
+					!EbN0Pcon = EbN0In(j)
+					!call Pcontrol2(EigPcon,EbN0Pcon,Pt_TMP1,Nsybl,Nsybl,info)
+					do k=1, Nsybl
+						Pt(j,k) = 1.0d0
+					end do
+
+					do m=1, Nsybl
+						do k=1, Nsybl
+							V(j,k,m) = X(k,m)
+						end do
+					end do
+
+					ExitFlag = ExitFlag + 1
+				end do
+			endif
 			!judge PPL exit
 			if(ExitFlag==ConvSize) exit
 		end do

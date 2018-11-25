@@ -9,12 +9,13 @@ program AvOth_BER
     !declaration
     integer,parameter :: Nsybl=32
     integer,parameter :: Npath=4
-    integer,parameter :: Nloop=1000
+    integer,parameter :: Nloop=100000
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=5
     double precision,parameter :: BERStandard=1.0d-2
     integer,parameter :: ConvSize=(int((EEbN0-SEbN0)/Step)+1)
+    integer,parameter :: MaxPconLoop=100
 
     integer i,j,k,Inloop
     integer RTNum(ConvSize), UseChNum(ConvSize)
@@ -124,9 +125,8 @@ program AvOth_BER
     call system_clock(t1)
 
     !file open
-    open (1, file='Comb_BER.csv', status='replace')
-    open (2, file='Comb_UseChNum.csv', status='replace')
-    open (3, file='Comb_Const.csv', status='replace')
+    open (1, file='Comb_BER(100).csv', status='replace')
+    open (2, file='Comb_UseChNum(100).csv', status='replace')
 
     !implimentation part
     !channel gain parameter
@@ -184,7 +184,7 @@ program AvOth_BER
         call CMultiply(HH,H,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
 
         !eigenvalue decomposition
-        call PPLComb(H,HE,Xppl,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,ConvSize,BERStandard,PV,Pt)
+        call PPLComb(H,HE,Xppl,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,ConvSize,BERStandard,PV,Pt,MaxPconLoop)
 
         do i=1, ConvSize
             !update AvRTNum
@@ -285,7 +285,6 @@ program AvOth_BER
                 call CMultiply(Y2H,A,R,1,Nsybl,Nsybl,1)
                 R(1,1) = conjg(R(1,1))
                 R2 = R(1,1)
-                write(3,*) real(S(1,i)), ',', aimag(S(1,i)), ',', real(R2), ',', aimag(R2), ',', Eig(i,k)
                 if(real(R2)>0.0d0) then
                     RdatI(i) = 1
                 elseif(real(R2)<0.0d0) then
@@ -331,8 +330,8 @@ program AvOth_BER
     end do
 
     do k=1, ConvSize
+        write(2,*) nint(10.0d0*dlog10(EbN0In(k))), ',', AvUseChNum(k)
         if(AvUseChNum(k)/=0.0d0) then
-            write(2,*) nint(10.0d0*dlog10(EbN0In(k))), ',', AvUseChNum(k)
             write(1,*) 10.0d0*dlog10(AvEbN02(k)), ',', AvBER2(k), ',', EbN0(k), ',', BER(k), ',', AvRTNum(k)
             print *
             print *, 'EbN0=', EbN0(k)
@@ -346,7 +345,6 @@ program AvOth_BER
     !file close
     close(1)
     close(2)
-    close(3)
 
     !time measurement end
     call system_clock(t2, t_rate, t_max)
