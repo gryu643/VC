@@ -14,11 +14,11 @@ program VC_Pcontrol
     !declaration
     integer,parameter :: Nsybl=32
     integer,parameter :: Npath=4
-    integer,parameter :: SEbN0=-10
-    integer,parameter :: EEbN0=40
+    integer,parameter :: SEbN0=20
+    integer,parameter :: EEbN0=20
     integer,parameter :: Step=10
-    integer,parameter :: Nloop=100
-    integer,parameter :: NInloop=100
+    integer,parameter :: Nloop=1
+    integer,parameter :: NInloop=1
     integer,parameter :: PPLloop=500
 
     integer i,j,Inloop
@@ -104,7 +104,7 @@ program VC_Pcontrol
     BER=0.0d0
     Eig=0.0d0
     Pt=0.0d0
-    TMP=0.0d0
+    TMP=(0.0d0,0.0d0)
 
     !time measurement start
     call system_clock(t1)
@@ -112,6 +112,7 @@ program VC_Pcontrol
     !file open
     open (1, file='VC_Pcon2(s32p4).csv', status='replace')
     open (2, file='VC_Pcon2(s32p4)convergence.csv', status='replace')
+    open (3, file='const.csv', status='replace')
 
     !implimentation part
     !channel gain parameter
@@ -179,13 +180,14 @@ program VC_Pcontrol
 
             !sort Eig descending order
             call sort(Eig,Nsybl)
-            do i=1,Nsybl
+            do i=1,Nsybl/2
                 do j=1, Nsybl
                     TMP = V(j,i)
                     V(j,i) = V(j,Nsybl+1-i)
                     V(j,Nsybl+1-i) = TMP
                 end do
             end do
+
             !transmit power control
             EbN0t = 10**(KEbN0/10.0d0)
             Pt=0.0d0
@@ -218,16 +220,11 @@ program VC_Pcontrol
                 SU=(0.0d0,0.0d0)
                 do i=1, Nsybl
                     do j=1, Nsybl
-                        SU(j,i) = S(1,i) /sqrt(2.0d0) * V(j,i)! * sqrt(Pt(1,i))
+                        SU(j,i) = S(1,i) * V(j,i)! * sqrt(Pt(1,i))
                     end do
                 end do
 
-                Sum=0.0d0
-                do i=1, Nsybl
-                    Sum = Sum + abs(SU(i,1))**2
-                end do
-                !print *, SUm
-
+                !-- calculate ideal value ----------------------------------------------------
                 BER=0.0d0
                 do i=1, Nsybl
                     BER=BER+1.0d0/2.0d0*erfc(sqrt(EbN0t*Eig(1,i)))/dble(Nsybl)
@@ -239,6 +236,7 @@ program VC_Pcontrol
                     BER2=BER2+1.0d0/2.0d0*erfc(sqrt(EbN0t*Eig(1,i)*Pt(1,i)))/dble(Nsybl)
                 end do
                 AvBER2 = AvBER2 + BER2/dble(Nloop)/dble(NInloop)
+                !------------------------------------------------------------------------------
 
                 !transmit vector
                 X = (0.0d0,0.0d0)
@@ -254,7 +252,7 @@ program VC_Pcontrol
                     Pow = Pow + (abs(X(i,1))**2.0d0)/dble(Nsybl)
                 end do
                 X = X / sqrt(Pow)
-                
+
                 call CMultiply(H,X,Y,Nsybl+Npath-1,Nsybl,Nsybl,1) !pass H
 
                 do i=1, Nsybl+Npath-1
@@ -289,7 +287,7 @@ program VC_Pcontrol
                     call CMultiply(Y2H,A,R,1,Nsybl,Nsybl,1)
                     R(1,1) = conjg(R(1,1))
                     R2 = R(1,1)
-
+                    write(3,*) real(R2), ',', aimag(R2), ',', real(S(1,i)), ',', aimag(S(1,i)), ',', Eig(1,i)
                     if(real(R2)>0.0) then
                         RdatI(1,i) = 1
                     elseif(real(R2)<0.0) then
@@ -323,16 +321,17 @@ program VC_Pcontrol
         BER = dble(False) / (dble(Collect) + dble(False))
         AvEbN0 = 10.0d0*dlog10(AvEbN0)
         AvEbN02 = 10.0d0*dlog10(AvEbN02)
-        if(BER>0.0) then
-            write(1,*) AvEbN0, ',', AvBER, ',', AvEbN02, ',', AvBER2
-            print *, 'EbN0=', EbN0
-            print *, 'BER=', BER
-        endif
+
+        write(1,*) AvEbN0, ',', AvBER, ',', AvEbN02, ',', AvBER2, ',', EbN0, ',', BER
+        print *, 'EbN0=', EbN0
+        print *, 'BER=', BER
+
     end do
 
     !file close
     close(1)
     close(2)
+    close(3)
 
     !time measurement end
     call system_clock(t2, t_rate, t_max)

@@ -9,7 +9,7 @@ program AvOth_BER
     !declaration
     integer,parameter :: Nsybl=32
     integer,parameter :: Npath=4
-    integer,parameter :: Nloop=100
+    integer,parameter :: Nloop=1000
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=5
@@ -63,6 +63,15 @@ program AvOth_BER
     double precision AvBER(ConvSize)
     double precision AvBER2(ConvSize)
     integer Pconloop(ConvSize)
+    complex(kind(0d0)) XX(Nsybl+Npath-1,1)
+    complex(kind(0d0)) YY(Nsybl,1)
+    complex(kind(0d0)) VV(Nsybl,1)
+    double precision NAISEKI_TMP
+    double precision sC2
+    double precision AVGOTH
+    integer ThrAdr
+    complex(kind(0d0)) V1(Nsybl),V2(Nsybl)
+    complex(kind(0d0)) NAISEKI(1,1)
 
     !initialize
     Ampd=0.0d0
@@ -107,6 +116,9 @@ program AvOth_BER
     AvBER=0.0d0
     AvBER2=0.0d0
     Pconloop=0
+    XX=(0.0d0,0.0d0)
+    YY=(0.0d0,0.0d0)
+    VV=(0.0d0,0.0d0)
 
     !time measurement start
     call system_clock(t1)
@@ -114,7 +126,7 @@ program AvOth_BER
     !file open
     open (1, file='Comb_BER.csv', status='replace')
     open (2, file='Comb_UseChNum.csv', status='replace')
-    write(1,*) 'EbN0', ',', 'BER', ',', 'AvRTNum'
+    open (3, file='Comb_Const.csv', status='replace')
 
     !implimentation part
     !channel gain parameter
@@ -220,7 +232,7 @@ program AvOth_BER
             SU=(0.0d0,0.0d0)
             do i=1, UseChNum(k)
                 do j=1, Nsybl
-                    SU(j,i) = S(1,i) * PV(k,j,i) * Pt(k,j)
+                    SU(j,i) = S(1,i) * PV(k,j,i) * sqrt(Pt(k,i))
                 end do
             end do
 
@@ -238,6 +250,7 @@ program AvOth_BER
                 Pow = Pow + (abs(X(i,1))**2.0d0)/Nsybl
             end do
             X = X / sqrt(Pow)
+        
             call CMultiply(H,X,Y,Nsybl+Npath-1,Nsybl,Nsybl,1) !pass H
 
             do i=1, Nsybl+Npath-1
@@ -272,14 +285,15 @@ program AvOth_BER
                 call CMultiply(Y2H,A,R,1,Nsybl,Nsybl,1)
                 R(1,1) = conjg(R(1,1))
                 R2 = R(1,1)
-                if(real(R2)>0.0) then
+                write(3,*) real(S(1,i)), ',', aimag(S(1,i)), ',', real(R2), ',', aimag(R2), ',', Eig(i,k)
+                if(real(R2)>0.0d0) then
                     RdatI(i) = 1
-                elseif(real(R2)<0.0) then
+                elseif(real(R2)<0.0d0) then
                     RdatI(i) = 0
                 endif
-                if(aimag(R2)>0.0) then
+                if(aimag(R2)>0.0d0) then
                     RdatQ(i) = 1
-                elseif(aimag(R2)<0.0) then
+                elseif(aimag(R2)<0.0d0) then
                     RdatQ(i) = 0
                 endif
             end do
@@ -301,8 +315,6 @@ program AvOth_BER
     end do
 
     do j=1, ConvSize
-!        AvEbN0(j) = AvEbN0(j)/dble(Nloop)
-!        AvBER(j) = BER(j)/dble(Nloop)
         if(Pconloop(j)==0) cycle
         AvEbN02(j) = AvEbN02(j)/dble(Pconloop(j))
         AvBER2(j) = BER2(j)/dble(Pconloop(j))
@@ -321,7 +333,7 @@ program AvOth_BER
     do k=1, ConvSize
         if(AvUseChNum(k)/=0.0d0) then
             write(2,*) nint(10.0d0*dlog10(EbN0In(k))), ',', AvUseChNum(k)
-            write(1,*) 10.0d0*dlog10(AvEbN02(k)), ',', AvBER2(k), ',', AvRTNum(k)
+            write(1,*) 10.0d0*dlog10(AvEbN02(k)), ',', AvBER2(k), ',', EbN0(k), ',', BER(k), ',', AvRTNum(k)
             print *
             print *, 'EbN0=', EbN0(k)
             print *, 'BER=', BER(k)
@@ -334,6 +346,7 @@ program AvOth_BER
     !file close
     close(1)
     close(2)
+    close(3)
 
     !time measurement end
     call system_clock(t2, t_rate, t_max)
