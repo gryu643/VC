@@ -193,12 +193,12 @@ contains
 			do i=1, Nsybl-1
 				!固有ベクトル群を１列のベクトルに格納
 				do k=1, Nsybl
-					V1(k,1) = X(k,i)
+					V1(k) = X(k,i)
 				end do
 				do j=i+1, Nsybl
 					!内積を取る固有ベクトルを格納
 					do k=1, Nsybl
-						V2(k,1) = X(k,j)
+						V2(k) = X(k,j)
 					end do
 					NAISEKI(1,1) = NAISEKI(1,1) + abs(dot_product(V1,V2))
 				end do
