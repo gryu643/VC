@@ -7,8 +7,8 @@ OBJS = *.o
 MOD = *.mod
 LAPACK = -llapack -lblas
 
-.PHONY: usePPLmod
-usePPLmod: CALmod.o PPLCUTOFFmod.o usePPLmod.o
+.PHONY: usePPL
+usePPL: CALmod.o PPLmod.o usePPL.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: avoth_ber
