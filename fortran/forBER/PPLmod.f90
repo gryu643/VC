@@ -43,6 +43,8 @@ contains
 		complex(kind(0d0)) D1(Nsybl,1)
 		double precision D_ABS
 		double precision D1_ABS
+		complex(kind(0d0)) R1(Nsybl)
+		complex(kind(0d0)) R2(Nsybl)
 
 		!initialize
 		Z=(0.0,0.0)
@@ -111,6 +113,13 @@ contains
 
 				LAMBDA_TMP = D1_ABS / D_ABS
 				LAMBDA(i,1) = cmplx(LAMBDA_TMP,0.0, kind(0d0))
+
+				!do j=1, Nsybl
+				!	R1(j) = Xpre(j,i)
+				!	R2(j) = HHHX(j,i)
+				!end do
+				!LAMBDA_TMP = dot_product(R2,R1)/dot_product(R1,R1)
+				!LAMBDA(i,1) = cmplx(LAMBDA_TMP,0.0, kind(0d0))
 			end do
 			!この時点で配列LAMBDAの各行に固有値が入っている。
 
