@@ -31,6 +31,10 @@ vcq: CALmod.o PPLVCQmod.o VCQ.o
 cutoff: CALmod.o PPLCutoffmod.o VC_cutoff.o
 	$(CC) $^ -o $@ $(LAPACK)
 
+.PHONY: comb
+comb: CALmod.o PPLCombmod.o PCONmod2.o VC_comb.o
+	$(CC) $^ -o $@ $(LAPACK)
+
 .PHONY: vc_ideal
 vc_ideal: VC_ideal.o
 	$(CC) $^ -o $@ $(LAPACK)
@@ -52,7 +56,11 @@ fixedH: CALmod.o PPLmod.o VC_fixedH.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: pcon
-pcon: CALmod.o PPLmod.o PCONmod.o VC_Pcontrol.o
+pcon: CALmod.o PPLmod.o PCONmod.o PCONmod2.o VC_Pcontrol.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+.PHONY: pcon2
+pcon2: CALmod.o PPLmod.o PCONmod2.o PCONmod3.o VC_Pcontrol2.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: vc_nonfading

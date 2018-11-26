@@ -1,8 +1,8 @@
 program VC_Pcontrol
     use PPLmod
     use CALmod
-    use PCONmod
     use PCONmod2
+    use PCONmod3
     implicit none
 
     !ifdef
@@ -14,13 +14,14 @@ program VC_Pcontrol
     !declaration
     integer,parameter :: Nsybl=32
     integer,parameter :: Npath=4
-    integer,parameter :: SEbN0=-10
-    integer,parameter :: EEbN0=40
+    integer,parameter :: SEbN0=20
+    integer,parameter :: EEbN0=20
     integer,parameter :: Step=10
-    integer,parameter :: Nloop=10000
+    integer,parameter :: Nloop=1
+    integer,parameter :: NInloop=1
     integer,parameter :: PPLloop=500
 
-    integer i,j
+    integer i,j,Inloop
     double precision Ampd(Npath,1)
     double precision Psig
     double precision Pwgn
@@ -58,9 +59,7 @@ program VC_Pcontrol
     complex(kind(0d0)) TMP
     double precision EbN0t
     double precision BERMin
-    double precision UsePt(1,Nsybl)
     integer info
-    integer TNum
     double precision AvTNum
     double precision Sum
     double precision BER2
@@ -68,6 +67,7 @@ program VC_Pcontrol
     double precision AvBER2
     double precision AvEbN0
     double precision AvEbN02
+    double precision Min
 
     !initialize
     Ampd(:,:)=0.0d0
@@ -104,16 +104,15 @@ program VC_Pcontrol
     BER=0.0d0
     Eig=0.0d0
     Pt=0.0d0
-    TMP=0.0d0
-    UsePt=0.0d0
-    info=1
+    TMP=(0.0d0,0.0d0)
 
     !time measurement start
     call system_clock(t1)
 
     !file open
-    open (1, file='VC_Pcon(s32p4).csv', status='replace')
-    open (2, file='VC_Pcon(s32p4)ideal.csv', status='replace')
+    open (1, file='VC_Pcon2(s32p4).csv', status='replace')
+    open (2, file='VC_Pcon2(s32p4)convergence.csv', status='replace')
+    open (3, file='const.csv', status='replace')
 
     !implimentation part
     !channel gain parameter
@@ -181,171 +180,158 @@ program VC_Pcontrol
 
             !sort Eig descending order
             call sort(Eig,Nsybl)
-            do i=1,Nsybl
+            do i=1,Nsybl/2
                 do j=1, Nsybl
                     TMP = V(j,i)
                     V(j,i) = V(j,Nsybl+1-i)
                     V(j,Nsybl+1-i) = TMP
                 end do
             end do
+
             !transmit power control
             EbN0t = 10**(KEbN0/10.0d0)
-            do i=Nsybl, 1, -1
-                Pt=0.0d0
-                info=1
-                call Pcontrol(Eig,EbN0t,Pt,i,Nsybl,info)
-                if(info==1) then
-                    do j=1, Nsybl
-                        UsePt(1,j) = Pt(1,j)
-                    end do
-                    TNum=i
-                    exit
-                endif
-            end do
-            AvTNum = AvTNum + dble(TNum)/dble(Nloop)
-            if(info==-1) cycle
+            Pt=0.0d0
+!           call Pcontrol3(Eig,EbN0t,Pt,Nsybl,Nsybl,info)
+            !2 no hou ga kousoku
+            call Pcontrol2(Eig,EbN0t,Pt,Nsybl,Nsybl,info)
 
-            !set information symbol
-            S=(0.0d0,0.0d0)
-            do i=1, TNum
-                S(1,i) = cmplx(nint(rand())*2.0d0-1.0d0,nint(rand())*2.0d0-1.0d0,kind(0d0)) !-1or1
-            end do
-
-            TdatI=0
-            TdatQ=0
-            do i=1, TNum
-                TdatI(1,i) = (real(S(1,i))+1)/2 !0or1
-                TdatQ(1,i) = (aimag(S(1,i))+1)/2
-            end do
-            SU=(0.0d0,0.0d0)
-            do i=1, TNum
-                do j=1, Nsybl
-                    SU(j,i) = S(1,i) * V(j,i) * sqrt(UsePt(1,i))
-                end do
-            end do
-
+            !calculate ideal value
             do i=1, Nsybl
                 AvEbN0 = AvEbN0 + EbN0t*Eig(1,i)/dble(Nsybl)/dble(Nloop)
             end do
 
-            do i=1, TNum
-                AvEbN02 = AvEbN02 + EbN0t*Eig(1,i)*UsePt(1,i)/dble(TNum)/dble(Nloop)
-            end do
-
-            BER=0.0d0
             do i=1, Nsybl
-                BER=BER+1.0d0/2.0d0*erfc(sqrt(EbN0t*Eig(1,i)))/dble(Nsybl)
+                AvEbN02 = AvEbN02 + EbN0t*Eig(1,i)*Pt(1,i)/dble(Nsybl)/dble(Nloop)
             end do
-            AvBER = AvBER + BER/dble(Nloop)
 
-            BER2=0.0d0
-            do i=1, TNum
-                BER2=BER2+1.0d0/2.0d0*erfc(sqrt(EbN0t*Eig(1,i)*UsePt(1,i)))/dble(TNum)
-            end do
-            AvBER2 = AvBER2 + BER2/dble(Nloop)
-
-            if(BER>=BER2) then
-                !print *, 'KEbN0, BER1, BER2=', KEbN0, BER, BER2
-            else
-                !print *, 'KEbN0, BER1, BER2=', KEbN0, BER, BER2, 'BER1<BER2'
-                do i=1, TNum
-                    !print *, i, UsePt(1,i)
+            do Inloop=1, NInloop
+                !set information symbol
+                S=(0.0d0,0.0d0)
+                do i=1, Nsybl
+                    S(1,i) = cmplx(nint(rand())*2.0d0-1.0d0,nint(rand())*2.0d0-1.0d0,kind(0d0)) !-1or1
                 end do
-            endif
 
-            !transmit vector
-            X = (0.0d0,0.0d0)
-            do i=1,Nsybl
-                do j=1,Nsybl
-                    X(j,1) = X(j,1) + SU(j,i)
+                TdatI=0
+                TdatQ=0
+                do i=1, Nsybl
+                    TdatI(1,i) = (real(S(1,i))+1)/2 !0or1
+                    TdatQ(1,i) = (aimag(S(1,i))+1)/2
                 end do
-            end do
+                SU=(0.0d0,0.0d0)
+                do i=1, Nsybl
+                    do j=1, Nsybl
+                        SU(j,i) = S(1,i) * V(j,i)! * sqrt(Pt(1,i))
+                    end do
+                end do
 
-            !power
-            Pow = 0.0d0
-            do i=1, Nsybl
-                Pow = Pow + (abs(X(i,1))**2.0d0)/dble(Nsybl)
-            end do
-            X = X / sqrt(Pow)
+                !-- calculate ideal value ----------------------------------------------------
+                BER=0.0d0
+                do i=1, Nsybl
+                    BER=BER+1.0d0/2.0d0*erfc(sqrt(EbN0t*Eig(1,i)))/dble(Nsybl)
+                end do
+                AvBER = AvBER + BER/dble(Nloop)/dble(NInloop)
+
+                BER2=0.0d0
+                do i=1, Nsybl
+                    BER2=BER2+1.0d0/2.0d0*erfc(sqrt(EbN0t*Eig(1,i)*Pt(1,i)))/dble(Nsybl)
+                end do
+                AvBER2 = AvBER2 + BER2/dble(Nloop)/dble(NInloop)
+                !------------------------------------------------------------------------------
+
+                !transmit vector
+                X = (0.0d0,0.0d0)
+                do i=1,Nsybl
+                    do j=1,Nsybl
+                        X(j,1) = X(j,1) + SU(j,i)
+                    end do
+                end do
+
+                !power
+                Pow = 0.0d0
+                do i=1, Nsybl
+                    Pow = Pow + (abs(X(i,1))**2.0d0)/dble(Nsybl)
+                end do
+                X = X / sqrt(Pow)
+
+                call CMultiply(H,X,Y,Nsybl+Npath-1,Nsybl,Nsybl,1) !pass H
+
+                do i=1, Nsybl+Npath-1
+                    Noise(i,1) = cmplx(normal(),normal(),kind(0d0))
+                end do
+                !正規乱数の分散＝１＝雑音電力なので、正規乱数に雑音電力をかける（√２で割っているのはIとQの両方合わせて雑音電力とするため）
+                Noise = Noise / sqrt(2.0d0) * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)
+
+                do i=1, Nsybl+Npath-1
+                    Psig = Psig + (abs(Y(i,1))**2.0d0)
+                    Pwgn = Pwgn + abs(Noise(i,1))**2.0d0
+                end do
+
+                !add noise
+                call CAdd(Y,Noise,Y,Nsybl+Npath-1,1,Nsybl+Npath-1,1)
+
+                !Matched Filter
+                call CMultiply(HH,Y,Yn,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,1)
             
-            call CMultiply(H,X,Y,Nsybl+Npath-1,Nsybl,Nsybl,1) !pass H
-
-            do i=1, Nsybl+Npath-1
-                Noise(i,1) = cmplx(normal(),normal(),kind(0d0))
-            end do
-            !正規乱数の分散＝１＝雑音電力なので、正規乱数に雑音電力をかける（√２で割っているのはIとQの両方合わせて雑音電力とするため）
-            Noise = Noise / sqrt(2.0d0) * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)
-
-            do i=1, Nsybl+Npath-1
-                Psig = Psig + (abs(Y(i,1))**2.0d0)
-                Pwgn = Pwgn + abs(Noise(i,1))**2.0d0
-            end do
-
-            !add noise
-            call CAdd(Y,Noise,Y,Nsybl+Npath-1,1,Nsybl+Npath-1,1)
-
-            !Matched Filter
-            call CMultiply(HH,Y,Yn,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,1)
-        
-            do i=1, Nsybl
-                Y2(i,1) = Yn(i,1)
-            end do
-            RdatI = 0
-            RdatQ = 0
-            !Demodulation
-            do i=1, TNum
-                do j=1, Nsybl
-                    A(j,1) = V(j,i)
+                do i=1, Nsybl
+                    Y2(i,1) = Yn(i,1)
                 end do
-                !inner product
-                call CAdjoint(Y2,Y2H,Nsybl,1)
-                call CMultiply(Y2H,A,R,1,Nsybl,Nsybl,1)
-                R(1,1) = conjg(R(1,1))
-                R2 = R(1,1)
+                RdatI = 0
+                RdatQ = 0
+                !Demodulation
+                do i=1, Nsybl
+                    do j=1, Nsybl
+                        A(j,1) = V(j,i)
+                    end do
+                    !inner product
+                    call CAdjoint(Y2,Y2H,Nsybl,1)
+                    call CMultiply(Y2H,A,R,1,Nsybl,Nsybl,1)
+                    R(1,1) = conjg(R(1,1))
+                    R2 = R(1,1)
+                    write(3,*) real(R2), ',', aimag(R2), ',', real(S(1,i)), ',', aimag(S(1,i)), ',', Eig(1,i)
+                    if(real(R2)>0.0) then
+                        RdatI(1,i) = 1
+                    elseif(real(R2)<0.0) then
+                        RdatI(1,i) = 0
+                    endif
+                    if(aimag(R2)>0.0) then
+                        RdatQ(1,i) = 1
+                    elseif(aimag(R2)<0.0) then
+                        RdatQ(1,i) = 0
+                    endif
+                end do
 
-                if(real(R2)>0.0) then
-                    RdatI(1,i) = 1
-                elseif(real(R2)<0.0) then
-                    RdatI(1,i) = 0
-                endif
-                if(aimag(R2)>0.0) then
-                    RdatQ(1,i) = 1
-                elseif(aimag(R2)<0.0) then
-                    RdatQ(1,i) = 0
-                endif
+                !Bit Error Rate
+                do i=1, Nsybl
+                    if(RdatI(1,i)==TdatI(1,i)) then
+                        Collect = Collect + 1
+                    elseif(RdatI(1,i)/=TdatI(1,i)) then
+                        False = False + 1
+                    endif
+                    if(RdatQ(1,i)==TdatQ(1,i)) then
+                        Collect = Collect + 1
+                    elseif(RdatQ(1,i)/=TdatQ(1,i)) then
+                        False = False + 1
+                    endif
+                end do
+                write(2,*) loop, ',', dble(False)/(dble(Collect)+dble(False))
             end do
-
-            !Bit Error Rate
-            do i=1, Nsybl
-                if(RdatI(1,i)==TdatI(1,i)) then
-                    Collect = Collect + 1
-                elseif(RdatI(1,i)/=TdatI(1,i)) then
-                    False = False + 1
-                endif
-                if(RdatQ(1,i)==TdatQ(1,i)) then
-                    Collect = Collect + 1
-                elseif(RdatQ(1,i)/=TdatQ(1,i)) then
-                    False = False + 1
-                endif
-            end do
-            write(2,*) loop, ',', dble(False)/(dble(Collect)+dble(False))
         end do
         
         EbN0 = 10.0d0*dlog10(Psig/Pwgn/2.0d0) !QPSK rate =2
         BER = dble(False) / (dble(Collect) + dble(False))
         AvEbN0 = 10.0d0*dlog10(AvEbN0)
         AvEbN02 = 10.0d0*dlog10(AvEbN02)
-        if(BER>0.0) then
-            write(1,*) AvEbN0, ',', AvBER, ',', AvEbN02, ',', AvBER2, ',', AvTNum
-            print *, 'EbN0=', EbN0
-            print *, 'BER=', BER
-            print *, 'IdealBER=', AvBER
-        endif
+
+        write(1,*) AvEbN0, ',', AvBER, ',', AvEbN02, ',', AvBER2, ',', EbN0, ',', BER
+        print *, 'EbN0=', EbN0
+        print *, 'BER=', BER
+
     end do
 
     !file close
     close(1)
     close(2)
+    close(3)
 
     !time measurement end
     call system_clock(t2, t_rate, t_max)

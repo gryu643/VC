@@ -1,8 +1,9 @@
-module PPLCutoffmod
+module PPLCombmod
 	use CALmod
+    use PCONmod2
 	implicit none
 contains
-	subroutine PPL(H,HE,X,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,ConvSize,BERStandard,V)
+	subroutine PPLComb(H,HE,X,Eig,Nsybl,Npath,EbN0In,RTNum,UseChNum,ConvStandard,ConvSize,BERStandard,V,Pt,MaxPconLoop)
 		implicit none
 
 		!argument
@@ -14,6 +15,8 @@ contains
 		double precision Eig(Nsybl,ConvSize)
 		double precision ConvStandard(ConvSize),BERStandard
 		complex(kind(0d0)) V(ConvSize,Nsybl,Nsybl)
+		double precision Pt(ConvSize,Nsybl)
+		integer MaxPconLoop
 
 		!declaration
 		integer i,j,k,l,m
@@ -59,6 +62,11 @@ contains
 		integer ExitFlag
 		double precision NCS(ConvSize)
 		double precision AVGOTHN
+		double precision Pt_TMP1(1,Nsybl)
+		double precision Pt_TMP2(1,Nsybl)
+		integer info
+		double precision EbN0Pcon
+		double precision EigPcon(1,Nsybl)
 
 		!initialize
 		Z=(0.0,0.0)
@@ -95,10 +103,13 @@ contains
 		LambdaEbN0=0.0d0
 		ExitFlag=0
 		BERFlag=.False.
+		info=1
+		Pt_TMP1=0.0d0
 
 		l = 0
 		do
 			l = l + 1
+
 			!次ループでの固有値算出のため、Xを退避
 			call CSubstitute(Xpre,X,Nsybl,Nsybl)
 
@@ -227,60 +238,93 @@ contains
 
 				!judge convergence for Nsybl
 				if(AVGOTHN<=ConvStandard(j)) then
+					!Transmit power control
+					Pt_TMP1=0.0d0
+					do k=1, Nsybl
+						EigPcon(1,k) = real(LAMBDA(k,1))
+					end do
+					EbN0Pcon = EbN0In(j)
+					call Pcontrol2(EigPcon,EbN0Pcon,Pt_TMP1,Nsybl,Nsybl,info)
+
+					!judge ber
 					BER=0.0d0
-					do i=1, Nsybl
-						LambdaEbN0 = real(LAMBDA(i,1))*EbN0In(j)
+					do k=1, Nsybl
+						LambdaEbN0 = real(LAMBDA(k,1))*EbN0In(j)*Pt_TMP1(1,k)
 						InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
 						BER = BER + InstantBER
 					end do
 					if(BER/dble(Nsybl)<=BERStandard) then
+						!output
 						BERFlag(j) = .True.
 						UseChNum(j) = Nsybl
+						do k=1, Nsybl
+							Pt(j,k) = Pt_TMP1(1,k)
+						end do
 					endif
 				endif
 
 				!judge convergence for Ksybl
-				if(BERFlag(j).neqv..True.) then
+				if(BERFlag(j).eqv..False.) then
 					if(AVGOTH(j)>NCS(j)) then
 						cycle
 					else
 						!judge ber
 						BER=0.0d0
 						do i=1, Ksybl(j)
-							LambdaEbN0 = real(LAMBDA(i,1))*EbN0In(j)
+							!transmit power control
+							!save taransmit Power
+							do k=1, Nsybl
+								Pt(j,k) = Pt_TMP1(1,k)
+							end do
+							Pt_TMP1=0.0d0
+							do k=1, Nsybl
+								EigPcon(1,k) = real(LAMBDA(k,1))
+							end do
+							EbN0Pcon = EbN0In(j)
+							call Pcontrol2(EigPcon,EbN0Pcon,Pt_TMP1,i,Nsybl,info)
+
+							LambdaEbN0 = real(LAMBDA(i,1))*EbN0In(j)*Pt_TMP1(1,i)
 							InstantBER = 1.0d0/2.0d0*erfc(sqrt(LambdaEbN0))
 							BER = BER + InstantBER
-
+							
 							!skip judgement to BER of Ksybl when Ksybl>2
 							if(Ksybl(j)>2.and.i<Ksybl(j)) cycle
 
 							if(BER/dble(i)>BERStandard) then
+								!output and exit
 								BERFlag(j) = .True.
 								UseChNum(j) = i-1
 								exit
 							else
 								if(Ksybl(j)==2.and.i==1) cycle
+
 								Ksybl(j) = Ksybl(j) + 1
 								if(Ksybl(j)==Nsybl+1) then
+									!output and exit
 									BERFlag(j) = .True.
 									UseChNum(j) = Nsybl
+									do k=1, Nsybl
+										Pt(j,k) = Pt_TMP1(1,k)
+									end do
 									exit
 								endif
 							endif
 						end do
 					endif
 				endif
-				
+
 				!output result 
 				if(BERFlag(j)) then
 					RTNum(j) = l
 					ExitFlag = ExitFlag + 1
-					
+					do m=1, Nsybl
+						Eig(m,j) = real(LAMBDA(m,1))
+					end do
+			
 					select case(UseChNum(j))
-						case(1)
-						case(2:)
+						case(0)
+						case(1:)
 							do m=1, UseChNum(j)
-								Eig(m,j) = real(LAMBDA(m,1))
 								do k=1, Nsybl
 									V(j,k,m) = X(k,m)
 								end do
@@ -289,8 +333,39 @@ contains
 				endif
 			end do
 			
+			if(l==MaxPconLoop) then
+				do j=1, ConvSize
+					if(BERFlag(j)) cycle
+
+					BERFlag(j) = .True.
+					UseChNum(j) = Nsybl
+					RTNum(j) = MaxPconLoop
+					do m=1, Nsybl
+						Eig(m,j) = real(LAMBDA(m,1))
+					end do
+
+					!Transmit power control
+					!Pt_TMP1=0.0d0
+					!do k=1, Nsybl
+					!	EigPcon(1,k) = real(LAMBDA(k,1))
+					!end do
+					!EbN0Pcon = EbN0In(j)
+					!call Pcontrol2(EigPcon,EbN0Pcon,Pt_TMP1,Nsybl,Nsybl,info)
+					do k=1, Nsybl
+						Pt(j,k) = 1.0d0
+					end do
+
+					do m=1, Nsybl
+						do k=1, Nsybl
+							V(j,k,m) = X(k,m)
+						end do
+					end do
+
+					ExitFlag = ExitFlag + 1
+				end do
+			endif
 			!judge PPL exit
 			if(ExitFlag==ConvSize) exit
 		end do
 	end subroutine
-end module PPLCutoffmod
+end module PPLCombmod

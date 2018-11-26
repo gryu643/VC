@@ -1,7 +1,8 @@
-module PCONmod
+module PCONmod3
+    !-- PCONmod3: when Pt>0.0 Teansmit Power Control Program --!
     implicit none
 contains
-    subroutine Pcontrol(lambda,EbN0,Pcon,Rep,Nsybl,info)
+    subroutine Pcontrol3(lambda,EbN0,Pcon,Rep,Nsybl,info)
         use CALmod
         implicit none
 
@@ -23,6 +24,7 @@ contains
         C=0.0d0
         Min=0.0d0
         Sum=0.0d0
+        info=1
 
         !--implementation
         !AX=B
@@ -37,7 +39,7 @@ contains
         do i=1, Rep
             B(i,1) = dlog(lambda(1,i)/dble(Rep)*EbN0)
         end do
-        B(Rep+1,1) = dble(Nsybl)
+        B(Rep+1,1) = dble(Rep)
 
         !calculate inverse matrix of A
         call InverseMat(A,Rep+1)
@@ -46,14 +48,29 @@ contains
         call RMultiply(A,B,C,Rep+1,Rep+1,Rep+1,1)
 
         do i=1, Rep
-            if(0.0d0>C(i,1)) then
-                info = -1
-                exit
+            if(0.0d0>C(i,1).and.C(i,1)<Min) then
+                Min=C(i,1)
+                info=-1
             endif
         end do
 
-        do i=1, Rep
-            Pcon(1,i) = C(i,1)
-        end do
-    end subroutine Pcontrol
-end module PCONmod
+        !set 0.01 for minimum value when minimum value is negative.
+        if(info==-1) then
+            do i=1, Rep
+                Pcon(1,i) = C(i,1) - (Min-0.01d0)
+            end do
+            !normalize Pcon
+            do i=1, Rep
+                Sum = Sum + Pcon(1,i)
+            end do
+            do i=1, Rep
+                Pcon(1,i) = Pcon(1,i) / Sum * dble(Rep)
+            end do
+        else
+            do i=1, Rep
+                Pcon(1,i) = C(i,1)
+            end do
+        endif
+
+    end subroutine Pcontrol3
+end module PCONmod3
