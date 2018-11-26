@@ -125,8 +125,8 @@ program AvOth_BER
     call system_clock(t1)
 
     !file open
-    open (1, file='Comb_BER(100).csv', status='replace')
-    open (2, file='Comb_UseChNum(100).csv', status='replace')
+    open (1, file='Comb_BER.csv', status='replace')
+    open (2, file='Comb_UseChNum.csv', status='replace')
 
     !implimentation part
     !channel gain parameter
