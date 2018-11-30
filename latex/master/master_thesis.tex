@@ -1,0 +1,96 @@
+\documentclass[11pt,oneside,notitlepage]{jsbook}
+\usepackage{times,array,fancyhdr,lastpage,amsmath,amssymb,txfonts,ccaption}
+\usepackage{bm}
+\usepackage[dvipdfm]{graphicx}
+\usepackage[newitem,newenum]{paralist}%箇条書き書式変更スタイル
+%\usepackage{slashbox}
+\usepackage{bm}
+\usepackage{here}
+%\usepackage{subfigure}
+\usepackage{comment}
+\usepackage{type1cm}
+\usepackage{amssymb}
+\newcommand{\argmax}{\mathop{\rm max}\limits}
+
+%%%%%%レイアウトの設定
+%%%%%%レイアウトの設定
+\topmargin 0pt    %オフセットからヘッダまでのマージン
+\headsep 35pt       %ヘッダと本文領域の間の高さ
+\topskip 5pt        %本文領域内の本文開始位置までの高さ
+\oddsidemargin 15pt %奇数ページのマージン
+\footskip 30.00pt   %文章領域の終わりからフッタの終わりまでの高さ
+\paperwidth 597pt   %用紙の幅
+\paperheight 845pt  %用紙の高さ
+\voffset 0pt        %垂直方向のオフセット
+\hoffset 0pt        %水平方向のオフセット
+\headheight 30pt    %ヘッダの高さ    
+\evensidemargin 17pt%偶数ページのマージン
+\marginparsep 10pt  %本文領域と傍注の間の幅
+\marginparwidth 17pt%傍注の幅
+\marginparpush 7pt  %傍注間の高さ
+\textwidth 43zw     %文章領域の幅
+\setlength{\textheight}{32.5\baselineskip}%行送り設定
+\addtolength{\textheight}{\topskip}
+\pagestyle{fancy}
+\setcounter{tocdepth}{3}	%subsubsectionまでを目次に表示
+\setcounter{secnumdepth}{4}
+
+\begin{document}
+\captiondelim{ }%キャプションの書式を変更
+%↓fancy.styの設定
+%\fancyhead{}
+\rfoot{{\small 九州大学 大学院 システム情報科学府 情報知能工学専攻}}%右フッタ
+%\fancyhead[LE]{\chaptermark}%偶数ページ左ヘッダ
+%\fancyhead[LO]{\sectionmark}%奇数ページ左ヘッダ
+\rhead{\textbf{\thepage}}　　　%右ヘッダ
+\cfoot{}　　　　　　　　　　　%中央フッタ
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\setlength{\baselineskip}{18.95pt}
+
+%%%%%　章の最初のページのページ番号・ヘッダ・フッタを他のページと同じ形式で表示　%%%%% 
+\makeatletter
+\renewcommand{\chapter}{
+  \if@openright\cleardoublepage\else\clearpage\fi
+  \global\@topnum\z@
+  \secdef\@chapter\@schapter}
+\makeatother
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%タイトルページ
+\vspace*{3cm}%\vspace*{長さ}:縦方向空白(ページ先頭有効)
+\begin{center}%センタリングはじめ
+{\Large \textbf{}}\\%\\:字下げ無し改行
+\vspace{3mm}
+{\Large \textbf{タイトル}} \\
+\vspace{5cm}%\vspace{長さ}:縦方向空白(ページ先頭無効)
+\indent \\
+{\Large 仁部龍介} \\
+\vspace{5mm}
+{\Large 平成 31年 2月} \\
+\vspace{5mm}
+{\Large 修士課程 \\ 情報知能工学専攻 \\ 社会情報システム工学コース} \\
+\end{center}%センタリングおわり 
+\thispagestyle{empty}%\thispagestyle{ページスタイル名}:一時的にページスタイル変更
+　　　　　　　　　　 %empty:ページ番号無し,plain:フッタ中央にページ番号を付ける
+
+%\clearpage %\clearpage(改ページ)		
+
+%\include{./chapter0/abstract}
+
+\frontmatter %ページ番号はローマ数字、章番号をつけない
+\clearpage %\clearpage(改ページ)
+%\pagenumbering{roman}
+\tableofcontents %目次出力
+\mainmatter %ページ番号は算用数字、章番号をつける
+
+\include{./chapter1/ch1}
+\include{./chapter2/ch2}
+\include{./chapter3/ch3}
+\include{./chapter4/ch4}
+\include{./chapter5/ch5}
+\backmatter          %章番号をつけない          
+\include{./chapter0/references}
+\include{./chapter0/acknowledgement}
+%\include{付録}     　　
+\end{document}
