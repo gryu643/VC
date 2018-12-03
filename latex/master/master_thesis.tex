@@ -1,4 +1,6 @@
-\documentclass[11pt,oneside,notitlepage]{jsbook}
+\documentclass[11pt,oneside,titlepage]{jsbook}
+
+%%%--- Read Package ---%%%
 \usepackage{times,array,fancyhdr,lastpage,amsmath,amssymb,txfonts,ccaption}
 \usepackage{bm}
 \usepackage[dvipdfm]{graphicx}
@@ -12,8 +14,7 @@
 \usepackage{amssymb}
 \newcommand{\argmax}{\mathop{\rm max}\limits}
 
-%%%%%%レイアウトの設定
-%%%%%%レイアウトの設定
+%%%--- Setup Layout ---%%%
 \topmargin 0pt    %オフセットからヘッダまでのマージン
 \headsep 35pt       %ヘッダと本文領域の間の高さ
 \topskip 5pt        %本文領域内の本文開始位置までの高さ
@@ -48,21 +49,20 @@
 \renewcommand{\footrulewidth}{0.4pt}
 \setlength{\baselineskip}{18.95pt}
 
-%%%%%　章の最初のページのページ番号・ヘッダ・フッタを他のページと同じ形式で表示　%%%%% 
+%%%--- 章の最初のページのページ番号・ヘッダ・フッタを他のページと同じ形式で表示 ---%%% 
 \makeatletter
 \renewcommand{\chapter}{
   \if@openright\cleardoublepage\else\clearpage\fi
   \global\@topnum\z@
   \secdef\@chapter\@schapter}
 \makeatother
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%タイトルページ
+%%%--- Title Page ---%%%
 \vspace*{3cm}%\vspace*{長さ}:縦方向空白(ページ先頭有効)
 \begin{center}%センタリングはじめ
 {\Large \textbf{}}\\%\\:字下げ無し改行
 \vspace{3mm}
-{\Large \textbf{タイトル}} \\
+{\Large \textbf{VectorCodingにおける伝搬路推定を必要としない\\固有符号推定アルゴリズム}} \\
 \vspace{5cm}%\vspace{長さ}:縦方向空白(ページ先頭無効)
 \indent \\
 {\Large 仁部龍介} \\
@@ -82,7 +82,12 @@
 \clearpage %\clearpage(改ページ)
 %\pagenumbering{roman}
 \tableofcontents %目次出力
+\rhead{}
+
 \mainmatter %ページ番号は算用数字、章番号をつける
+
+\newpage
+\rhead{\thepage}
 
 \include{./chapter1/ch1}
 \include{./chapter2/ch2}
