@@ -91,6 +91,10 @@ qpsk_ideal: qpsk_ideal.o
 qpsk_fading: CALmod.o qpsk_fading.o
 	$(CC) $^ -o $@ $(LAPACK)
 
+.PHONY: rake
+rake: CALmod.o rake.o
+	$(CC) $^ -o $@ $(LAPACK)
+
 .PHONY: qpsk_ideal_fading
 qpsk_ideal_fading: CALmod.o qpsk_ideal_fading.o
 	$(CC) $^ -o $@ $(LAPACK)
