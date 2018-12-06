@@ -17,7 +17,7 @@ program rake
     integer i,j
     double precision Ampd(Npath,1)
     complex(kind(0d0)) Cpath(Npath,1)
-    complex(kind(0d0)) H(Nsybl+Npath-1,Nsybl)
+    complex(kind(0d0)) H(Nsybl+Npath-1,2**M_tapN-1)
     double precision Ps
     double precision Pn
     integer Collect
@@ -25,10 +25,11 @@ program rake
     integer loop
     integer KEbN0
     complex(kind(0d0)) S
-    complex(kind(0d0)) X(Nsybl,Nsybl)
+    complex(kind(0d0)) X(2**M_tapN-1,Nsybl)
+    complex(kind(0d0)) Y(Nsybl+Npath-1,1)
     integer TdatI
     double precision Pow
-    complex(kind(0d0)) Noise
+    double precision Noise(2**M_tapN-1,1)
     integer RdatI
     double precision EbN0
     double precision BER
@@ -83,6 +84,7 @@ program rake
             M_cal = TMP
         end do
 
+        !output M-sequence
         V(i) =  TMP
         if(V(i)==0) V(i)=-1
         !print *, V(i)
@@ -102,7 +104,7 @@ program rake
             end do
 
             !set H
-            do i=1, Nsybl
+            do i=1, 2**M_tapN-1
                 do j=1, Npath
                     H(i+j-1,i) = Cpath(j,1)
                 end do
@@ -112,33 +114,40 @@ program rake
             S = cmplx(nint(rand())*2.0d0-1.0d0,0.0d0,kind(0d0)) !-1or1
             TdatI = (real(S)+1)/2 !0or1
 
+            !spreading
+            do i=1, 2**M_tapN-1
+                X(i,1) = S * V(i)
+            end do
+
             !signal power = 1
             Pow = 0.0d0
-            Pow = abs(S)**2.0d0
-            S = S / sqrt(Pow)
-
-            !spreading
-
+            do i=1, 2**M_tapN-1
+                Pow = abs(X(i,1))**2.0d0 / dble(2**M_tapN-1)
+            end do
+            X = X / sqrt(Pow)
 
             !generate Noise
-            Noise = cmplx(normal(),normal(),kind(0d0))
+            do i=1, 2**M_tapN-1+Npath-1
+                Noise(i,1) = normal()
+            end do
             !apply EbN0
             Noise = Noise * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)
 
             !pass H --------------------------------------
-
-
+            call CMultiply(H,X,Y,2**M_tapN-1+Npath-1,2**M_tapN-1,2**M_tapN-1,Nsybl)
             !---------------------------------------------
 
             !calculate Ps and Pn
-            Ps = Ps + abs(S)**2.0d0
-            Pn = Pn + abs(Noise)**2.0d0
+            do i=1, 2**M_tapN-1+Npath-1
+                Ps = Ps + abs(Y(i,1))**2.0d0
+                Pn = Pn + abs(Noise(i,1))**2.0d0
+            end do
 
             !add noise
-            S = S + Noise
+            call CAdd(Y,Noise,Y,2**M_tapN-1+Npath-1,1,2**M_tapN-1+Npath-1,1)
 
             !despreading ----------------------------------
-
+            
 
 
             !----------------------------------------------
