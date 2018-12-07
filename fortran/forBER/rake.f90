@@ -6,39 +6,44 @@ program rake
     integer t1, t2, t_rate, t_max, diff
 
     !-- declaration
-    integer,parameter :: SEbN0=-10
+    integer,parameter :: SEbN0=0
     integer,parameter :: EEbN0=10
     integer,parameter :: Step=1
     integer,parameter :: Nloop=100000
     integer,parameter :: Nsybl=1
-    integer,parameter :: Npath=2
+    integer,parameter :: Npath=2 !Npath>=2
     integer,parameter :: M_tapN=4
 
     integer i,j
     double precision Ampd(Npath,1)
     complex(kind(0d0)) Cpath(Npath,1)
-    complex(kind(0d0)) H(Nsybl+Npath-1,2**M_tapN-1)
+    complex(kind(0d0)) H(2**M_tapN-1+Npath-1,2**M_tapN-1)
     double precision Ps
     double precision Pn
     integer Collect
     integer False
     integer loop
     integer KEbN0
-    complex(kind(0d0)) S
+    complex(kind(0d0)) S(Nsybl)
     complex(kind(0d0)) X(2**M_tapN-1,Nsybl)
-    complex(kind(0d0)) Y(Nsybl+Npath-1,1)
-    integer TdatI
+    complex(kind(0d0)) Y(2**M_tapN-1+Npath-1,Nsybl)
+    complex(kind(0d0)) Y2(2**M_tapN-1+Npath-1,Nsybl)
+    complex(kind(0d0)) Y3(2**M_tapN-1+Npath-1,Nsybl)
+    integer TdatI(Nsybl)
     double precision Pow
-    double precision Noise(2**M_tapN-1,1)
-    integer RdatI
+    complex(kind(0d0)) Noise(2**M_tapN-1+Npath-1,1)
+    integer RdatI(Nsybl)
     double precision EbN0
     double precision BER
     integer M_weight(M_tapN)
     integer M_tap(M_tapN)
+    complex(kind(0d0)) DSS_tap(2**M_tapN-1)
+    complex(kind(0d0)) Rake_tap(Npath)
     double precision V(2**M_tapN-1)
     data M_weight/1,0,0,1/
     integer M_cal
     integer TMP
+    complex(kind(0d0)) R
 
     !-- initialize
     Ps=0.0d0
@@ -47,7 +52,8 @@ program rake
     False=0
     loop=0
     KEbN0=0
-    S=0.0d0
+    H=(0.0d0,0.0d0)
+    S=(0.0d0,0.0d0)
     TdatI=0
     Pow=0.0d0
     Noise=(0.0d0,0.0d0)
@@ -57,12 +63,19 @@ program rake
     M_tap=0
     M_tap(1)=1
     M_cal=0
+    R=(0.0d0,0.0d0)
+    DSS_tap=(0.0d0,0.0d0)
+    Rake_tap=(0.0d0,0.0d0)
+    Y=(0.0d0,0.0d0)
+    Y2=(0.0d0,0.0d0)
+    Y3=(0.0d0,0.0d0)
 
     !-- time measurement start
     call system_clock(t1)
 
     !-- file open
     open (1, file='rake.csv', status='replace')
+    open (2, file='rake_out.csv', status='replace')
 
     !channel gain parameter
     do i=1, Npath
@@ -111,24 +124,30 @@ program rake
             end do
 
             !set information symbol
-            S = cmplx(nint(rand())*2.0d0-1.0d0,0.0d0,kind(0d0)) !-1or1
-            TdatI = (real(S)+1)/2 !0or1
+            do i=1, Nsybl
+                S(i) = cmplx(nint(rand())*2.0d0-1.0d0,0.0d0,kind(0d0)) !-1or1
+            end do
+            do i=1, Nsybl
+                TdatI(i) = (real(S(i))+1)/2 !0or1
+            end do
 
             !spreading
-            do i=1, 2**M_tapN-1
-                X(i,1) = S * V(i)
+            do j=1, Nsybl
+                do i=1, 2**M_tapN-1
+                    X(i,j) = S(j) * V(i)
+                end do
             end do
 
             !signal power = 1
             Pow = 0.0d0
             do i=1, 2**M_tapN-1
-                Pow = abs(X(i,1))**2.0d0 / dble(2**M_tapN-1)
+                Pow = Pow + abs(X(i,1))**2.0d0 / dble(2**M_tapN-1)
             end do
             X = X / sqrt(Pow)
 
             !generate Noise
             do i=1, 2**M_tapN-1+Npath-1
-                Noise(i,1) = normal()
+                Noise(i,1) = cmplx(normal(),normal(),kind(0d0))
             end do
             !apply EbN0
             Noise = Noise * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)
@@ -147,40 +166,65 @@ program rake
             call CAdd(Y,Noise,Y,2**M_tapN-1+Npath-1,1,2**M_tapN-1+Npath-1,1)
 
             !despreading ----------------------------------
-            
+            Y2=(0.0d0,0.0d0)
+            do i=1, 2**M_tapN-1+Npath-1
+                !update despreading tap
+                do j=2**M_tapN-1, 2, -1
+                    DSS_tap(j) = DSS_tap(j-1)
+                end do
+                DSS_tap(1) = Y(i,1)
 
-
+                !calculate output
+                do j=1, 2**M_tapN-1
+                    Y2(i,1) = Y2(i,1) + DSS_tap(j)*V(2**M_tapN-j)
+                end do
+            end do
             !----------------------------------------------
 
-            !rake -----------------------------------------
+            !rake reception-----------------------------------------
+            Y3=(0.0d0,0.0d0)
+            do i=1, 2**M_tapN-1+Npath-1
+                !update rake tap
+                do j=Npath, 2, -1
+                    Rake_tap(j) = Rake_tap(j-1)
+                end do
+                Rake_tap(1) = Y2(i,1)
 
-
-
+                !calculate output
+                do j=1, Npath
+                    Y3(i,1) = Y3(i,1) + Rake_tap(j)*conjg(Cpath(Npath+1-j,1))
+                end do
+            end do
             !----------------------------------------------
 
             !mabiki? --------------------------------------
-
-
-
+            do i=1, 2**M_tapN-1+Npath-1
+                !print *, Y2(i,1), abs(Cpath(1,1)), abs(Cpath(2,1))
+                !write(2,*) i, ',', real(Y2(i,1))
+            end do
+            R = Y3(2**M_tapN-1+Npath-1,1)
+            !print *, S(1), real(R)
             !----------------------------------------------
 
             RdatI = 0
             !Demodulation
-            if(real(S)>0.0) then
-                RdatI = 1
-            elseif(real(S)<0.0) then
-                RdatI = 0
-            endif
+            do i=1, Nsybl
+                if(real(R)>0.0) then
+                    RdatI(i) = 1
+                elseif(real(R)<0.0) then
+                    RdatI(i) = 0
+                endif
 
-            !Bit Error Rate
-            if(RdatI==TdatI) then
-                Collect = Collect + 1
-            elseif(RdatI/=TdatI) then
-                False = False + 1
-            endif
+                !Bit Error Rate
+                if(RdatI(i)==TdatI(i)) then
+                    Collect = Collect + 1
+                elseif(RdatI(i)/=TdatI(i)) then
+                    False = False + 1
+                endif
+            end do
         end do
         
-        EbN0 = 10.0d0*dlog10(Ps/Pn) !1/2*SNR=EbN0 (QPSK)
+        EbN0 = 10.0d0*dlog10(Ps/Pn/2.0d0)
         BER = dble(False) / (dble(Collect) + dble(False))
         if(BER>0.0) then
             write(1,*) EbN0, ',', BER
@@ -191,6 +235,7 @@ program rake
 
     !-- file close
     close(1)
+    close(2)
 
     !-- time measurement end
     call system_clock(t2, t_rate, t_max)
