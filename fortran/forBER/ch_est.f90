@@ -141,13 +141,15 @@ program rake
             end do
 
             !signal power = 1
-            do j=1, Nsybl
-                Pow = 0.0d0
-                do i=1, 2**M_tapN-1
-                    Pow = Pow + abs(X(i,j))**2.0d0 / dble(2**M_tapN-1)
-                end do
-                X(:,j) = X(:,j) / sqrt(Pow)
-            end do
+!            do j=1, Nsybl
+!                Pow = 0.0d0
+!                do i=1, 2**M_tapN-1
+!                    Pow = Pow + abs(X(i,j))**2.0d0 / dble(2**M_tapN-1)
+!                end do
+!                do i=1, 2**M_tapN-1
+!                    X(i,j) = X(i,j) / sqrt(Pow)
+!                end do
+!            end do
 
             !generate Noise
             do j=1, Nsybl
@@ -169,18 +171,24 @@ program rake
 !            end do
 
             !add noise
-            call CAdd(Y,Noise,Y,2**M_tapN-1+Npath-1,1,2**M_tapN-1+Npath-1,1)
+            !call CAdd(Y,Noise,Y,2**M_tapN-1+Npath-1,1,2**M_tapN-1+Npath-1,1)
             do i=1, Nsybl
-                Y(:,i) = Y(:,i) + Noise(:,i)
+                do j=1, 2**M_tapN-1+Npath-1
+                    Y(j,i) = Y(j,i) + Noise(j,i)
+                end do
             end do
             
             !add pilot
             if(Nsybl>1) then
                 do i=2, Nsybl
-                    Y(:,1) = Y(:,1) + Y(:,i)
+                    do j=1, 2**M_tapN-1+Npath-1
+                        Y(j,1) = Y(j,1) + Y(j,i)
+                    end do
+                end do
+                do j=1, 2**M_tapN-1+Npath-1
+                    Y(j,1) = Y(j,1) / dble(Nsybl)
                 end do
             endif
-            Y(:,1) = Y(:,1) / dble(Nsybl)
 
             !despreading ----------------------------------
             Y2=(0.0d0,0.0d0)
