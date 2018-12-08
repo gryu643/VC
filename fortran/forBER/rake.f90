@@ -9,7 +9,7 @@ program rake
     integer,parameter :: SEbN0=0
     integer,parameter :: EEbN0=10
     integer,parameter :: Step=1
-    integer,parameter :: Nloop=100000
+    integer,parameter :: Nloop=10000
     integer,parameter :: Nsybl=1
     integer,parameter :: Npath=2 !Npath>=2
     integer,parameter :: M_tapN=4
@@ -167,6 +167,7 @@ program rake
 
             !despreading ----------------------------------
             Y2=(0.0d0,0.0d0)
+            DSS_tap=(0.0d0,0.0d0)
             do i=1, 2**M_tapN-1+Npath-1
                 !update despreading tap
                 do j=2**M_tapN-1, 2, -1
@@ -183,6 +184,7 @@ program rake
 
             !rake reception-----------------------------------------
             Y3=(0.0d0,0.0d0)
+            Rake_tap=(0.0d0,0.0d0)
             do i=1, 2**M_tapN-1+Npath-1
                 !update rake tap
                 do j=Npath, 2, -1
@@ -199,11 +201,10 @@ program rake
 
             !mabiki? --------------------------------------
             do i=1, 2**M_tapN-1+Npath-1
-                !print *, Y2(i,1), abs(Cpath(1,1)), abs(Cpath(2,1))
-                !write(2,*) i, ',', real(Y2(i,1))
+                !print *, i, Y3(i,1)
+                !write(2,*) i, ',', real(Y3(i,1))
             end do
             R = Y3(2**M_tapN-1+Npath-1,1)
-            !print *, S(1), real(R)
             !----------------------------------------------
 
             RdatI = 0
@@ -227,7 +228,7 @@ program rake
         EbN0 = 10.0d0*dlog10(Ps/Pn/2.0d0)
         BER = dble(False) / (dble(Collect) + dble(False))
         if(BER>0.0) then
-            write(1,*) EbN0, ',', BER
+            write(1,*) KEbN0, ',', BER
             print *, 'EbN0=', EbN0
             print *, 'BER=', BER
         endif
