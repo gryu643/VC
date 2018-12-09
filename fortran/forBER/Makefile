@@ -96,7 +96,7 @@ rake: CALmod.o rake.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: est
-est: CALmod.o ch_est.o
+est: CALmod.o ChEstmod.o ch_est.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: qpsk_ideal_fading
