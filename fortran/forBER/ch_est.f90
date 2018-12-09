@@ -10,9 +10,9 @@ program rake
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=10
-    integer,parameter :: Nloop=1
+    integer,parameter :: Nloop=10000
     integer,parameter :: Nsybl=32
-    integer,parameter :: Npilot=4
+    integer,parameter :: Npilot=16
     integer,parameter :: Npath=4 !Npath>=2
     integer,parameter :: M_tapN=4
 
@@ -49,7 +49,7 @@ program rake
     complex(kind(0d0)) Y2H(1,Nsybl)
     complex(kind(0d0)) R(1,1)
     complex(kind(0d0)) R2
-    double precision Eig(Nsybl)
+    double precision Eig(1,Nsybl)
 
     !-- initialize
     Ampd=0.0d0
@@ -61,6 +61,7 @@ program rake
     KEbN0=0
     Cpath=(0.0d0,0.0d0)
     H=(0.0d0,0.0d0)
+    H_est=(0.0d0,0.0d0)
     HH=(0.0d0,0.0d0)
     HHH=(0.0d0,0.0d0)
     S=0.0d0
@@ -88,7 +89,7 @@ program rake
     call system_clock(t1)
 
     !-- file open
-    open (1, file='ch_est.csv', status='replace')
+    open (1, file='ch_est(Npilot=16).csv', status='replace')
 
     !channel gain parameter
     do i=1, Npath
@@ -121,7 +122,7 @@ program rake
             !make H from CSI
             do i=1, Nsybl
                 do j=1, Npath
-                    H_est(i+j-1,i) = Cpath(j,1)
+                    H_est(i+j-1,i) = Chest(j) !Cpath(j,1)
                 end do
             end do
 
@@ -132,10 +133,8 @@ program rake
             call CMultiply(HH,H_est,HHH,Nsybl,Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
 
             !QP decomposition -------------------------------------------
-
-
-
-
+            call CSubstitute(V,HHH,Nsybl,Nsybl)
+            call decomp_zheevd(Nsybl,V,Eig)
             !------------------------------------------------------------
 
             !set information symbol
@@ -166,7 +165,8 @@ program rake
                 Pow = Pow + (abs(X(i,1))**2.0d0)/Nsybl
             end do
             X = X / sqrt(Pow)
-            call CMultiply(H,X,Y,Nsybl+Npath-1,Nsybl,Nsybl,1) !pass H
+
+            call CMultiply(H_est,X,Y,Nsybl+Npath-1,Nsybl,Nsybl,1) !pass H
 
             do i=1, Nsybl+Npath-1
                 Noise(i,1) = cmplx(normal(),normal(),kind(0d0))
