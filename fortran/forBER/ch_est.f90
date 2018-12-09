@@ -22,7 +22,8 @@ program ch_est
     double precision Pwgn
     double precision Ampd(Npath,1)
     complex(kind(0d0)) Cpath(Npath,1)
-    complex(kind(0d0)) H(2**M_tapN-1+Npath-1,2**M_tapN-1)
+    complex(kind(0d0)) H_forChEst(2**M_tapN-1+Npath-1,2**M_tapN-1)
+    complex(kind(0d0)) H(Nsybl+Npath-1,Nsybl)
     integer Collect
     integer False
     integer loop
@@ -112,17 +113,25 @@ program ch_est
             !set H
             do i=1, 2**M_tapN-1
                 do j=1, Npath
-                    H(i+j-1,i) = Cpath(j,1)
+                    H_forChEst(i+j-1,i) = Cpath(j,1)
                 end do
             end do
 
             !channel estimation
-            call ChEstimate(H,Npilot,Npath,ChEst,M_tapN,KEbN0)
+            call ChEstimate(H_forChEst,Npilot,Npath,ChEst,M_tapN,KEbN0)
 
-            !make H from CSI
+            !make H_est from CSI
             do i=1, Nsybl
                 do j=1, Npath
                     H_est(i+j-1,i) = Chest(j) !Cpath(j,1)
+                end do
+            end do
+
+            !reset H
+            H=(0.0d0,0.0d0)
+            do i=1, Nsybl
+                do j=1, Npath
+                    H(i+j-1,i) = Cpath(j,1)
                 end do
             end do
 
@@ -166,7 +175,7 @@ program ch_est
             end do
             X = X / sqrt(Pow)
 
-            call CMultiply(H_est,X,Y,Nsybl+Npath-1,Nsybl,Nsybl,1) !pass H
+            call CMultiply(H,X,Y,Nsybl+Npath-1,Nsybl,Nsybl,1) !pass H
 
             do i=1, Nsybl+Npath-1
                 Noise(i,1) = cmplx(normal(),normal(),kind(0d0))
