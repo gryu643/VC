@@ -1,4 +1,4 @@
-program rake
+program ch_est
     use CALmod
     use ChEstmod
     implicit none
@@ -243,4 +243,4 @@ program rake
     !-- time measurement end
     call system_clock(t2, t_rate, t_max)
     print *, 'Elapsed time is...', (t2-t1)/dble(t_rate)
-end program
+end program ch_est
