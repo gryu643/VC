@@ -6,10 +6,10 @@ program rake
     integer t1, t2, t_rate, t_max, diff
 
     !-- declaration
-    integer,parameter :: SEbN0=0
+    integer,parameter :: SEbN0=1
     integer,parameter :: EEbN0=10
     integer,parameter :: Step=1
-    integer,parameter :: Nloop=10000
+    integer,parameter :: Nloop=1000
     integer,parameter :: Nsybl=1
     integer,parameter :: Npath=2 !Npath>=2
     integer,parameter :: M_tapN=4
@@ -26,12 +26,12 @@ program rake
     integer KEbN0
     complex(kind(0d0)) S(Nsybl)
     complex(kind(0d0)) X(2**M_tapN-1,Nsybl)
-    complex(kind(0d0)) Y(2**M_tapN-1+Npath-1,Nsybl)
-    complex(kind(0d0)) Y2(2**M_tapN-1+Npath-1,Nsybl)
-    complex(kind(0d0)) Y3(2**M_tapN-1+Npath-1,Nsybl)
+    complex(kind(0d0)) Y(2**M_tapN-1+(11-1),Nsybl)
+    complex(kind(0d0)) Y2(2**M_tapN-1+(11-1)+(2**M_tapN-1-1),Nsybl)
+    complex(kind(0d0)) Y3(2**M_tapN-1+(11-1)+(2**M_tapN-1-1)+(11-1),Nsybl)
     integer TdatI(Nsybl)
     double precision Pow
-    complex(kind(0d0)) Noise(2**M_tapN-1+Npath-1,1)
+    complex(kind(0d0)) Noise(2**M_tapN-1+(11-1),1)
     integer RdatI(Nsybl)
     double precision EbN0
     double precision BER
@@ -44,6 +44,8 @@ program rake
     integer M_cal
     integer TMP
     complex(kind(0d0)) R
+    complex(kind(0d0)) H_weight(11)
+    complex(kind(0d0)) H_tap(11)
 
     !-- initialize
     Ps=0.0d0
@@ -69,6 +71,10 @@ program rake
     Y=(0.0d0,0.0d0)
     Y2=(0.0d0,0.0d0)
     Y3=(0.0d0,0.0d0)
+    H_weight=(0.0d0,0.0d0)
+    H_weight(1)=(1.0d0,0.0d0)
+    H_weight(11)=(0.0d0,1.0d0)
+    H_tap=(0.0d0,0.0d0)
 
     !-- time measurement start
     call system_clock(t1)
@@ -112,9 +118,11 @@ program rake
 
         do loop=1, Nloop !Monte calro loop
             !set H
-            do i=1, Npath
-                Cpath(i,1) = cmplx(normal(),normal(),kind(0d0))/sqrt(2.0d0)*Ampd(i,1)
-            end do
+!            do i=1, Npath
+!                Cpath(i,1) = cmplx(normal(),normal(),kind(0d0))/sqrt(2.0d0)*Ampd(i,1)
+!            end do
+            Cpath(1,1)=cmplx(1.0d0,0.0d0,kind(0d0))
+            Cpath(2,1)=cmplx(0.0d0,1.0d0,kind(0d0))
 
             !set H
             do i=1, 2**M_tapN-1
@@ -146,34 +154,49 @@ program rake
             X = X / sqrt(Pow)
 
             !generate Noise
-            do i=1, 2**M_tapN-1+Npath-1
+            do i=1, 2**M_tapN-1+(11-1)
                 Noise(i,1) = cmplx(normal(),normal(),kind(0d0))
             end do
             !apply EbN0
             Noise = Noise * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)
 
             !pass H --------------------------------------
-            call CMultiply(H,X,Y,2**M_tapN-1+Npath-1,2**M_tapN-1,2**M_tapN-1,Nsybl)
+            Y=(0.0d0,0.0d0)
+            H_tap=(0.0d0,0.0d0)
+            do i=1, 2**M_tapN-1+(11-1)
+                !update despreading tap
+                do j=11, 2, -1
+                    H_tap(j) = H_tap(j-1)
+                end do
+                if(i>2**M_tapN-1) H_tap(1)=(0.0d0,0.0d0)
+                if(i<=2**M_tapN-1) H_tap(1) = X(i,1)
+
+                !calculate output
+                do j=1, 11
+                    Y(i,1) = Y(i,1) + H_tap(j)*H_weight(j)
+                end do
+            end do
             !---------------------------------------------
 
             !calculate Ps and Pn
-            do i=1, 2**M_tapN-1+Npath-1
+            do i=1, 2**M_tapN-1+(11-1)
                 Ps = Ps + abs(Y(i,1))**2.0d0
                 Pn = Pn + abs(Noise(i,1))**2.0d0
             end do
 
             !add noise
-            call CAdd(Y,Noise,Y,2**M_tapN-1+Npath-1,1,2**M_tapN-1+Npath-1,1)
+            call CAdd(Y,Noise,Y,2**M_tapN-1+(11-1),1,2**M_tapN-1+(11-1),1)
 
             !despreading ----------------------------------
             Y2=(0.0d0,0.0d0)
             DSS_tap=(0.0d0,0.0d0)
-            do i=1, 2**M_tapN-1+Npath-1
+            do i=1, 2**M_tapN-1+(11-1)+(2**M_tapN-1-1)
                 !update despreading tap
                 do j=2**M_tapN-1, 2, -1
                     DSS_tap(j) = DSS_tap(j-1)
                 end do
-                DSS_tap(1) = Y(i,1)
+                if(i>2**M_tapN-1+(11-1)) DSS_tap(1)=(0.0d0,0.0d0)
+                if(i<=2**M_tapN-1+(11-1)) DSS_tap(1) = Y(i,1)
 
                 !calculate output
                 do j=1, 2**M_tapN-1
@@ -184,27 +207,29 @@ program rake
 
             !rake reception-----------------------------------------
             Y3=(0.0d0,0.0d0)
-            Rake_tap=(0.0d0,0.0d0)
-            do i=1, 2**M_tapN-1+Npath-1
+            H_tap=(0.0d0,0.0d0)
+            do i=1, 2**M_tapN-1+(11-1)+(2**M_tapN-1-1)+(11-1)
                 !update rake tap
-                do j=Npath, 2, -1
-                    Rake_tap(j) = Rake_tap(j-1)
+                do j=11, 2, -1
+                    H_tap(j) = H_tap(j-1)
                 end do
-                Rake_tap(1) = Y2(i,1)
+                if(i>2**M_tapN-1+(11-1)+(2**M_tapN-1-1)) H_tap(1)=(0.0d0,0.0d0)
+                if(i<=2**M_tapN-1+(11-1)+(2**M_tapN-1-1)) H_tap(1) = Y2(i,1)
 
                 !calculate output
-                do j=1, Npath
-                    Y3(i,1) = Y3(i,1) + Rake_tap(j)*conjg(Cpath(Npath+1-j,1))
+                do j=1, 11
+                    Y3(i,1) = Y3(i,1) + H_tap(j)*conjg(H_weight(12-j))
                 end do
             end do
             !----------------------------------------------
 
             !mabiki? --------------------------------------
-            do i=1, 2**M_tapN-1+Npath-1
+            do i=1, 2**M_tapN-1+(11-1)+(2**M_tapN-1-1)
                 !print *, i, Y3(i,1)
-                !write(2,*) i, ',', real(Y3(i,1))
+                write(2,*) i, ',', real(Y2(i,1))
+                !print *, Y3(i,1)
             end do
-            R = Y3(2**M_tapN-1+Npath-1,1)
+            R = Y3(2**M_tapN-1+(11-1)+11,1)
             !----------------------------------------------
 
             RdatI = 0
