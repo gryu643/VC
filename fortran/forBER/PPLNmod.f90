@@ -1,18 +1,20 @@
-module PPLmod
+module PPLNmod
 	use CALmod
 	implicit none
 contains
-	subroutine PPL(H,HE,X,Eig,Nsybl,Npath,PPLloop)
+	subroutine PPLN(H,HE,X,Eig,Nsybl,Npath,EbN0,PPLloop,Noise_)
 		implicit none
 
-		!argument
+		!-- argument
+        logical Noise_
 		integer Nsybl,Npath,PPLloop
 		complex(kind(0d0)) X(Nsybl,Nsybl)
 		complex(kind(0d0)) H(Nsybl+Npath-1,Nsybl)
 		complex(kind(0d0)) HE(Nsybl+2*(Npath-1),Nsybl+Npath-1)
 		double precision Eig(1,Nsybl)
+        integer EbN0
 
-		!declaration
+		!-- declaration
 		integer i,j,k,l,m
 		complex(kind(0d0)) Z(Nsybl,Nsybl)
 		complex(kind(0d0)) Xpre(Nsybl,Nsybl)
@@ -45,8 +47,12 @@ contains
 		double precision D1_ABS
 		complex(kind(0d0)) R1(Nsybl)
 		complex(kind(0d0)) R2(Nsybl)
+        complex(kind(0d0)) TNoise(Nsybl+2*(Npath-1),Nsybl)
+        complex(kind(0d0)) RNoise(Nsybl+Npath-1,Nsybl)
+        double precision Psig
+        double precision Pwgn
 
-		!initialize
+		!-- initialize
 		Z=(0.0,0.0)
 		Xpre=(0.0,0.0)
 		HH=(0.0,0.0)
@@ -77,7 +83,10 @@ contains
 		D_ABS=0.0
 		D1_ABS=0.0
 		Eig=0.0d0
+        TNoise=(0.0d0,0.0d0)
+        RNoise=(0.0d0,0.0d0)
 
+        !-- implementation
 		!行列Hの随伴行列HHの設定
 		call CAdjoint(H,HH,Nsybl+Npath-1,Nsybl)
 
@@ -91,11 +100,42 @@ contains
 			!伝搬路H通過
 			call CMultiply(H,X,HX,Nsybl+Npath-1,Nsybl,Nsybl,Nsybl)
 
+            !add Noise ------------------------------------
+            if(Noise_) then
+                do j=1, Nsybl
+                    do i=1, Nsybl+Npath-1
+                        RNoise(i,j) = cmplx(normal(),normal(),kind(0d0))
+                    end do
+                end do
+                RNoise = RNoise / sqrt(2.0d0) / sqrt(dble(Nsybl)) * sqrt(1.0d0/(10.0d0**(EbN0/10.0d0))/2.0d0)
+                call CAdd(HX,RNoise,HX,Nsybl+Npath-1,Nsybl,Nsybl+Npath-1,Nsybl)
+            endif
+            !----------------------------------------------
+
+            Psig=0.0d0
+            Pwgn=0.0d0
+            do i=1, Nsybl+Npath-1
+                Psig = Psig + abs(HX(i,1))**2
+                Pwgn = Pwgn + abs(RNoise(i,1))**2
+            end do
+
 			!処理I
 			call ProcI(HX,HXarI,Nsybl+Npath-1,Nsybl)
 
 			!HE通過
 			call CMultiply(HE,HXarI,HHHXbrJ,Nsybl+2*(Npath-1),Nsybl+Npath-1,Nsybl+Npath-1,Nsybl)
+
+            !add Noise ------------------------------------
+            if(Noise_) then
+                do j=1, Nsybl
+                    do i=1, Nsybl+2*(Npath-1)
+                        TNoise(i,j) = cmplx(normal(),normal(),kind(0d0))
+                    end do
+                end do
+                TNoise = TNoise / sqrt(2.0d0) / sqrt(dble(Nsybl)) * sqrt(1.0d0/(10.0d0**(EbN0/10.0d0))/2.0d0)
+                call CAdd(HHHXbrJ,TNoise,HHHXbrJ,Nsybl+2*(Npath-1),Nsybl,Nsybl+2*(Npath-1),Nsybl)
+            endif
+            !----------------------------------------------
 
 			!処理J
 			call ProcJ(HHHXbrJ,HHHX,Nsybl+2*(Npath-1),Nsybl,Npath)
@@ -191,4 +231,4 @@ contains
 			Eig(1,i) = real(LAMBDA(i,1))
 		end do
 	end subroutine
-end module PPLmod
+end module PPLNmod

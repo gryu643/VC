@@ -7,8 +7,8 @@ OBJS = *.o
 MOD = *.mod
 LAPACK = -llapack -lblas
 
-.PHONY: usePPLmod
-usePPLmod: CALmod.o PPLCUTOFFmod.o usePPLmod.o
+.PHONY: usePPL
+usePPL: CALmod.o ChEstmod.o PPLNmod.o PPLmod.o usePPL.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: avoth_ber
@@ -89,6 +89,18 @@ qpsk_ideal: qpsk_ideal.o
 
 .PHONY: qpsk_fading
 qpsk_fading: CALmod.o qpsk_fading.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+.PHONY: rake
+rake: CALmod.o rake.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+.PHONY: est
+est: CALmod.o ChEstmod.o ch_est.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+.PHONY: est_err
+est_err: CALmod.o ChEstmod.o ch_est_err.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: qpsk_ideal_fading

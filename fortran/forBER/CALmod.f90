@@ -443,6 +443,49 @@ contains
         end subroutine sortdp2
     end subroutine diag
 
+    function orthogonal(X,Nsybl)
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) X(Nsybl,Nsybl)
+
+        !-- declaration
+        integer i,j,k
+        complex(kind(0d0)) NAISEKI(1,1)
+        complex(kind(0d0)) V1(Nsybl)
+        complex(kind(0d0)) V2(Nsybl)
+        double precision NAISEKI_TMP
+        double precision orthogonal
+
+        !-- initialization
+        NAISEKI=(0.0d0,0.0d0)
+        V1=(0.0d0,0.0d0)
+        V2=(0.0d0,0.0d0)
+        NAISEKI_TMP=0.0d0
+        orthogonal=0.0d0
+
+        !-- implementation
+			!average othogonality of eiven vector
+			NAISEKI(1,1) = cmplx(0.0,0.0,kind(0d0))
+			do i=1, Nsybl-1
+				!固有ベクトル群を１列のベクトルに格納
+				do k=1, Nsybl
+					V1(k) = X(k,i)
+				end do
+				do j=i+1, Nsybl
+					!内積を取る固有ベクトルを格納
+					do k=1, Nsybl
+						V2(k) = X(k,j)
+					end do
+					NAISEKI(1,1) = NAISEKI(1,1) + abs(dot_product(V1,V2))
+				end do
+			end do
+
+			call CAbs(NAISEKI,NAISEKI_TMP,1,1)
+            orthogonal = NAISEKI_TMP
+    end function orthogonal
+
     subroutine decomp_zheevd(Nsybl,V,Eig)
         implicit none
 
