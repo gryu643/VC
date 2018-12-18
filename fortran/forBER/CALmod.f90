@@ -486,6 +486,148 @@ contains
             orthogonal = NAISEKI_TMP
     end function orthogonal
 
+    subroutine PPLEV(X,HHHX,LAMBDA,Nsybl)
+        !----------------------------------------------------------------!
+        !calculate eigenvalue(subroutine used in PPL)
+        !----------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) X(Nsybl,Nsybl)
+        complex(kind(0d0)) HHHX(Nsybl,Nsybl)
+        complex(kind(0d0)) LAMBDA(Nsybl,1)
+
+        !-- declaration
+        integer i,j
+        complex(kind(0d0)) D_X(Nsybl,1)
+        complex(kind(0d0)) D_HHHX(Nsybl,1)
+        double precision D_XAbs
+        double precision D_HHHXAbs
+        
+        !-- initialization
+        D_X=(0.0d0,0.0d0)
+        D_HHHX=(0.0d0,0.0d0)
+        D_XAbs=0.0d0
+        D_HHHXAbs=0.0d0
+
+        !-- implementation
+        do i=1, Nsybl
+            do j=1,Nsybl
+                D_X(j,1) = X(j,i)
+                D_HHHX(j,1) = HHHX(j,i)
+            end do
+
+            call CAbs(D_X,D_XAbs,Nsybl,1)
+            call CAbs(D_HHHX,D_HHHXAbs,Nsybl,1)
+
+            LAMBDA(i,1) = cmplx(D_HHHXAbs/D_XAbs,0.0d0, kind(0d0))
+        end do
+    end subroutine PPLEV
+
+    subroutine PPLSubPart(X,LAMBDA,SUB_PART,Nsybl)
+        !-----------------------------------------------------------------------!
+        !calculate Subpart(subroutine used in PPL)
+        !-----------------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) X(Nsybl,Nsybl)
+        complex(kind(0d0)) SUB_PART(Nsybl,Nsybl)
+        complex(kind(0d0)) LAMBDA(Nsybl,1)
+
+        !-- declaration
+        integer i,k
+		complex(kind(0d0)) Xn(Nsybl,1)
+		complex(kind(0d0)) U(Nsybl,1)
+		complex(kind(0d0)) UH(1,Nsybl)
+		complex(kind(0d0)) LUUH(Nsybl,Nsybl)
+		complex(kind(0d0)) LUUH_SET(Nsybl,Nsybl)
+		complex(kind(0d0)) LU(Nsybl,1)
+		complex(kind(0d0)) LUUHXn(Nsybl,1)
+
+        !-- initialization
+		Xn=(0.0,0.0)
+		U=(0.0,0.0)
+		UH=(0.0,0.0)
+		LUUH=(0.0,0.0)
+		LUUH_SET=(0.0,0.0)
+		LU=(0.0,0.0)
+		LUUHXn=(0.0,0.0)
+
+        !-- implementation
+        LUUH_SET=cmplx(0.0d0,0.0d0,kind(0d0))
+        do i=2, Nsybl
+            !収束する固有ベクトル(Nsybl,1)
+            do k=1, Nsybl
+                Xn(k,1) = X(k,i)
+            end do
+
+            !減算する固有ベクトル(Nsybl,1)
+            do k=1, Nsybl
+                U(k,1) = X(k,i-1)
+            end do
+
+            !固有ベクトルの随伴行列(1,Nsybl)
+            call CAdjoint(U,UH,Nsybl,1)
+
+            !λ*U(Nsybl,1)
+            do k=1, Nsybl
+                LU(k,1) = LAMBDA(i-1,1)*U(k,1)
+            end do
+
+            !LU*UH(Nsybl,Nsybl)
+            call CMultiply(LU,UH,LUUH,Nsybl,1,1,Nsybl)
+
+            !λUUHの集合を格納
+            call CAdd(LUUH_SET,LUUH,LUUH_SET,Nsybl,Nsybl,Nsybl,Nsybl)
+
+            !LUUH_SET*Xn(Nsybl,1) iの次ループで足し合わせる
+            call CMultiply(LUUH_SET,Xn,LUUHXn,Nsybl,Nsybl,Nsybl,1)
+
+            !減算部の格納
+            do k=1, Nsybl
+                SUB_PART(k,i) = LUUHXn(k,1)
+            end do
+        end do
+    end subroutine PPLSubPart
+
+    subroutine PPLNormalize(arSUB,X,Nsybl)
+        !-----------------------------------------------------------!
+        !Normalize Eigen vector(subroutine used in PPL)
+        !-----------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) arSUB(Nsybl,Nsybl)
+        complex(kind(0d0)) X(Nsybl,Nsybl)
+
+        !-- declaration
+        integer i,j
+        complex(kind(0d0)) NORM(Nsybl,1)
+
+        !-- initialization
+        NORM=(0.0d0,0.0d0)
+
+        !-- implementation
+        do i=1, Nsybl
+            !固有ベクトル群を1列のベクトルに格納
+            do j=1, Nsybl
+                NORM(j,1) = arSUB(j,i)
+            end do
+
+            !正規化
+            call CNormalize(NORM,Nsybl,1)
+
+            !正規化したベクトルをXに格納
+            do j=1, Nsybl
+                X(j,i) = NORM(j,1)
+            end do
+        end do
+    end subroutine PPLNormalize
+
     subroutine decomp_zheevd(Nsybl,V,Eig)
         implicit none
 
