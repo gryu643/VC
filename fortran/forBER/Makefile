@@ -32,7 +32,7 @@ cutoff: CALmod.o PPLCutoffmod.o VC_cutoff.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: comb
-comb: CALmod.o PCONmod2.o PPLCombmod.o VC_comb.o
+comb: CALmod.o PCONmod2.o CombSubmod.o PPLCombmod.o VC_comb.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .PHONY: vc_ideal
