@@ -1,5 +1,7 @@
 module CALmod
     implicit none
+
+    double precision :: pi=dacos(dble(-1))
 contains
     subroutine CMultiply(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
         !--------------------------------------------------------------------------!
@@ -702,4 +704,23 @@ contains
        END IF
 
     end subroutine InverseMat
+
+    function euler(theta)
+        !--------------------------------------------------------------------------!
+        !return euler
+        !--------------------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        double precision theta
+
+        !-- decralation
+        complex(kind(0d0)) euler
+
+        !-- initialization
+        euler=(0.0d0,0.0d0)
+
+        !-- implementation
+        euler = cmplx(dcos(theta),dsin(theta),kind(0d0))
+    end function euler
 end module CALmod
