@@ -3,7 +3,7 @@
 CC = gfortran
 PROGRAM = usePPL avoth_ber tsym vc vcq cutoff comb vc_ideal vc_ideal2 vc_ideal_formula \
 each_ch fixedH pcon pcon2 vc_nonfading normal pdf pdf_ideal qpsk qpsk_ideal qpsk_fading \
-rake est est_err qpsk_ideal_fading MRdiv
+rake est est_err qpsk_ideal_fading MRdiv ofdm
 CFLAGS = -O3 -mtune=native -march=native -mfpmath=both
 OBJS = *.o
 MOD = *.mod
@@ -86,6 +86,9 @@ qpsk_ideal_fading: CALmod.o qpsk_ideal_fading.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 MRdiv: CALmod.o qpsk_ideal_MRdiv.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+ofdm: CALmod.o OFDMmod.o ofdm.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .SUFFIXES: .f90 .o
