@@ -46,7 +46,7 @@ contains
         end do
     end subroutine
 
-    subroutine QPSK(S,Nsybl)
+    subroutine QPSK(S,Smod,Nsybl)
         !--------------------------------------------------------------------------!
         !do QPSK modulation to S set by "SetQPSKData" subroutine
         !--------------------------------------------------------------------------!
@@ -55,19 +55,21 @@ contains
         !-- argument
         integer Nsybl
         complex(kind(0d0)) S(Nsybl)
+        complex(kind(0d0)) Smod(Nsybl)
 
         !-- decralation
         integer i
 
         !-- initialization
+        Smod=(0.0d0,0.0d0)
 
         !-- implementation
         do i=1, Nsybl
-            S(i) = cmplx(real(S(i))*2.0d0-1.0d0,aimag(S(i))*2.0d0-1.0d0,kind(0d0))
+            Smod(i) = cmplx(real(S(i))*2.0d0-1.0d0,aimag(S(i))*2.0d0-1.0d0,kind(0d0))
         end do
     end subroutine
 
-    subroutine BPSK(S,Nsybl)
+    subroutine BPSK(S,Smod,Nsybl)
         !--------------------------------------------------------------------------!
         !do BPSK modulation to S set by "SetBPSKData" subroutine
         !--------------------------------------------------------------------------!
@@ -76,15 +78,17 @@ contains
         !-- argument
         integer Nsybl
         complex(kind(0d0)) S(Nsybl)
+        complex(kind(0d0)) Smod(Nsybl)
 
         !-- decralation
         integer i
 
         !-- initialization
+        Smod=(0.0d0,0.0d0)
 
         !-- implementation
         do i=1, Nsybl
-            S(i) = cmplx(real(S(i))*2.0d0-1.0d0,0.0d0,kind(0d0))
+            Smod(i) = cmplx(real(S(i))*2.0d0-1.0d0,0.0d0,kind(0d0))
         end do
     end subroutine
 
@@ -130,7 +134,7 @@ contains
         end do
     end subroutine MseqGen
 
-    subroutine ConvStoP(Mseq,S,MS,Mseq_L,Nsybl)
+    subroutine AddMseq(Mseq,S,MS,Mseq_L,Nsybl)
         !--------------------------------------------------------------------------!
         !transform serial to parallel
         !--------------------------------------------------------------------------!
@@ -154,7 +158,7 @@ contains
             end do
             MS(i,Mseq_L+1) = S(i)
         end do
-    end subroutine ConvStoP
+    end subroutine AddMseq
 
     subroutine OFDM_Tx(MS,Tx,Nsybl,Mseq_L,GI_L)
         !--------------------------------------------------------------------------!
@@ -195,4 +199,95 @@ contains
             end do
         end do
     end subroutine OFDM_Tx
+
+    subroutine ConvPtoS(Tx,Tx2,Nsybl,Mseq_L,GI_L)
+        !--------------------------------------------------------------------------!
+        !Convet parallel to serial
+        !--------------------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl,Mseq_L,GI_L
+        complex(kind(0d0)) Tx(Mseq_L+1,GI_L+Nsybl)
+        complex(kind(0d0)) Tx2((Mseq_L+1)*(GI_L+Nsybl))
+
+        !-- decralation
+        integer i,j
+
+        !-- initialization
+
+        !-- implementation
+        do i=1, Mseq_L+1
+            do j=1, GI_L+Nsybl
+                Tx2((GI_L+Nsybl)*(i-1)+j) = Tx(i,j)
+            end do
+        end do
+    end subroutine ConvPtoS
+
+    subroutine Ch(Tx2,H_weight,Rx,Nsybl,Npath,Mseq_L,GI_L)
+        !--------------------------------------------------------------------------!
+        !pass fading channel
+        !--------------------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl,Npath,Mseq_L,GI_L
+        complex(kind(0d0)) H_weight(Npath)
+        complex(kind(0d0)) Rx((Mseq_L+1)*(GI_L+Nsybl)+Npath-1)
+        complex(kind(0d0)) Tx2((Mseq_L+1)*(GI_L+Nsybl))
+
+        !-- decralation
+        integer i,j
+        complex(kind(0d0)) H_tap(Npath)
+        integer Tx2_L
+
+        !-- initialization
+        H_tap=(0.0d0,0.0d0)
+        Rx=(0.0d0,0.0d0)
+        Tx2_L=(Mseq_L+1)*(GI_L+Nsybl)
+
+        !-- implementation
+        H_tap=(0.0d0,0.0d0)
+        do i=1, Tx2_L+Npath-1
+            !update the tap of transversal fileter
+            do j=Npath, 2, -1
+                H_tap(j) = H_tap(j-1)
+            end do
+            if(i<=Tx2_L) H_tap(1)=Tx2(i)
+            if(i>Tx2_L) H_tap(1)=cmplx(0.0d0,0.0d0,kind(0d0))
+
+            !calculate output
+            do j=1, Npath
+                Rx(i) = Rx(i) + H_tap(j)*H_weight(j)
+            end do
+        end do
+    end subroutine Ch
+
+    subroutine MakeNoise(Noise,Nsybl,Npath,Mseq_L,GI_L,KEbN0)
+        !--------------------------------------------------------------------------!
+        !Convet parallel to serial
+        !--------------------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl,Npath,Mseq_L,GI_L,KEbN0
+        complex(kind(0d0)) Noise((Mseq_L+1)*(GI_L+Nsybl)+Npath-1)
+
+        !-- decralation
+        integer i
+        integer Rx_L
+
+        !-- initialization
+        Noise=(0.0d0,0.0d0)
+        Rx_L=(Mseq_L+1)*(GI_L+Nsybl)+Npath-1
+
+        !-- implementation
+        !make noise
+        do i=1, Rx_L
+            Noise(i) = cmplx(normal(),normal(),kind(0d0))
+        end do
+
+        !set noise by KEbN0
+        Noise = Noise / sqrt(2.0d0) * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)
+    end subroutine MakeNoise
 end module OFDMmod
