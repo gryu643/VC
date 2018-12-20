@@ -12,23 +12,30 @@ program ofdm
 
     integer i,j
     complex(kind(0d0)) S(Nsybl)
+    complex(kind(0d0)) SRx(Nsybl)
     complex(kind(0d0)) Smod(Nsybl)
+    complex(kind(0d0)) SmodRx(Nsybl)
     complex(kind(0d0)) Sp(Nsybl,1)
     integer M_weight(M_tapN)
     integer M_tap(M_tapN)
     integer Mseq(Mseq_L)
+    complex(kind(0d0)) MseqRx(Nsybl,Mseq_L)
     complex(kind(0d0)) MS(Nsybl,Mseq_L+1)
-    complex(kind(0d0)) Tx(Mseq_L+1,GI_L+Nsybl)
-    complex(kind(0d0)) Tx2((Mseq_L+1)*(GI_L+Nsybl))
-    complex(kind(0d0)) Rx((Mseq_L+1)*(GI_L+Nsybl)+Npath-1)
+    complex(kind(0d0)) Tx(Mseq_L+1,GI_L+Nsybl) !Tx(parallel)
+    complex(kind(0d0)) Tx2((Mseq_L+1)*(GI_L+Nsybl)) !Tx(serial)
+    complex(kind(0d0)) Rx((Mseq_L+1)*(GI_L+Nsybl)+Npath-1) !Rx(serial)
+    complex(kind(0d0)) Rx2(Mseq_L+1,GI_L+Nsybl) !Rx(parallel)
     double precision Ampd(Npath)
     complex(kind(0d0)) H_weight(Npath)
     integer KEbN0
     complex(kind(0d0)) Noise((Mseq_L+1)*(GI_L+Nsybl)+Npath-1)
+    complex(kind(0d0)) FFTout(Nsybl,Mseq_L+1) !FFT output
+    complex(kind(0d0)) Chseq(Nsybl)
 
     !-- initialization --------------------------
     S=(0.0d0,0.0d0)
     Smod=(0.0d0,0.0d0)
+    SmodRx=(0.0d0,0.0d0)
     M_tap=(/1,0,0,0/) !set M-sequence tap
     M_weight=(/1,0,0,1/) !set M-sequence weight
     Mseq=0
@@ -37,6 +44,9 @@ program ofdm
     Ampd=0.0d0
     H_weight=(0.0d0,0.0d0)
     Noise=(0.0d0,0.0d0)
+    FFTout=(0.0d0,0.0d0)
+    MseqRx=(0.0d0,0.0d0)
+    Chseq=(0.0d0,0.0d0)
 
     !-- implementation --------------------------
     !M-sequence generate-------------------------
@@ -86,41 +96,34 @@ program ofdm
     !--------------------------------------------
 
     !serial to parallel -------------------------
-
+    call ConvStoP(Rx,Rx2,Nsybl,Npath,Mseq_L,GI_L)
     !--------------------------------------------
 
-    !remove GI ----------------------------------
-
-
-    !--------------------------------------------
-
-    !FFT ----------------------------------------
-
-
+    !demultiplexing(FFT and GI removal) ---------
+    call OFDM_Rx(Rx2,FFTout,Nsybl,Npath,Mseq_L,GI_L)
     !--------------------------------------------
 
     !remove channel estimate sequence -----------
-
-
+    call RemoveMseq(FFTout,MseqRx,SmodRx,Nsybl,Mseq_L)
     !--------------------------------------------
 
     !channel estimate ---------------------------
-
-
+    call ChEstimate(MseqRx,Mseq,Chseq,Nsybl,Mseq_L)
     !--------------------------------------------
 
     !phase compensation -------------------------
-
-
-    !--------------------------------------------
-
-    !parallel to serial -------------------------
-
-
+    call PhaseComp(Chseq,SmodRx,Nsybl)
     !--------------------------------------------
 
     !PSK demodulation ---------------------------
+    call QPSKDem(SmodRx,SRx,Nsybl)
+    !--------------------------------------------
 
-
+    !result output ------------------------------
+    do i=1, Nsybl
+        print *, i, real(S(i)), real(SRx(i))
+        print *, i, aimag(S(i)), aimag(SRx(i))
+        print *
+    end do
     !--------------------------------------------
 end program ofdm

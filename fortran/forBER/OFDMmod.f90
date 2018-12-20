@@ -136,7 +136,7 @@ contains
 
     subroutine AddMseq(Mseq,S,MS,Mseq_L,Nsybl)
         !--------------------------------------------------------------------------!
-        !transform serial to parallel
+        !transform serial to parallel and add M-sequence
         !--------------------------------------------------------------------------!
         implicit none
 
@@ -159,6 +159,39 @@ contains
             MS(i,Mseq_L+1) = S(i)
         end do
     end subroutine AddMseq
+
+    subroutine RemoveMseq(FFTout,MseqRx,SmodRx,Nsybl,Mseq_L)
+        !--------------------------------------------------------------------------!
+        !separate M-sequence and Symbol modulated
+        !--------------------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Mseq_L,Nsybl
+        complex(kind(0d0)) FFTout(Nsybl,Mseq_L+1)
+        complex(kind(0d0)) MseqRx(Nsybl,Mseq_L)
+        complex(kind(0d0)) SmodRx(Nsybl)
+
+        !-- decralation
+        integer i,j
+
+        !-- initialization
+        MseqRx=(0.0d0,0.0d0)
+        SmodRx=(0.0d0,0.0d0)
+
+        !-- implementation
+        !store channel estimate sequence
+        do j=1, Nsybl
+            do i=1, Mseq_L
+                MseqRx(j,i) = FFTout(j,i)
+            end do
+        end do
+
+        !store Smod
+        do i=1, Nsybl
+            SmodRx(i) = FFTout(i,Mseq_L+1)
+        end do
+    end subroutine RemoveMseq
 
     subroutine OFDM_Tx(MS,Tx,Nsybl,Mseq_L,GI_L)
         !--------------------------------------------------------------------------!
@@ -200,6 +233,43 @@ contains
         end do
     end subroutine OFDM_Tx
 
+    subroutine OFDM_Rx(Rx2,FFTout,Nsybl,Npath,Mseq_L,GI_L)
+        !--------------------------------------------------------------------------!
+        !fast fourier transform and GI removal
+        !--------------------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl,Npath,Mseq_L,GI_L
+        complex(kind(0d0)) Rx2(Mseq_L+1,GI_L+Nsybl)
+        complex(kind(0d0)) FFTout(Nsybl,Mseq_L+1)
+
+        !-- decralation
+        integer i,j,k
+        complex(kind(0d0)) Rx2rmGI(Mseq_L+1,Nsybl)
+
+        !-- initialization
+        Rx2rmGI=(0.0d0,0.0d0)
+        FFTout=(0.0d0,0.0d0)
+
+        !-- implementation
+        !remove GI
+        do j=1, Mseq_L+1
+            do i=1, Nsybl
+                Rx2rmGI(j,i) = Rx2(j,GI_L+i)
+            end do
+        end do
+
+        !FFT
+        do j=1, Mseq_L+1
+            do i=1, Nsybl
+                do k=1, Nsybl
+                    FFTout(i,j) = FFTout(i,j) + Rx2rmGI(j,k) * euler(-2.0d0*pi*(dble(i)/dble(Nsybl))*k) / dble(Nsybl)
+                end do
+            end do
+        end do
+    end subroutine OFDM_Rx
+
     subroutine ConvPtoS(Tx,Tx2,Nsybl,Mseq_L,GI_L)
         !--------------------------------------------------------------------------!
         !Convet parallel to serial
@@ -223,6 +293,31 @@ contains
             end do
         end do
     end subroutine ConvPtoS
+
+    subroutine ConvStoP(Rx,Rx2,Nsybl,Npath,Mseq_L,GI_L)
+        !--------------------------------------------------------------------------!
+        !Convet serial to parallel
+        !--------------------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl,Npath,Mseq_L,GI_L
+        complex(kind(0d0)) Rx((Mseq_L+1)*(GI_L+Nsybl)+Npath-1)
+        complex(kind(0d0)) Rx2(Mseq_L+1,GI_L+Nsybl)
+
+        !-- decralation
+        integer i,j
+
+        !-- initialization
+        Rx2=(0.0d0,0.0d0)
+
+        !-- implementation
+        do i=1, Mseq_L+1
+            do j=1, GI_L+Nsybl
+                Rx2(i,j) = Rx((GI_L+Nsybl)*(i-1)+j)
+            end do
+        end do
+    end subroutine ConvStoP
 
     subroutine Ch(Tx2,H_weight,Rx,Nsybl,Npath,Mseq_L,GI_L)
         !--------------------------------------------------------------------------!
@@ -290,4 +385,92 @@ contains
         !set noise by KEbN0
         Noise = Noise / sqrt(2.0d0) * sqrt(1.0d0/(10.0d0**(KEbN0/10.0d0))/2.0d0)
     end subroutine MakeNoise
+
+    subroutine ChEstimate(MseqRx,Mseq,Chseq,Nsybl,Mseq_L)
+        !--------------------------------------------------------------------------!
+        !estimate channel information
+        !--------------------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl,Mseq_L
+        complex(kind(0d0)) MseqRx(Nsybl,Mseq_L)
+        integer Mseq(Mseq_L)
+        complex(kind(0d0)) Chseq(Nsybl)
+
+        !-- decralation
+        integer i,j
+
+        !-- initialization
+
+        !-- implementation
+        do j=1, Nsybl
+            do i=1, Mseq_L
+                Chseq(j) = Chseq(j) + MseqRx(j,i)*dble(Mseq(i))/dble(Mseq_L)
+            end do
+        end do
+    end subroutine ChEstimate
+
+    subroutine PhaseComp(Chseq,SmodRx,Nsybl)
+        !--------------------------------------------------------------------------!
+        !compensate the deviation of phase
+        !--------------------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) Chseq(Nsybl)
+        complex(kind(0d0)) SmodRx(Nsybl)
+
+        !-- decralation
+        integer i
+
+        !-- initialization
+
+        !-- implementation
+        do i=1, Nsybl
+            SmodRx(i) = conjg(Chseq(i))*SmodRx(i)
+        end do
+    end subroutine PhaseComp
+
+    subroutine QPSKDem(SmodRx,SRx,Nsybl)
+        !--------------------------------------------------------------------------!
+        !QPSK demodulation
+        !--------------------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) SmodRx(Nsybl)
+        complex(kind(0d0)) SRx(Nsybl)
+
+        !-- decralation
+        integer i
+        double precision Re,Im
+
+        !-- initialization
+        SRx=(0.0d0,0.0d0)
+
+        !-- implementation
+        do i=1, Nsybl
+            Re=0.0d0
+            Im=0.0d0
+            !real part judge
+            if(real(SmodRx(i))>0.0d0) then
+                Re = 1.0d0
+            elseif(real(SmodRx(i))>0.0d0) then
+                Re = 0.0d0
+            endif
+            
+            !imaginaly part judge
+            if(aimag(SmodRx(i))>0.0d0) then
+                Im = 1.0d0
+            elseif(aimag(SmodRx(i))>0.0d0) then
+                Im = 0.0d0
+            endif
+
+            !store Re and Im
+            SRx(i) = cmplx(Re,Im,kind(0d0))
+        end do
+    end subroutine QPSKDem
 end module OFDMmod
