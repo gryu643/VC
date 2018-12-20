@@ -217,7 +217,7 @@ contains
         do j=1, Mseq_L+1
             do i=1, Nsybl
                 do k=1, Nsybl
-                    MS_IFT(j,i) = MS_IFT(j,i) + MS(k,j) * euler(2.0d0*pi*(dble(k)/dble(Nsybl))*i)
+                    MS_IFT(j,i) = MS_IFT(j,i) + MS(k,j) * euler(2.0d0*pi*(dble(k)/dble(Nsybl))*dble(i-1))
                 end do
             end do
         end do
@@ -517,4 +517,27 @@ contains
         cal_ber = BER
 
     end function cal_ber
+
+    subroutine PowerAdjust(Tx2,Nsybl,Mseq_L,GI_L)
+        !--------------------------------------------------------------------------!
+        !adjust power(power=1)
+        !--------------------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl,Mseq_L,GI_L,i
+        complex(kind(0d0)) Tx2((Mseq_L+1)*(GI_L+Nsybl))
+
+        !-- decralation
+        double precision Pow
+
+        !-- initialization
+        Pow=0.0d0
+
+        !-- implementation
+        do i=1, (Mseq_L+1)*(GI_L+Nsybl)
+            Pow = Pow + abs(Tx2(i))**2 / dble((Mseq_L+1)*(GI_L+Nsybl))
+        end do
+        Tx2 = Tx2 / sqrt(Pow)
+    end subroutine PowerAdjust
 end module OFDMmod

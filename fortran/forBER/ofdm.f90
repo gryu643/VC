@@ -9,9 +9,9 @@ program ofdm
     integer,parameter :: M_tapN=4
     integer,parameter :: GI_L=8
     integer,parameter :: Mseq_L=2**M_tapN-1
-    integer,parameter :: Nloop=100
-    integer,parameter :: SEbN0=40
-    integer,parameter :: EEbN0=40
+    integer,parameter :: Nloop=1
+    integer,parameter :: SEbN0=20
+    integer,parameter :: EEbN0=20
     integer,parameter :: Step=10
 
     integer i
@@ -57,6 +57,10 @@ program ofdm
     BER=0.0d0
 
     !-- implementation --------------------------
+    !file open ----------------------------------
+    open (1,file='ofdm.csv',status='replace')
+    !--------------------------------------------
+
     !M-sequence generate-------------------------
     call MseqGen(M_tap,M_weight,M_tapN,Mseq)
     !--------------------------------------------
@@ -96,6 +100,10 @@ program ofdm
 
             !parallel to serial -------------------------
             call ConvPtoS(Tx,Tx2,Nsybl,Mseq_L,GI_L)
+            !--------------------------------------------
+
+            !power=1 ------------------------------------
+            call PowerAdjust(Tx2,Nsybl,Mseq_L,GI_L)
             !--------------------------------------------
 
             !pass channel -------------------------------
@@ -141,4 +149,8 @@ program ofdm
         print *, BER
         !--------------------------------------------
     end do
+
+    !file close ---------------------------------
+    close(1)
+    !--------------------------------------------
 end program ofdm
