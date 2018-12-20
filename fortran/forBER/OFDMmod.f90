@@ -473,4 +473,48 @@ contains
             SRx(i) = cmplx(Re,Im,kind(0d0))
         end do
     end subroutine QPSKDem
+
+    function cal_ber(S,SRx,Nsybl)
+        !--------------------------------------------------------------------------!
+        !return ber
+        !--------------------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) S(Nsybl)
+        complex(kind(0d0)) SRx(Nsybl)
+
+        !-- decralation
+        integer i,Correct,Incorrect
+        double precision BER
+        double precision cal_ber
+
+        !-- initialization
+        BER=0.0d0
+        cal_ber=0.0d0
+        Correct=0
+        Incorrect=0
+
+        !-- implementation
+        do i=1, Nsybl
+            !real part
+            if(real(S(i))==real(SRx(i))) then
+                Correct = Correct + 1
+            else
+                Incorrect = Incorrect + 1
+            endif
+            !imaginaly part
+            if(aimag(S(i))==aimag(SRx(i))) then
+                Correct = Correct + 1
+            else
+                Incorrect = Incorrect + 1
+            endif
+        end do
+
+        !calculate ber
+        BER = dble(Incorrect) / dble(Correct+Incorrect)
+        cal_ber = BER
+
+    end function cal_ber
 end module OFDMmod
