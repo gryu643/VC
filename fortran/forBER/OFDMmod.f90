@@ -264,7 +264,7 @@ contains
         do j=1, Mseq_L+1
             do i=1, Nsybl
                 do k=1, Nsybl
-                    FFTout(i,j) = FFTout(i,j) + Rx2rmGI(j,k) * euler(-2.0d0*pi*(dble(i)/dble(Nsybl))*k) / dble(Nsybl)
+                    FFTout(i,j) = FFTout(i,j) + Rx2rmGI(j,k) * euler(-2.0d0*pi*(dble(i)/dble(Nsybl))*dble(k)) / dble(Nsybl)
                 end do
             end do
         end do

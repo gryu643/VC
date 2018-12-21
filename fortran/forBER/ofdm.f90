@@ -9,9 +9,9 @@ program ofdm
     integer,parameter :: M_tapN=4
     integer,parameter :: GI_L=8
     integer,parameter :: Mseq_L=2**M_tapN-1
-    integer,parameter :: Nloop=1000
-    integer,parameter :: SEbN0=-10
-    integer,parameter :: EEbN0=40
+    integer,parameter :: Nloop=1
+    integer,parameter :: SEbN0=10
+    integer,parameter :: EEbN0=10
     integer,parameter :: Step=10
 
     !-- run time declaration
@@ -121,12 +121,15 @@ program ofdm
             call Ch(Tx2,H_weight,Rx,Nsybl,Npath,Mseq_L,GI_L)
             !--------------------------------------------
 
+            !Make Noise ---------------------------------
+            call MakeNoise(Noise,Nsybl,Npath,Mseq_L,GI_L,KEbN0)
+            !--------------------------------------------
+
             !calculate power ----------------------------
             call CalPower(Rx,Noise,P,Nsybl,Npath,Mseq_L,GI_L)
             !--------------------------------------------
 
             !add noise ----------------------------------
-            call MakeNoise(Noise,Nsybl,Npath,Mseq_L,GI_L,KEbN0)
             Rx = Rx + Noise
             !--------------------------------------------
 
