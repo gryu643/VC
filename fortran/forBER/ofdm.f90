@@ -9,7 +9,7 @@ program ofdm
     integer,parameter :: M_tapN=4
     integer,parameter :: GI_L=8
     integer,parameter :: Mseq_L=2**M_tapN-1
-    integer,parameter :: Nloop=10000
+    integer,parameter :: Nloop=1000
     integer,parameter :: SEbN0=-10
     integer,parameter :: EEbN0=40
     integer,parameter :: Step=10
@@ -121,13 +121,13 @@ program ofdm
             call Ch(Tx2,H_weight,Rx,Nsybl,Npath,Mseq_L,GI_L)
             !--------------------------------------------
 
+            !calculate power ----------------------------
+            call CalPower(Rx,Noise,P,Nsybl,Npath,Mseq_L,GI_L)
+            !--------------------------------------------
+
             !add noise ----------------------------------
             call MakeNoise(Noise,Nsybl,Npath,Mseq_L,GI_L,KEbN0)
             Rx = Rx + Noise
-            !--------------------------------------------
-
-            !calculate power ----------------------------
-            call CalPower(Rx,Noise,P,Nsybl,Npath,Mseq_L,GI_L)
             !--------------------------------------------
 
             !serial to parallel -------------------------
@@ -166,7 +166,7 @@ program ofdm
         !result output ------------------------------
         print *, 'EbN0= ', EbN0
         print *, 'BER=  ', BER
-        write(1,*) KEbN0, ',', BER
+        write(1,*) EbN0, ',', BER
         !--------------------------------------------
     end do
 
