@@ -9,11 +9,14 @@ program ofdm
     integer,parameter :: M_tapN=4
     integer,parameter :: GI_L=8
     integer,parameter :: Mseq_L=2**M_tapN-1
-    integer,parameter :: Nloop=1
-    integer,parameter :: SEbN0=20
-    integer,parameter :: EEbN0=20
+    integer,parameter :: Nloop=10000
+    integer,parameter :: SEbN0=-10
+    integer,parameter :: EEbN0=40
     integer,parameter :: Step=10
 
+    !-- run time declaration
+    integer t1, t2, t_rate, t_max, diff
+    
     integer i
     complex(kind(0d0)) S(Nsybl)
     complex(kind(0d0)) SRx(Nsybl)
@@ -36,7 +39,9 @@ program ofdm
     complex(kind(0d0)) Noise((Mseq_L+1)*(GI_L+Nsybl)+Npath-1)
     complex(kind(0d0)) FFTout(Nsybl,Mseq_L+1) !FFT output
     complex(kind(0d0)) Chseq(Nsybl)
+    double precision EbN0
     double precision BER
+    double precision P(2) !1=signal power,2=noise power
 
     !-- initialization --------------------------
     S=(0.0d0,0.0d0)
@@ -54,9 +59,14 @@ program ofdm
     MseqRx=(0.0d0,0.0d0)
     Chseq=(0.0d0,0.0d0)
     KEbN0=-10
+    EbN0=0.0d0
     BER=0.0d0
 
     !-- implementation --------------------------
+    !time measurement start ---------------------
+    call system_clock(t1)
+    !--------------------------------------------
+
     !file open ----------------------------------
     open (1,file='ofdm.csv',status='replace')
     !--------------------------------------------
@@ -73,6 +83,7 @@ program ofdm
     !--------------------------------------------
 
     do KEbN0=SEbN0, EEbN0, Step
+        P=0.0d0
         BER=0.0d0
 
         do Kloop=1, Nloop
@@ -115,6 +126,10 @@ program ofdm
             Rx = Rx + Noise
             !--------------------------------------------
 
+            !calculate power ----------------------------
+            call CalPower(Rx,Noise,P,Nsybl,Npath,Mseq_L,GI_L)
+            !--------------------------------------------
+
             !serial to parallel -------------------------
             call ConvStoP(Rx,Rx2,Nsybl,Npath,Mseq_L,GI_L)
             !--------------------------------------------
@@ -144,13 +159,23 @@ program ofdm
             !--------------------------------------------
         end do
 
+        !calculate EbN0 -----------------------------
+        EbN0 = 10.0d0*dlog10(P(1)/P(2)/2.0d0)
+        !--------------------------------------------
+
         !result output ------------------------------
-        print *, KEbN0
-        print *, BER
+        print *, 'EbN0= ', EbN0
+        print *, 'BER=  ', BER
+        write(1,*) KEbN0, ',', BER
         !--------------------------------------------
     end do
 
     !file close ---------------------------------
     close(1)
+    !--------------------------------------------
+
+    !time measurement end -----------------------
+    call system_clock(t2, t_rate, t_max)
+    print *, 'Elapsed time is...', (t2-t1)/dble(t_rate)
     !--------------------------------------------
 end program ofdm

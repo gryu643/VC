@@ -402,6 +402,7 @@ contains
         integer i,j
 
         !-- initialization
+        Chseq=(0.0d0,0.0d0)
 
         !-- implementation
         do j=1, Nsybl
@@ -540,4 +541,33 @@ contains
         end do
         Tx2 = Tx2 / sqrt(Pow)
     end subroutine PowerAdjust
+
+    subroutine CalPower(Rx,Noise,P,Nsybl,Npath,Mseq_L,GI_L)
+        !--------------------------------------------------------------------------!
+        !calculate EbN0
+        !--------------------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl,Npath,Mseq_L,GI_L,i
+        complex(kind(0d0)) Rx((Mseq_L+1)*(GI_L+Nsybl)+Npath-1)
+        complex(kind(0d0)) Noise((Mseq_L+1)*(GI_L+Nsybl)+Npath-1)
+        double precision P(2)
+
+        !-- decralation
+        double precision Ps
+        double precision Pn
+
+        !-- initialization
+        Ps=0.0d0
+        Pn=0.0d0
+
+        !-- implementation
+        do i=1, (Mseq_L+1)*(GI_L+Nsybl)+Npath-1
+            Ps = Ps + abs(Rx(i))**2
+            Pn = Pn + abs(Noise(i))**2
+        end do
+        P(1) = P(1) + Ps
+        P(2) = P(2) + Pn
+    end subroutine CalPower
 end module OFDMmod
