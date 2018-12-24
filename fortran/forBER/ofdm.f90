@@ -9,9 +9,9 @@ program ofdm
     integer,parameter :: M_tapN=4
     integer,parameter :: GI_L=8
     integer,parameter :: Mseq_L=2**M_tapN-1
-    integer,parameter :: Nloop=1
-    integer,parameter :: SEbN0=10
-    integer,parameter :: EEbN0=10
+    integer,parameter :: Nloop=1000
+    integer,parameter :: SEbN0=-10
+    integer,parameter :: EEbN0=40
     integer,parameter :: Step=10
 
     !-- run time declaration
@@ -163,7 +163,7 @@ program ofdm
         end do
 
         !calculate EbN0 -----------------------------
-        EbN0 = 10.0d0*dlog10(P(1)/P(2)/2.0d0)
+        EbN0 = 10.0d0*dlog10(P(1)/P(2)) !/2.0d0?
         !--------------------------------------------
 
         !result output ------------------------------
