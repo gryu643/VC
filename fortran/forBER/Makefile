@@ -1,114 +1,94 @@
 # Makefile for colMat.f90 noiseExist
 
 CC = gfortran
-PROGRAM = CALmod PPLmod usePPLmod vc vc_nonfading normal pdf pdf_ideal qpsk qpsk_ideal_fading vc_ideal vc_ideal_formula
+PROGRAM = usePPL avoth_ber tsym vc vcq cutoff comb vc_ideal vc_ideal2 vc_ideal_formula \
+each_ch fixedH pcon pcon2 vc_nonfading normal pdf pdf_ideal qpsk qpsk_ideal qpsk_fading \
+rake est est_err qpsk_ideal_fading MRdiv ofdm
 CFLAGS = -O3 -mtune=native -march=native -mfpmath=both
 OBJS = *.o
 MOD = *.mod
 LAPACK = -llapack -lblas
 
-.PHONY: usePPL
+.PHONY: $(PROGRAM)
 usePPL: CALmod.o ChEstmod.o PPLNmod.o PPLmod.o usePPL.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: avoth_ber
 avoth_ber: CALmod.o PPLAvOth_BERmod.o AvOth_BER.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: tsym
 tsym: CALmod.o PPLTSYMmod.o AVOth_BER_TSYM.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: vc
 vc: CALmod.o PPLmod.o VC.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: vcq
 vcq: CALmod.o PPLVCQmod.o VCQ.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: cutoff
 cutoff: CALmod.o PPLCutoffmod.o VC_cutoff.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: comb
-comb: CALmod.o PPLCombmod.o PCONmod2.o VC_comb.o
+comb: CALmod.o PCONmod2.o CombSubmod.o PPLCombmod.o VC_comb.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: vc_ideal
 vc_ideal: VC_ideal.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: vc_ideal2
 vc_ideal2: CALmod.o PPLmod.o VC_ideal_v2.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: vc_ideal_formula
 vc_ideal_formula: VC_ideal_formula.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: each_ch
 each_ch: CALmod.o PPLmod.o VC_BEReachCH.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: fixedH
 fixedH: CALmod.o PPLmod.o VC_fixedH.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: pcon
 pcon: CALmod.o PPLmod.o PCONmod.o PCONmod2.o VC_Pcontrol.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: pcon2
 pcon2: CALmod.o PPLmod.o PCONmod2.o PCONmod3.o VC_Pcontrol2.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: vc_nonfading
 vc_nonfading: CALmod.o PPLmod.o VC_nonfading.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: normal
 normal: CALmod.o verify_normal.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: pdf
 pdf: CALmod.o PPLmod.o eigenvaluePDF.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: pdf_ideal
 pdf_ideal: eigenvaluePDF_ideal.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: qpsk
 qpsk: CALmod.o qpsk.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: qpsk_ideal
 qpsk_ideal: qpsk_ideal.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: qpsk_fading
 qpsk_fading: CALmod.o qpsk_fading.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: rake
 rake: CALmod.o rake.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: est
 est: CALmod.o ChEstmod.o ch_est.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: est_err
 est_err: CALmod.o ChEstmod.o ch_est_err.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: qpsk_ideal_fading
 qpsk_ideal_fading: CALmod.o qpsk_ideal_fading.o
 	$(CC) $^ -o $@ $(LAPACK)
 
-.PHONY: MRdiv
 MRdiv: CALmod.o qpsk_ideal_MRdiv.o
+	$(CC) $^ -o $@ $(LAPACK)
+
+ofdm: CALmod.o OFDMmod.o ofdm.o
 	$(CC) $^ -o $@ $(LAPACK)
 
 .SUFFIXES: .f90 .o
