@@ -1,9 +1,13 @@
 module CALmod
     implicit none
-contains
-	!複素行列の掛け算を行う
 
+    double precision :: pi=dacos(dble(-1))
+contains
     subroutine CMultiply(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
+        !--------------------------------------------------------------------------!
+        !complex multiplication
+        !--------------------------------------------------------------------------!
+
         integer A_ROW,A_COL,B_ROW,B_COL,i,j,k
         complex(kind(0d0)) A(:,:), B(:,:),C(:,:)
         complex(kind(0d0)) db
@@ -20,8 +24,11 @@ contains
 
     end subroutine
 
-    !実行列の掛け算を行う
     subroutine RMultiply(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
+        !--------------------------------------------------------------------------!
+        !real number multiplication
+        !--------------------------------------------------------------------------!
+
         integer A_ROW,A_COL,B_ROW,B_COL,i,j,k
         double precision A(:,:), B(:,:),C(:,:)
         double precision db
@@ -37,9 +44,11 @@ contains
 
     end subroutine
 
-    !行列の和を取る
-
     subroutine CAdd(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
+        !--------------------------------------------------------------------------!
+        !complex Addition
+        !--------------------------------------------------------------------------!
+
         integer A_ROW,A_COL,B_ROW,B_COL,i,j
         complex(kind(0d0)) A(:,:),B(:,:),C(:,:)
 
@@ -51,9 +60,11 @@ contains
 
     end subroutine
 
-    !行列の差を取る
-
     subroutine CSubtract(A,B,C,A_ROW,A_COL,B_ROW,B_COL)
+        !--------------------------------------------------------------------------!
+        !complex subtraction
+        !--------------------------------------------------------------------------!
+
         integer A_ROW,A_COL,B_ROW,B_COL,i,j
         complex(kind(0d0)) A(:,:),B(:,:),C(:,:)
 
@@ -65,9 +76,11 @@ contains
 
     end subroutine
 
-    !随伴行列を取る
-
     subroutine CAdjoint(A,AH,A_ROW,A_COL)
+        !--------------------------------------------------------------------------!
+        !calculate Hermitian conjugate
+        !--------------------------------------------------------------------------!
+
         integer A_ROW,A_COL,i,j
         complex(kind(0d0)) A(:,:),AH(:,:)
 
@@ -79,9 +92,11 @@ contains
 
     end subroutine
 
-    !処理Iを加える
-
     subroutine ProcI(A,AI,A_ROW,A_COL)
+        !--------------------------------------------------------------------------!
+        !do processing I(subroutine used in PPL)
+        !--------------------------------------------------------------------------!
+
         integer A_ROW,A_COL,i,j
         complex(kind(0d0)) A(:,:),AI(:,:)
 
@@ -93,9 +108,11 @@ contains
 
     end subroutine
 
-    !処理Jを加える
-
     subroutine ProcJ(A,AJ,A_ROW,A_COL,PATH)
+        !--------------------------------------------------------------------------!
+        !do processing J(subroutine used in PPL)
+        !--------------------------------------------------------------------------!
+
         integer A_ROW,A_COL,PATH,i,j
         complex(kind(0d0)) A(:,:),AJ(:,:)
 
@@ -107,9 +124,11 @@ contains
 
     end subroutine
 
-    !配列を代入する
-
     subroutine CSubstitute(A,B,A_ROW,A_COL)
+        !--------------------------------------------------------------------------!
+        !substitute complex
+        !--------------------------------------------------------------------------!
+
         integer A_ROW,A_COL,i,j
         complex(kind(0d0)) A(:,:),B(:,:)
 
@@ -121,9 +140,11 @@ contains
 
     end subroutine
 
-    !正規化する
-
     subroutine CNormalize(A,A_ROW,A_COL)
+        !--------------------------------------------------------------------------!
+        !Normalize complex
+        !--------------------------------------------------------------------------!
+
         integer A_ROW,A_COL,i
         complex(kind(0d0)) A(:,:)
         double precision TMP
@@ -148,9 +169,11 @@ contains
 
     end subroutine
 
-    !複素数の絶対値をとる
-
     subroutine CAbs(A,TMP,A_ROW,A_COL)
+        !--------------------------------------------------------------------------!
+        !return the absolute value
+        !--------------------------------------------------------------------------!
+
         integer i,A_ROW,A_COL
         complex(kind(0d0)) A(:,:)
         double precision TMP
@@ -163,24 +186,11 @@ contains
         TMP = sqrt(TMP)
     end subroutine
 
-    !正規乱数を配列に設定する
-
-    subroutine Setnoise(A,A_ROW,A_COL)
-        integer A_ROW,A_COL,i,j
-        complex(kind(0d0)) A(:,:),CNV
-
-        do i=1, A_ROW
-            CNV=cmplx(Normal(),Normal(),kind(0d0))
-
-            do j=1, A_COL
-                A(i,j) = CNV
-            end do
-        end do
-
-    end subroutine
-
-    !normal random number
     function normal()
+        !------------------------------------------------------------------------!
+        !normal random number(mean=0,variance=1)
+        !------------------------------------------------------------------------!
+
         double precision :: m=0.0d0
         double precision :: var=1.0d0
         double precision :: x=0.0d0
@@ -230,8 +240,11 @@ contains
         normal = x
     end function
 
-    !random number
 	function rand()
+        !----------------------------------------------------------------------------!
+        !uniform random number[0,1)
+        !----------------------------------------------------------------------------!
+
 		!declaration
 		integer seedsize,i
 		integer,allocatable :: seed(:)
@@ -252,198 +265,12 @@ contains
 
 		call random_number(rand)
     end function
-    
-    !return eigenvalue decomposition
-    subroutine zdiag(N,A,ev)
-        !sikinote
-        implicit none
-        integer::N
-        double precision::ev(1:N)
-        complex(kind(0d0))::A(1:N,1:N)
-       
-        integer::lda,lwork,liwork,lrwork,info
-        double precision,allocatable::rwork(:)
-        complex(kind(0d0)),allocatable::work(:)
-        complex(kind(0d0))::qw(1:3)
-        double precision::qrw(1:3)
-        integer,allocatable::iwork(:)
-        integer::qiw(1:3)
-        character(1)::job,uplo
-       
-        job="V"
-        uplo="U"
-        lda=N
-       
-        call zheevd(job,uplo,N,0,lda,0,qw,-1,qrw,-1,qiw,-1,info)
-        if(info.ne.0)then
-           write(6,'(A)')"    program stop @zheevd"
-           write(6,'(A,i0)')"    info --> ",info
-           stop
-        endif
-       
-        lrwork=idint(qrw(1))+1
-        lwork=idint(dble(qw(1)))+1
-        liwork=qiw(1)+1
-        allocate(work(1:lwork),iwork(1:liwork),rwork(1:lrwork))
-        work(1:lwork)=0.d0
-        iwork(1:liwork)=0
-        rwork(1:lrwork)=0.d0
-       
-        !diagonalise.
-        call zheevd(job,uplo,N,A,lda,ev,work,lwork,rwork,lrwork,iwork,liwork,info)
-        if(info.ne.0)then
-           write(6,'(A)')"    program stop @zheevd"
-           write(6,'(A,i0)')"    info --> ",info
-           stop
-        endif
-       
-        deallocate(work,iwork)
-       
-        return
-      end subroutine zdiag
-
-    subroutine diag(N,A,Ev)
-        ! sikinote
-        !date      : 2015/07/07
-        !            2015/08/21   
-        !developer : sikino & fernandeskun
-        implicit none
-        integer,intent(in)::N
-        complex(kind(0d0)),intent(inout)::A(1:N,1:N)
-        complex(kind(0d0)),intent(out)::Ev(1:N)
-
-        integer::ilo,ihi,info,lwork,turn(1:N),tmp,i
-        double precision::scale(1:N),rwork(1:N)
-        complex(kind(0d0))::tau(1:N-1),w(1:N),z(1:N,1:N),Q(1:N,1:N),vr(1:N,1:N),tw(1:3)
-        complex(kind(0d0)),allocatable::work(:)
-        
-        tau(1:N-1)=dcmplx(0d0,0d0)
-        w(1:N)=dcmplx(0d0,0d0)
-        z(1:N,1:N)=dcmplx(0d0,0d0)
-        Q(1:N,1:N)=dcmplx(0d0,0d0)
-        vr(1:N,1:N)=dcmplx(0d0,0d0)
-        tw(1:3)=dcmplx(0d0,0d0)
-        Ev(1:N)=dcmplx(0d0,0d0)
-        
-        !Equilibrate matrix A to equilibrated matrix A' to improve accuracy.  
-        !            i   i io  i   o    o     o     o 
-        call zgebal('P', N, A, N, ilo, ihi, scale, info)
-        if(info.ne.0)then
-            write(6,'(A,i0)')" At zgebal error, info --> ",info
-            write(6,'(A)')" Program stop"
-            stop
-        endif
-        
-        !Size Query
-        call zgehrd(N, ilo, ihi, A, N, tau, tw, -1, info)
-        lwork=nint(dble(tw(1)))
-        allocate(work(1:lwork)); work=dcmplx(0d0,0d0)
-        
-        !Degenerate matrix A to upper Hessenberg matrix H.   
-        !           i   i    i  io  i   o    i      i      o
-        call zgehrd(N, ilo, ihi, A, N, tau, work, lwork, info)
-        if(info.ne.0)then
-            write(6,'(A,i0)')" At zgehrd error, info --> ",info
-            write(6,'(A)')" Program stop"
-            stop
-        endif
-        deallocate(work)
-
-        Q=a
-        !Size Query
-        call zunghr(N, ilo, ihi, Q, N, tau, tw, -1, info)
-        lwork=nint(dble(tw(1)))
-        allocate(work(1:lwork)); work=dcmplx(0d0,0d0)
-
-        !Make complex unitary matrix Q from upper Hessenberg matrix H.
-        !           i   i    i  io  i   i    i      i      o
-        call zunghr(N, ilo, ihi, Q, N, tau, work, lwork, info)
-        if(info.ne.0)then
-            write(6,'(A,i0)')" At zunghr error, info --> ",info
-            write(6,'(A)')" Program stop"
-            stop
-        endif
-        deallocate(work)
-        
-        z=Q
-        !Size Query
-        call zhseqr('S', 'V', N, ilo, ihi, A, N, Ev, z, N, tw, -1, info)
-        lwork=nint(dble(tw(1)))
-        allocate(work(1:lwork)); work=dcmplx(0d0,0d0)
-
-        !Get eigenvalue of upper Hessenberg matrix H and Get Schur vector.
-        !                     i   i    i  io  i   o  o  i   i      i      o  
-        call zhseqr('S', 'V', N, ilo, ihi, A, N, Ev, z, N, work, lwork, info)
-        if(info.ne.0)then
-            write(6,'(A,i0)')" At zhseqr error, info --> ",info
-            write(6,'(A)')" Program stop"
-            stop
-        endif
-        deallocate(work)
-
-        !Get right eigenvector X from upper triangular matrix T. 
-        allocate(work(1:2*N))  
-        vr=z
-        !                        i  i  i         o  i  i   o   i      i      i
-        call ztrevc('R', 'B', 0, N, A, N, 0, 1, vr, N, N, tmp, work, rwork, info)
-        if(info.ne.0)then
-            write(6,'(A,i0)')" At zhseqr error, info --> ",info
-            write(6,'(A)')" Program stop"
-            stop
-        endif
-        deallocate(work)
-        
-        !Transrate right eigenvector X of Equilibrated matrix A' to right eigenvector of matrix A
-        !                     i   i    i     i    i   o  i   o 
-        call zgebak('P', 'R', N, ilo, ihi, scale, N, vr, N, info)
-        if(info.ne.0)then
-            write(6,'(A,i0)')" At zhseqr error, info --> ",info
-            write(6,'(A)')" Program stop"
-            stop
-        endif
-            
-        A=vr
-
-        !swap Eigenvectol as same arrangement for Eigenvalue
-        call sortdp2(N,Ev,turn)
-
-        Q=A
-        do i=1,N
-            tmp=turn(i)
-            A(1:N,i)=Q(1:N,tmp)
-        enddo
-        return
-
-    !sort Eigenvalue of real part from small to big.
-    contains
-        subroutine sortdp2(N,data,turn)
-            implicit none
-            integer::i,ti,j,N,turn(1:N)
-            complex(kind(0d0))::data(1:N),tmp
-
-            do i=1,N
-            turn(i)=i
-            enddo
-
-            do i=1,N-1
-            do j=i+1,N
-                if(dble(data(i)) > dble(data(j)))then
-                    tmp=data(i)
-                    data(i)=data(j)
-                    data(j)=tmp
-
-                    ti=turn(i)
-                    turn(i)=turn(j)
-                    turn(j)=ti
-                end if
-            end do
-            end do
-
-            return
-        end subroutine sortdp2
-    end subroutine diag
 
     function orthogonal(X,Nsybl)
+        !--------------------------------------------------------------------------!
+        !return orthogonality
+        !--------------------------------------------------------------------------!
+
         implicit none
 
         !-- argument
@@ -486,6 +313,148 @@ contains
             orthogonal = NAISEKI_TMP
     end function orthogonal
 
+    subroutine PPLEV(X,HHHX,LAMBDA,Nsybl)
+        !----------------------------------------------------------------!
+        !calculate eigenvalue(subroutine used in PPL)
+        !----------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) X(Nsybl,Nsybl)
+        complex(kind(0d0)) HHHX(Nsybl,Nsybl)
+        complex(kind(0d0)) LAMBDA(Nsybl,1)
+
+        !-- declaration
+        integer i,j
+        complex(kind(0d0)) D_X(Nsybl,1)
+        complex(kind(0d0)) D_HHHX(Nsybl,1)
+        double precision D_XAbs
+        double precision D_HHHXAbs
+        
+        !-- initialization
+        D_X=(0.0d0,0.0d0)
+        D_HHHX=(0.0d0,0.0d0)
+        D_XAbs=0.0d0
+        D_HHHXAbs=0.0d0
+
+        !-- implementation
+        do i=1, Nsybl
+            do j=1,Nsybl
+                D_X(j,1) = X(j,i)
+                D_HHHX(j,1) = HHHX(j,i)
+            end do
+
+            call CAbs(D_X,D_XAbs,Nsybl,1)
+            call CAbs(D_HHHX,D_HHHXAbs,Nsybl,1)
+
+            LAMBDA(i,1) = cmplx(D_HHHXAbs/D_XAbs,0.0d0, kind(0d0))
+        end do
+    end subroutine PPLEV
+
+    subroutine PPLSubPart(X,LAMBDA,SUB_PART,Nsybl)
+        !-----------------------------------------------------------------------!
+        !calculate Subpart(subroutine used in PPL)
+        !-----------------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) X(Nsybl,Nsybl)
+        complex(kind(0d0)) SUB_PART(Nsybl,Nsybl)
+        complex(kind(0d0)) LAMBDA(Nsybl,1)
+
+        !-- declaration
+        integer i,k
+		complex(kind(0d0)) Xn(Nsybl,1)
+		complex(kind(0d0)) U(Nsybl,1)
+		complex(kind(0d0)) UH(1,Nsybl)
+		complex(kind(0d0)) LUUH(Nsybl,Nsybl)
+		complex(kind(0d0)) LUUH_SET(Nsybl,Nsybl)
+		complex(kind(0d0)) LU(Nsybl,1)
+		complex(kind(0d0)) LUUHXn(Nsybl,1)
+
+        !-- initialization
+		Xn=(0.0,0.0)
+		U=(0.0,0.0)
+		UH=(0.0,0.0)
+		LUUH=(0.0,0.0)
+		LUUH_SET=(0.0,0.0)
+		LU=(0.0,0.0)
+		LUUHXn=(0.0,0.0)
+
+        !-- implementation
+        LUUH_SET=cmplx(0.0d0,0.0d0,kind(0d0))
+        do i=2, Nsybl
+            !収束する固有ベクトル(Nsybl,1)
+            do k=1, Nsybl
+                Xn(k,1) = X(k,i)
+            end do
+
+            !減算する固有ベクトル(Nsybl,1)
+            do k=1, Nsybl
+                U(k,1) = X(k,i-1)
+            end do
+
+            !固有ベクトルの随伴行列(1,Nsybl)
+            call CAdjoint(U,UH,Nsybl,1)
+
+            !λ*U(Nsybl,1)
+            do k=1, Nsybl
+                LU(k,1) = LAMBDA(i-1,1)*U(k,1)
+            end do
+
+            !LU*UH(Nsybl,Nsybl)
+            call CMultiply(LU,UH,LUUH,Nsybl,1,1,Nsybl)
+
+            !λUUHの集合を格納
+            call CAdd(LUUH_SET,LUUH,LUUH_SET,Nsybl,Nsybl,Nsybl,Nsybl)
+
+            !LUUH_SET*Xn(Nsybl,1) iの次ループで足し合わせる
+            call CMultiply(LUUH_SET,Xn,LUUHXn,Nsybl,Nsybl,Nsybl,1)
+
+            !減算部の格納
+            do k=1, Nsybl
+                SUB_PART(k,i) = LUUHXn(k,1)
+            end do
+        end do
+    end subroutine PPLSubPart
+
+    subroutine PPLNormalize(arSUB,X,Nsybl)
+        !-----------------------------------------------------------!
+        !Normalize Eigen vector(subroutine used in PPL)
+        !-----------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        integer Nsybl
+        complex(kind(0d0)) arSUB(Nsybl,Nsybl)
+        complex(kind(0d0)) X(Nsybl,Nsybl)
+
+        !-- declaration
+        integer i,j
+        complex(kind(0d0)) NORM(Nsybl,1)
+
+        !-- initialization
+        NORM=(0.0d0,0.0d0)
+
+        !-- implementation
+        do i=1, Nsybl
+            !固有ベクトル群を1列のベクトルに格納
+            do j=1, Nsybl
+                NORM(j,1) = arSUB(j,i)
+            end do
+
+            !正規化
+            call CNormalize(NORM,Nsybl,1)
+
+            !正規化したベクトルをXに格納
+            do j=1, Nsybl
+                X(j,i) = NORM(j,1)
+            end do
+        end do
+    end subroutine PPLNormalize
+
     subroutine decomp_zheevd(Nsybl,V,Eig)
         implicit none
 
@@ -526,6 +495,10 @@ contains
     end subroutine decomp_zheevd
 
     subroutine decomp_zheev(Nsybl,V,Eig)
+        !--------------------------------------------------------------------------!
+        !eigenvalue decomposition(using zheev nagfor library)
+        !--------------------------------------------------------------------------!
+
         implicit none
 
         !-- argument
@@ -562,6 +535,9 @@ contains
     end subroutine decomp_zheev
 
     subroutine decomp_zgeev(Nsybl,V,Eig)
+        !--------------------------------------------------------------------------!
+        !eigenvalue decomposition(using zgeev nagfor library)
+        !--------------------------------------------------------------------------!
         implicit none
 
         !-- argument
@@ -610,6 +586,9 @@ contains
     end subroutine decomp_zgeev
 
     subroutine decomp_zhpev(Nsybl,V,Eig)
+        !--------------------------------------------------------------------------!
+        !eigenvalue decomposition(using zhpev nagfor library)
+        !--------------------------------------------------------------------------!
         implicit none
 
         !-- argument
@@ -652,6 +631,10 @@ contains
     end subroutine decomp_zhpev
 
     subroutine sort(A,num)
+        !--------------------------------------------------------------------------!
+        !descending sort
+        !--------------------------------------------------------------------------!
+
         implicit none
 
         !-- declaration
@@ -675,8 +658,10 @@ contains
 
     end subroutine sort
 
-    !逆行列計算
     subroutine InverseMat(A,n)
+        !--------------------------------------------------------------------------!
+        !calculate inverse matrix
+        !--------------------------------------------------------------------------!
 !      .. Implicit None Statement ..
        IMPLICIT NONE
 !      .. Parameters ..
@@ -719,5 +704,23 @@ contains
        END IF
 
     end subroutine InverseMat
-    
+
+    function euler(theta)
+        !--------------------------------------------------------------------------!
+        !return euler
+        !--------------------------------------------------------------------------!
+        implicit none
+
+        !-- argument
+        double precision theta
+
+        !-- decralation
+        complex(kind(0d0)) euler
+
+        !-- initialization
+        euler=(0.0d0,0.0d0)
+
+        !-- implementation
+        euler = cmplx(dcos(theta),dsin(theta),kind(0d0))
+    end function euler
 end module CALmod
