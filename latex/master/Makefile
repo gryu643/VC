@@ -1,8 +1,9 @@
-CC = ptex2pdf
+CC1 = platex
+CC2 = dvipdfmx
 
 .PHONY: all
 all:
 	for i in 2; do\
-		$(CC) -l *.tex;\
+		$(CC1) master_thesis.tex;\
 	done
-	rm *.aux *.log *.toc
+	$(CC2) master_thesis
