@@ -7,3 +7,4 @@ all:
 		$(CC1) master_thesis.tex;\
 	done
 	$(CC2) master_thesis
+	rm *.aux *.dvi *.log *.toc

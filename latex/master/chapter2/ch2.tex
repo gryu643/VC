@@ -246,7 +246,7 @@ $\bm{A}$を1回乗算すると、
 \end{eqnarray}
 (2.16)式において、nが十分に大きい($\bm{A}$の乗算を十分繰り返す)場合、
 \begin{equation}
-    |\frac{\lambda_i}{\lambda_1}^n| << 1 \hspace{10mm} (i=2,3,\ldots,M)
+    \left|\frac{\lambda_i}{\lambda_1}^n\right| << 1 \hspace{10mm} (i=2,3,\ldots,M)
 \end{equation}
 であるから、(2.16)式、(2.17)式より、
 \begin{equation}
@@ -272,7 +272,90 @@ nを十分大きく取り$\bm{u_1}$を引き込んだ後、$\bm{u_1}$に$\bm{A}$
 固有ベクトルが得られる。第2以降の固有値・固有ベクトルも、第2固有値・固有ベクトルと同様の手順で得られる。
 
 \section{VCの概要}
+最初にVCを説明するにあたって必要なチャネル行列の定義を行った上で、VCの概要について説明する。
+
 \subsection{チャネル行列}
+チャネルインパルス応答$h[n]$は以下で与えられている。
+\begin{equation}
+    h[n] = \left\{
+        \begin{array}{ll}
+            = 0 & (n<0 \quad or \quad n \geq K) \\
+            \neq 0 & (n=0)
+        \end{array}
+    \right.
+\end{equation}
+伝送信号系列を$x[n]$とすると、受信信号系列$y[n]$は(2.20)式を用いて、次の畳み込み
+演算で与えられる。
+\begin{equation}
+    y[n] = \sum_{m=0}^\infty h[n-m]x[m]
+\end{equation}
+送信変調ベクトルをN次の列ベクトル$\bm{X}(=x[0],x[1],\ldots,x[N-1])^T$、チャネル行列を
+$\bm{H}$とすると、受信信号ベクトル$\bm{Y}$は(2.21)式を行列表記することで下記のように
+与えられる。
+\begin{equation}
+    \bm{Y} = \bm{HX}
+\end{equation}
+ここで$\bm{Y}$は$M(=N+K-1)$次の列ベクトル$(=y[0],y[1],\ldots,y[M-1])^T$で、チャネル歪み
+の影響でN次からM次になっている。Kはパス数である。$\bm{H}$はM行N列の行列で以下のように
+表記される。
+\begin{equation}
+    \bm{H} = \left[
+        \begin{array}{ccccc}
+            h[0] & 0 & 0 & \ldots & 0 \\
+            h[1] & h[0] & 0 & \ldots & 0 \\
+            \vdots & h[1] & h[0] & \ldots & \vdots \\
+            h[K-1] & \vdots & h[1] & \ldots & 0 \\
+            0 & h[K-1] & \vdots & \ldots & h[0] \\
+            0 & 0 & h[K-1] & \ldots & h[1] \\
+            \vdots & \vdots & \vdots & \ldots & \vdots \\
+            0 & 0 & 0 & \ldots & h[K-1]
+        \end{array}
+    \right]
+\end{equation}
+
+次にチャネル行列$\bm{H}$に対するMFが$\bm{H^H}$であることを示す。SNRを最大とするMFの
+インパルス応答を$h_{MF}[n]$とする。$h[n]$と$h_{MF}[n]$を接続した連結システムのインパルス応答
+$h^{\prime}[n]$は、次の畳み込み演算で与えられる。
+\begin{equation}
+    h^{\prime}[n] = \sum_{m=0}^{\infty} h[m]h_{MF}[n-m]
+\end{equation}
+(2.24)式において、$n=0$のときがSNR最大であり、その出力は、
+\begin{equation}
+    h^{\prime}[0] = \sum_{m=0}^{K-1} |h[m]|^2
+\end{equation}
+(2.25)式の畳み込み演算を行列表記すると、$\bm{H^{\prime}}=\bm{H_{MF}H}$となる。簡単のため、$N=3$、$K=2$
+での$\bm{H}$を考え、$\bm{H_{MF}=\bm{H^H}}$として$\bm{H^{\prime}}$を計算、さらにこの$\bm{H^{\prime}}$
+にインパルス$\bm{I}=(1 \quad 0 \quad 0)^T$を入力したときの出力を計算すると、
+\begin{eqnarray}
+    \bm{H^{\prime}}I &=& \left[
+        \begin{array}{ccc}
+            |h[0]|^2+|h[1]|^2 & h^*[1]h[0] & 0 \\
+            h^*[0]h[1] & |h[0]|^2+|h[1]|^2 & h^*[1]h[0] \\
+            0 & h^*[0]h[1] & |h[0]|^2+|h[1]|^2
+        \end{array}
+    \right]
+    \left[
+        \begin{array}{c}
+            1 \\
+            0 \\
+            0
+        \end{array} 
+    \right] \nonumber \\
+    &=& \left[
+        \begin{array}{c}
+            |h[0]|^2+|h[1]|^2 \\
+            h^*[0]h[1] \\
+            0
+        \end{array}
+    \right]
+\end{eqnarray}
+(2.25)式の1行1列に着目すると、
+\begin{equation}
+    |h[0]|^2+|h[1]|^2 = \sum_{m=0}^{2-1} |h[m]|^2 \nonumber
+\end{equation}
+であり、これは先に述べたSNR最大時の出力である。以上より、$\bm{H^H}$が$\bm{H}$に対するMFで
+あることが分かる。
+
 \subsection{合成チャネル行列}
 \subsection{VC計算過程}
 
