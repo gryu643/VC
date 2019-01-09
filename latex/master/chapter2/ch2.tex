@@ -213,6 +213,63 @@ $\bm{x}$に左から$\bm{A}$をかけると、
 となり、これは(2.14)式と一致する。以上より、(2.13)式が成立することが証明された。
 
 \section{べき乗法}
+対角行列の固有値・固有ベクトルを求める方法の一つにべき乗法がある。$\bm{A}$をM次のエルミート行列
+とし、その固有値を$\lambda_1,\lambda_2,\ldots,\lambda_M$とする。$\lambda_i$に対応する
+固有ベクトルを$\bm{u_i}$とすると、(2.4)式より、
+\begin{equation}
+    \bm{Au_i} = \lambda_i\bm{u_i} \nonumber
+\end{equation}
+となる。以下では、$|\lambda_1|>|\lambda_2|>\cdots>|\lambda_M|$の関係があるとする。
+任意ベクトル$\bm{x}$に左から$\bm{A}$をn回乗算したものを$\bm{x_n}$とする。$\bm{x}$に左から
+$\bm{A}$を1回乗算すると、
+\begin{eqnarray}
+    \bm{x_1} &=& \bm{Ax_0} = \bm{A}\sum_{i=1}^M c_i\bm{u_i} \hspace{10mm}(\because(2.2)式) \nonumber \\
+    &=& \sum_{i=1}^M c_i\bm{Au_i} = \sum_{i=1}^M c_i\lambda_i\bm{u_i}
+\end{eqnarray}
+である。(2.15)式に繰り返し左から$\bm{A}$を1回乗算すると、
+\begin{eqnarray}
+    \bm{x_2} &=& \bm{Ax_1} = \bm{A^2x_0} = \sum_{i=1}^M c_i\lambda_i^2\bm{u_i} \nonumber \\
+    \bm{x_3} &=& \bm{Ax_2} = \bm{A^3x_0} = \sum_{i=1}^M c_i\lambda_i^3\bm{u_i} \nonumber \\
+    \vdots \nonumber
+\end{eqnarray}
+となり、$\bm{x_n}$は下記のようになる。
+\begin{eqnarray}
+    \bm{x_n} &=& \sum_{i=1}^M c_i\lambda_i^n\bm{u_i} \nonumber \\
+    &=& \lambda_1^n
+    \left(
+        c_1+\bm{u_1}+\sum_{i=2}^M c_i
+        \left(
+            \frac{\lambda_i}{\lambda_1}
+        \right)^n
+        \bm{u_i}
+    \right)
+\end{eqnarray}
+(2.16)式において、nが十分に大きい($\bm{A}$の乗算を十分繰り返す)場合、
+\begin{equation}
+    |\frac{\lambda_i}{\lambda_1}^n| << 1 \hspace{10mm} (i=2,3,\ldots,M)
+\end{equation}
+であるから、(2.16)式、(2.17)式より、
+\begin{equation}
+    \bm{x_n} = \lambda_1^nc_1\bm{u_1}
+\end{equation}
+が導かれる。(2.18)式は、任意ベクトル$\bm{x}$に繰り返し$\bm{A}$を乗算することで$\bm{x}$が
+$\bm{A}$の第1(最大)固有ベクトル$\bm{u_1}$の定数倍に近づいていくことを意味している。
+$\bm{x_n}$と$\bm{u_1}$は、大きさは違うが方向は同じであるため、$\bm{x_n}$を正規化することで
+$\bm{u_1}$が得られる。正規化とはベクトルの各成分をベクトルの長さ(ノルム)で割ることにより、
+ベクトルを単位ベクトルにすることである。
+
+nを十分大きく取り$\bm{u_1}$を引き込んだ後、$\bm{u_1}$に$\bm{A}$を乗算することで$\bm{u_1}$に
+対応する固有値$\lambda_1$は得られる。つまり、$\bm{u_1}$に$\bm{A}$を乗算した結果を$\bm{u_1^{\prime}}$
+とすると、$\bm{u_1^{\prime}}$は$\bm{u_1}$の定数倍となり、この定数が固有値$\lambda_1$である。
+
+エルミート行列$\bm{A}$はスペクトル定理により、(2.13)式のように分解できる。(2.13)式と一致する。以上より、
+\begin{equation}
+    \bm{A} - \lambda_1\bm{u_1}\bm{u_1^H} = \lambda_2\bm{u_2}\bm{u_2^H} + \cdots + \lambda_n\bm{u_n}\bm{u_n^H}
+\end{equation}
+であるから、(2.19)式の左辺$\bm{A} - \lambda_1\bm{u_1}\bm{u_1^H}$($\bm{A_2}$とする)の
+第1固有値・固有ベクトルは、$\bm{A}$の第2固有値・固有ベクトルに当たる。すなわち、$\bm{A}$から
+第1固有値・固有ベクトルを導出した手順を$\bm{A_2}$に適用することで、$\bm{A}$の第2固有値・
+固有ベクトルが得られる。第2以降の固有値・固有ベクトルも、第2固有値・固有ベクトルと同様の手順で得られる。
 
 \section{VCの概要}
 \subsection{チャネル行列}
