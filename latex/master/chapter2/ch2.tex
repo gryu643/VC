@@ -1,11 +1,216 @@
 \chapter{基本的概念の解説}
+本章では、本論文を理解する上で必要となる基本概念についての説明を行う。VCを理解するため材料として
+エルミート行列の性質やべき乗法について説明する。また、無線通信の理解に関してディジタル変復調、
+同期検波等について説明を行う。
 
 \section{数学的基礎知識}
+VCを理解するための事前準備として数学的基礎知識の説明を行う。本章では行列の要素が複素数である
+複素行列を扱っている。
+
 \subsection{随伴行列(共役転置行列)}
+ある複素行列$\bm{A}$において、全要素で共役をとった上でその行列を転置させたものを$\bm{A}$の随伴行列（共役転置行列）
+といい、$\bm{A^H}$と表す。
+
+(例)\quad
+$
+  \bm{A} = \left[
+    \begin{array}{cc}
+      1-i & 2-6i \\
+      5+i & 3 \\
+      0 & 1+9i
+    \end{array}
+  \right]
+$とすると、
+\vspace{1mm}
+\begin{equation}
+    \bm{A^H} = \left[
+        \begin{array}{cc}
+            1-i & 2-6i \\
+            5+i & 3 \\
+            0 & 1+9i
+        \end{array}
+    \right]^H 
+    = \left[
+        \begin{array}{ccc}
+            1+i & 5-i & 0 \\
+            2+6i & 3 & 1-9i \\
+        \end{array}
+    \right] \nonumber
+\end{equation}
+
 \subsection{複素ベクトルの内積}
+要素数の等しい複素ベクトル$X,Y$の内積を、以下で定義する。
+\begin{equation}
+    (\bm{X},\bm{Y}) = \bm{X^HY}
+\end{equation}
+
 \subsection{任意ベクトルの表記}
+M次元空間内の任意の列ベクトルを$\bm{x}$、M個の直交した固有ベクトルを$\bm{u_1},\bm{u_2},\ldots,\bm{u_M}$
+とすると、$\bm{x}$はM個の固有ベクトル及び定数$c_i(i=0,1,\ldots)$を用いて、以下のように表すこと
+ができる。
+\begin{equation}
+    \bm{x} = \sum_{i=1}^M c_i\bm{u_i}
+\end{equation}
 
 \section{エルミート行列}
+ある複素行列$\bm{A}$において、$\bm{A}$の随伴行列$\bm{A^H}$が$\bm{A}$と等しいとき、$\bm{A}$を
+エルミート行列と呼ぶ。
+
+(例) \quad
+$
+  \bm{A} = \left[
+    \begin{array}{cc}
+      1 & 3-4i \\
+      3+4i & 2
+    \end{array}
+  \right]
+$とすると、
+\vspace{1mm}
+\begin{equation}
+    \bm{A^H} = \left[
+        \begin{array}{cc}
+            1 & 3-4i \\
+            3+4i & 2
+        \end{array}
+    \right]
+    = \bm{A} \nonumber
+\end{equation}
+であり、$\bm{A^H}=\bm{A}$となることから$\bm{A}$はエルミート行列であると言える。
+
+エルミート行列の主な性質として以下の4つが挙げられる。
+
+\vspace{5mm}
+\noindent\textbf{(性質1) \quad 任意複素ベクトルとの関係} \\
+$\bm{A}$がエルミート行列であれば、任意の列ベクトル$\bm{x}$に対して、$\bm{x^HAx}$は実数になる。\\
+\vspace{3mm}
+(証明)
+
+任意複素ベクトル
+$
+    \bm{x} = \left[
+        \begin{array}{c}
+            u \\
+            v
+        \end{array}
+    \right]
+$
+、エルミート行列
+$
+    \bm{A} = \left[
+        \begin{array}{cc}
+            a & b \\
+            b^* & c
+        \end{array}
+    \right]
+$
+とすると、
+\begin{eqnarray}
+    \bm{x^HAx} &=& 
+    \left[
+        \begin{array}{cc}
+            u^* & v^*
+        \end{array}
+    \right]
+    \left[
+        \begin{array}{cc}
+            a & b \\
+            b^* & c
+        \end{array}
+    \right]
+    \left[
+        \begin{array}{c}
+            u \\
+            v
+        \end{array}
+    \right] \nonumber \\
+    &=& auu^* + cvv^* + b^*uv^* + bu^*v \nonumber \\
+    &=& a|u|^2+c|v|^2+b^*uv^*+bu^*v
+\end{eqnarray}
+
+\noindent(2.3)式の右辺第1項、第2項はともに実数である。第3項、第4項は互いに複素共役となっており、これらの
+和は実数部分の2倍になる。よって、$\bm{x^HAx}$は実数であると言える。
+
+\vspace{5mm}
+\noindent\textbf{(性質2) \quad 全固有値が実数} \\
+エルミート行列の固有値はすべて実数である。 \\
+\vspace{3mm}
+(証明) \\
+エルミート行列$\bm{A}$の固有値を$\bm{\lambda}$、その$\bm{\lambda}$に対応する$\bm{0}$でない
+固有ベクトルを$\bm{x}$とする。行列とその行列の固有値・固有ベクトルとの関係より、
+\begin{equation}
+    \bm{Ax} = \lambda\bm{x}
+\end{equation}
+(2.4)式の両辺に$\bm{x^H}$をかけると、
+\begin{equation}
+    \bm{x^HAx} = \lambda\bm{x^Hx}
+\end{equation}
+(2.5)式の左辺は(性質1)により実数である。加えて、$\bm{x}\neq\bm{0}$より、$\bm{x^Hx}=||x||^2$
+は正の実数である。したがって、$\lambda$は実数でなければならない。
+
+\vspace{5mm}
+\noindent\textbf{(性質3) \quad 固有ベクトルの直交性} \\
+エルミート行列の固有ベクトルは、他のあらゆる固有値の固有ベクトルと直交している。 \\
+\vspace{3mm}
+(証明) \\
+ある$2\times2$以上の大きさを持ったエルミート行列$\bm{A}$の2つの異なる$\bm{0}$でない固有ベクトルを
+$\bm{x}$,$\bm{y}$とし、$\bm{x}$,$\bm{y}$に対応する固有値を$\lambda,\mu(\lambda\neq\mu)$と
+する。行列とその行列の固有値・固有ベクトルとの関係((2.4)式)より、
+\begin{eqnarray}
+    \bm{Ax} &=& \lambda\bm{x} \\
+    \bm{Ay} &=& \mu\bm{y}
+\end{eqnarray}
+(2.6)式を共役転置すると、
+\begin{equation}
+    \bm{x^HA^H} = \lambda\bm{x^H} \hspace{10mm} (\because\lambda は実数より、\lambda=\lambda^*)
+\end{equation}
+$\bm{A}$はエルミート行列であることから$\bm{A=A^H}$。これを(2.8)式に代入して、
+\begin{equation}
+    \bm{x^HA} = \lambda\bm{x^H}
+\end{equation}
+(2.9)式の両辺に右から$\bm{y}$をかけると、
+\begin{equation}
+    \bm{x^HAy} = \lambda\bm{x^Hy}
+\end{equation}
+一方、(2.7)式の両辺に左から$\bm{x^H}$をかけると、
+\begin{equation}
+    \bm{x^HAy} = \mu\bm{x^Hy}
+\end{equation}
+これら(2.10)式、(2.11)式より、
+\begin{equation}
+    \lambda\bm{x^Hy} = \mu\bm{x^Hy}
+\end{equation}
+$\lambda\neq\mu$であることから、$\bm{x^Hy}=\bm{0}$でなければならない。$\bm{x^Hy}$は
+複素列ベクトル$\bm{x},\bm{y}$の内積を表しており((2.1)式)、それが$\bm{0}$であるということは
+$\bm{x}$と$\bm{y}$は直交関係にある。
+
+\vspace{5mm}
+\noindent\textbf{(性質4) \quad スペクトル定理} \\
+エルミート行列$\bm{A}$はその固有ベクトル群行列$\bm{U}$、固有値対角行列$\bm{D}$を用いて、
+次のように分解できる。 \\
+\begin{eqnarray}
+    \bm{A} &=& \bm{UDU^H} = c_1\lambda_1\bm{u_1u_1^H}+c_2\lambda_2\bm{u_2u_2^H}+\ldots+c_n\lambda_n\bm{u_nu_n^H} \nonumber \\
+    &=& \sum_i c_i\lambda_i\bm{u_iu_i^H}
+\end{eqnarray}
+\vspace{3mm}
+(証明) \\
+あるエルミート行列$\bm{A}$の固有値・固有ベクトルをそれぞれ$\lambda_i,\bm{u_i}$とする。
+$\bm{u_i}$は正規直交基底であるから、任意ベクトル$\bm{x}$は(2.2)式のように分解される。
+$\bm{x}$に左から$\bm{A}$をかけると、
+\begin{equation}
+    \bm{Ax} = \sum_i c_i\bm{Au_i} = \sum_i c_i\bm{\lambda u_i}
+\end{equation}
+が得られる。一方、(2.13)式の右辺に$\bm{x}$をかけると、
+\begin{equation}
+    \left[
+        \sum_k \lambda_k\bm{u_ku_k^H}
+    \right]\bm{x}
+    = \left[
+        \sum_k \lambda_k\bm{u_ku_k^H}
+    \right]\sum_i c_i\bm{u_i}
+    = \sum_{i,k} c_i\lambda_k\bm{u_ku_k^Hu_i}
+    = \sum_i c_i\lambda_i\bm{u_i} \nonumber
+\end{equation}
+となり、これは(2.14)式と一致する。以上より、(2.13)式が成立することが証明された。
 
 \section{べき乗法}
 
