@@ -46,7 +46,7 @@ $とすると，
 
 \subsection{任意ベクトルの表記}
 M次元空間内の任意の列ベクトルを$\bm{x}$，M個の直交した固有ベクトルを$\bm{u_1}，\bm{u_2}，\ldots，\bm{u_M}$
-とすると，$\bm{x}$はM個の固有ベクトル及び定数$c_i(i=0，1，\ldots)$を用いて，以下のように表すこと
+とすると，$\bm{x}$はM個の固有ベクトル及び定数$c_i(i=0,1,\ldots,M)$を用いて，以下のように表すこと
 ができる.
 \begin{equation}
     \bm{x} = \sum_{i=1}^M c_i\bm{u_i}
@@ -82,6 +82,7 @@ $とすると，
 \vspace{5mm}
 \noindent\textbf{(性質1) \quad 任意複素ベクトルとの関係} \\
 $\bm{A}$がエルミート行列であれば，任意の列ベクトル$\bm{x}$に対して，$\bm{x^HAx}$は実数になる.\\
+\begin{comment}
 \vspace{3mm}
 (証明)
 
@@ -129,10 +130,13 @@ $
 
 \noindent(2.3)式の右辺第1項，第2項はともに実数である.第3項，第4項は互いに複素共役となっており，これらの
 和は実数部分の2倍になる.よって，$\bm{x^HAx}$は実数であると言える.
+\end{comment}
 
 \vspace{5mm}
 \noindent\textbf{(性質2) \quad 全固有値が実数} \\
 エルミート行列の固有値はすべて実数である. \\
+
+\begin{comment}
 \vspace{3mm}
 (証明) \\
 エルミート行列$\bm{A}$の固有値を$\bm{\lambda}$，その$\bm{\lambda}$に対応する$\bm{0}$でない
@@ -146,10 +150,13 @@ $
 \end{equation}
 (2.5)式の左辺は(性質1)により実数である.加えて，$\bm{x}\neq\bm{0}$より，$\bm{x^Hx}=||x||^2$
 は正の実数である.したがって，$\lambda$は実数でなければならない.
+\end{comment}
 
 \vspace{5mm}
 \noindent\textbf{(性質3) \quad 固有ベクトルの直交性} \\
 エルミート行列の固有ベクトルは，他のあらゆる固有値の固有ベクトルと直交している. \\
+
+\begin{comment}
 \vspace{3mm}
 (証明) \\
 ある$2\times2$以上の大きさを持ったエルミート行列$\bm{A}$の2つの異なる$\bm{0}$でない固有ベクトルを
@@ -182,15 +189,18 @@ $\bm{A}$はエルミート行列であることから$\bm{A=A^H}$.これを(2.8)
 $\lambda\neq\mu$であることから，$\bm{x^Hy}=\bm{0}$でなければならない.$\bm{x^Hy}$は
 複素列ベクトル$\bm{x}，\bm{y}$の内積を表しており((2.1)式)，それが$\bm{0}$であるということは
 $\bm{x}$と$\bm{y}$は直交関係にある.
+\end{comment}
 
 \vspace{5mm}
 \noindent\textbf{(性質4) \quad スペクトル定理} \\
 エルミート行列$\bm{A}$はその固有ベクトル群行列$\bm{U}$，固有値対角行列$\bm{D}$を用いて，
 次のように分解できる. \\
 \begin{eqnarray}
-    \bm{A} &=& \bm{UDU^H} = c_1\lambda_1\bm{u_1u_1^H}+c_2\lambda_2\bm{u_2u_2^H}+\ldots+c_n\lambda_n\bm{u_nu_n^H} \nonumber \\
-    &=& \sum_i c_i\lambda_i\bm{u_iu_i^H}
+    \bm{A} &=& \bm{UDU^H} = \lambda_1\bm{u_1u_1^H}+\lambda_2\bm{u_2u_2^H}+\ldots+\lambda_n\bm{u_nu_n^H} \nonumber \\
+    &=& \sum_i \lambda_i\bm{u_iu_i^H}
 \end{eqnarray}
+
+\begin{comment}
 \vspace{3mm}
 (証明) \\
 あるエルミート行列$\bm{A}$の固有値・固有ベクトルをそれぞれ$\lambda_i，\bm{u_i}$とする.
@@ -211,6 +221,7 @@ $\bm{x}$に左から$\bm{A}$をかけると，
     = \sum_i c_i\lambda_i\bm{u_i} \nonumber
 \end{equation}
 となり，これは(2.14)式と一致する.以上より，(2.13)式が成立することが証明された.
+\end{comment}
 
 \section{べき乗法}
 対角行列の固有値・固有ベクトルを求める方法の一つにべき乗法がある.$\bm{A}$をM次のエルミート行列
