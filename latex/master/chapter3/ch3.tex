@@ -232,13 +232,13 @@ PPLを大きく分けて，無線機Aから無線機Bへの往路と無線機B�
     \centering
     \includegraphics[width=0.6\linewidth]{chapter3/figure/ProcI.eps}
     \caption{処理I}
-    \label{figPPL}
+    \label{figProcI}
 \end{figure}
 \begin{figure}
     \centering
     \includegraphics[width=0.7\linewidth]{chapter3/figure/ProcJ.eps}
     \caption{処理J}
-    \label{figPPL}
+    \label{figProcJ}
 \end{figure}
 
 図 \ref{figProcI}に示している通り，処理Iはベクトルの複素共役をとった後，上下を反転させる．
@@ -375,6 +375,13 @@ PPLを大きく分けて，無線機Aから無線機Bへの往路と無線機B�
 具体的な数式を用いて，PPLにおいてどのように第一固有ベクトルが求められていくか見ていく．
 合成チャネル行列$\bm{H^HH}$の固有値の大きさは$|\lambda_1|>|\lambda_2|>\ldots>|\lambda_M|$の
 関係があるとして，また，これに対応する固有ベクトルを$\bm{u_1},\bm{u_2},\ldots,\bm{u_M}$とする．
+図 \ref{figProcIJ1}に第1固有ベクトル導出の概略図を示す．
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\linewidth]{chapter3/figure/ProcIJ1.eps}
+    \caption{第1固有ベクトル導出}
+    \label{figProcIJ1}
+\end{figure}
 
 まず，任意ベクトル$\bm{x}$を一対の無線機間で1往復させた場合を考える．
 ここで，任意ベクトル$\bm{x}$は2.1.3節より，固有符号群$\bm{u_1},\bm{u_2},\ldots,\bm{u_M}$と
@@ -458,6 +465,13 @@ PPLを大きく分けて，無線機Aから無線機Bへの往路と無線機B�
 しかし，当然ながら実際の合成チャネル行列は$\bm{H^HH}-\lambda_1\bm{u_1u_1^H}$のような形には
 なっていないので，適当な式変形を行うことでこれを実現しなければならない．
 この様子を具体的に見ていく．
+図 \ref{figProcIJ2}に第2固有ベクトル導出の概略図を示す．
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\linewidth]{chapter3/figure/ProcIJ2.eps}
+    \caption{第2固有ベクトル導出}
+    \label{figProcIJ2}
+\end{figure}
 
 まず，単純に1往復した後に，前節で解説したようにこの時点での固有ベクトル$\bm{u_1}$を求める．
 \begin{equation}
