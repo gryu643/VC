@@ -54,7 +54,7 @@ PPLの最大の特徴は，チャネル推定・合成チャネル行列計算�
 \end{figure}
 \begin{figure}
     \centering
-    \includegraphics[width=\linewidth]{chapter4/figure/CutoffFlow.eps}
+    \includegraphics[width=0.95\linewidth]{chapter4/figure/CutoffFlow.eps}
     \caption{足切りアルゴリズムフローチャート}
     \label{figCutoffFlow}
 \end{figure}
@@ -67,7 +67,20 @@ PPLの最大の特徴は，チャネル推定・合成チャネル行列計算�
 \end{equation}
 
 具体的にどのように足切り判定が行われるか図 \ref{figCutoffFlow}をもとに説明する．
-任意ベクトル$\bm{x}$を
+まず，任意ベクトル$\bm{x}$の送受信機関往復を行った後，正規化を行いKsybl番目までの
+直交度を計算する．Ksyblの初期値は$Ksybl=2$とする．その後，Nsybl番目まで(全固有ベクトル)
+の直交度を計算する．これは，Ksybl番目までよりNsybl番目の直交度が速く収束した場合に，
+優先してNsybl番目まで使用した際の通信品質を評価するためである．直交度の定義的に，
+十分収束したと判断するための収束基準は，評価する固有ベクトルの数が少ないほど厳しくなる．
+そのため，Nsybl番目まで見たときのほうが先に収束する場合が稀に存在するので，以上の処理を
+挿入している．Nsyblまでの直交度が十分な場合，$使用チャネル数=Nsybl$として，
+図中のEndに飛ぶ．直交度が不十分な場合，Ksyblまでの直交度評価に移る．
+Ksyblまでの直交度が不十分な場合は，無線機間往復に戻る．直交度が十分な場合は，
+固有値からBER理論値を計算し，当該理論値があらかじめ設定した品質基準を満足するか判定にかける．
+品質を満たさない場合は，Ksybl番目のチャネル品質が悪いということになるので，$使用チャネル数=Ksybl-1$
+として，Endに移行する．品質判定において，品質基準を満足する場合は$Ksybl \leq Nsybl$の時は
+Ksyblを1増やして無線機間往復に戻る．$Ksybl>Nsybl$の時はすべての固有ベクトルが収束し，
+かつすべてのチャネルを使用しても通信品質を満足するということなので，足切りを終了する．
 
 \subsection{送信電力制御を用いたBER理論値最小化}
 \subsection{送信電力制御適用時の使用チャネル足切りアルゴリズム}
