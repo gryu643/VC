@@ -129,9 +129,76 @@ BER理論値を最小とするような送信電力の組み合わせを見つ�
     h(p_1,p_2,\ldots,p_N) = \sum_{i=1}^N p_i-N=0 \\
     p_i \geq 0 \hspace{10mm} (i=1,2,\ldots,N)
 \end{eqnarray}
-の2つの制約条件を考慮する必要がある．
+の等式制約，不等式制約を考慮する必要がある．(4.7),(4.8)式の制約条件から，この最適化問題はKKT条件と
+なっている．以上の最適化問題をラグランジュの未定乗数法を用いて解いていく．
+ラグランジュの未定乗数法は2.4.2節で示した通りだが，ここでは問題を簡単にするために一旦
+(4.8)式は無視し，等式制約のみの場合で考える．これによって，一般的に解くことが難しいとされる
+KKT条件を等式条件のみの最適化問題に帰着させる．さらに，目的関数fが相補誤差関数で表され積分を
+含むため，計算が非常に困難になる．そこで，この関数fをチェルノフ限界(Chernoff bound) \cite{akaiwa}，
+\begin{equation}
+    Q(x) = \frac{1}{2}erfc\left( \frac{x}{\sqrt{2}} \right) \leq \exp\left( -\frac{x^2}{2} \right)
+\end{equation}
+を用いて以下のように近似する．
+\begin{equation}
+    \frac{1}{N}\sum_{i=1}^N \frac{1}{2}erfc\left( \sqrt{p_i\lambda_i\frac{E_b}{N_0}} \right)
+    \leq \frac{1}{N}\sum_{i=1}^N exp \left( -p_i\lambda_i\frac{E_b}{N_0} \right)
+\end{equation}
+ラグランジュ関数$L$は(2.11)式より，
+\begin{equation}
+    L(p_1,p_2,\ldots,p_N,\mu) = f(p_1,p_2,\ldots,p_N)-\mu h(p_1,p_2,\ldots,p_N)
+\end{equation}
+で表され，
+\begin{equation}
+    \frac{\partial L}{\partial p_i}=\frac{\partial L}{\partial \mu}=0 \hspace{10mm} 
+    (i=1,2,\ldots,N)
+\end{equation}
+を解くことで解が得られる．(4.12)式より，これを(4.6)式，(4.7)式に当てはめると，
+\begin{eqnarray}
+    \frac{\partial L}{\partial p_i}&=&-\frac{\lambda_i}{N}\frac{E_b}{N_0}
+    exp\left( -\lambda_i\frac{E_b}{N_0}p_i \right)-\mu=0 \hspace{10mm} (i=1,2,\ldots,N) \\
+    \frac{\partial L}{\partial \mu}&=&p_1+p_2+\cdots+p_N-N=0
+\end{eqnarray}
+となる．(4.13)式より，
+\begin{eqnarray}
+    -\frac{\lambda_i}{N}\frac{E_b}{N_0}
+    exp\left( -\lambda_i\frac{E_b}{N_0}p_i \right)-\mu &=& 0 \nonumber \\
+    exp\left( -\lambda_i\frac{E_b}{N_0}p_i \right) &=& -\frac{N}{\lambda_i\frac{E_b}{N_0}}\mu \nonumber \\
+    -\lambda_i\frac{E_b}{N_0}p_i &=& ln\left( -\frac{N}{\lambda_i\frac{E_b}{N_0}}\mu \right) \hspace{10mm} (両辺lnをとる) \nonumber \\
+    -\lambda_i\frac{E_b}{N_0}p_i &=& ln\left( -\mu \right) + ln\left( \frac{N}{\lambda_i\frac{E_b}{N_0}} \right) \nonumber \\
+    p_i &=& -\frac{1}{\lambda_i\frac{E_b}{N_0}}\left( ln\left( -\mu \right) + 
+    ln\left( \frac{N}{\lambda_i\frac{E_b}{N_0}} \right) \right) \hspace{10mm} (i=1,2,\ldots,N)
+\end{eqnarray}
+となる．(4.15)式を(4.14)式に代入すると，
+\begin{eqnarray}
+    -\frac{1}{\frac{E_b}{N_0}}\sum_{i=1}^N \frac{1}{\lambda_i}
+    \left( ln\left( -\mu \right)+ln\left( \frac{N}{\lambda_i\frac{E_b}{N_0}} \right) \right)-N &=& 0 \nonumber \\
+    -\frac{ln(-\mu)}{\frac{E_b}{N_0}}\sum_{i=1}^N \frac{1}{\lambda_i} &=& 
+    N+\frac{1}{\frac{E_b}{N_0}}\sum_{i=1}^N \frac{1}{\lambda_i}ln\left( \frac{N}{\lambda_i\frac{E_b}{N_0}} \right) \nonumber \\
+    ln(-\mu) &=& -\frac{E_b}{N_0}\frac{1}{\sum_{i=1}^N \frac{1}{\lambda_i}} 
+    \left( N+\frac{1}{\frac{E_b}{N_0}}\sum_{i=1}^N \frac{1}{\lambda_i}ln\left( \frac{N}{\lambda_i\frac{E_b}{N_0}} \right) \right)
+\end{eqnarray}
+と，$ln(-\mu)$が求められる．また，以上より(4.15)式に(4.16)式を代入することで各$p_i$を求めることができる．
+
+ここまでは，(4.8)式の不等式制約を無視して計算を行ったが，実際に(4.15)式を解くと，
+\begin{equation}
+    p_k < 0 \hspace{10mm} (1 \leq k \leq N)
+\end{equation}
+のような$p_k$が存在する場合がある．送信電力が負になることはありえないので，
+$p_k$のうち最小の$p_k$を$p_{min}$とおいて，
+\begin{equation}
+    p_i = p_i-(p_{min}-c) \hspace{10mm} (i=1,2,\ldots,N)
+\end{equation}
+のように全体を正方向に$p_{min}-c$だけシフトさせる．この時$c$は任意の最小送信電力とする．
+全体をシフトさせた後，送信電力の合計がNになるように全体を正規化してやれば，各$p_i$の相対的な
+大小関係を保ったまま，負となる変数を無くすことができる．つまり，(4.8)式の不等式制約も満足
+させることができる．以上が，BER理論値を最小化する送信電力制御の方針である．
 
 \subsection{送信電力制御適用時の使用チャネル足切りアルゴリズム}
+ここでは，4.2.1節，4.2.2節で説明した足切りアルゴリズムと送信電力最適化の2つを同時適用した場合に，
+送信電力制御によって所望の通信品質を満足するチャネル数を最大化しつつ，不要なチャネルを足切りする
+アルゴリズムを提案する．
+
+
 
 \section{検証}
 \subsection{BER理論値を指標とする使用チャネル足切りアルゴリズム}
