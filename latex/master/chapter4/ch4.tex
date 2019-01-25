@@ -197,16 +197,209 @@ $p_k$のうち最小の$p_k$を$p_{min}$とおいて，
 ここでは，4.2.1節，4.2.2節で説明した足切りアルゴリズムと送信電力最適化の2つを同時適用した場合に，
 送信電力制御によって所望の通信品質を満足するチャネル数を最大化しつつ，不要なチャネルを足切りする
 アルゴリズムを提案する．
-
-
+図 \ref{figCombFlow}にフローチャートを示す．
+\begin{figure}
+    \centering
+    \includegraphics[width=0.95\linewidth]{chapter4/figure/CombFlow.eps}
+    \caption{送信電力制御適用時の足切りアルゴリズムフローチャート}
+    \label{figCombFlow}
+\end{figure}
+基本的には4.2.1節で解説した足切りアルゴリズムと同じだが，図中の赤い四角で囲われた送信電力分配
+が追加されている．4.2.1節のアルゴリズムでは，獲得したKsybl個の固有ベクトルを使用して
+通信した際のBER理論値を求め，この理論値があらかじめ設定した通信品質基準を満足するか判断した．
+ここで送信電力分配を適用することによって，獲得したKsybl個の固有ベクトルを用いたBER理論値を
+最小化することができる．BER理論値が最小化されるということは，送信電力分配の次の項目である
+通信品質基準が満足されやすくなるということである．つまり，使用可能チャネル数が最大化されるので，
+実質的に通信速度を最大にしつつ，足切りによって反復回数を削減することができる．
 
 \section{検証}
+ここでは，4.2.1節，4.2.2節，4.2.3節で解説した3つの内容についてシミュレーションを用いた検討を
+行う．
+
 \subsection{BER理論値を指標とする使用チャネル足切りアルゴリズム}
+ここでは，4.2.1節で解説したBER理論値を指標とした固有ベクトル(使用チャネル)足切りアルゴリズム
+について検証を行う．足切りを行わない場合と比較して，実質的に使用できるチャネル数を減らさずに
+無線機間反復回数のみ削減できることを示す．
+
 \subsubsection{シミュレーション諸元}
+まず，図 \ref{figCutoffFlow}にあるように，固有ベクトルの収束判断に使用する収束基準と，
+BER理論値を評価する際の通信品質基準の2つを決定する必要がある．通信品質基準については，
+$10^{-2}$以下のBERであれば，誤り訂正符号を付加すれば誤り率を0にすることができると仮定して，
+\begin{equation}
+    品質基準=10^{-2}
+\end{equation}
+とするものとする．
+
+収束基準については，直交度について検証を行うことによって実験的に求めていく．
+まず，横軸を直交度，縦軸をBERとした時に直交度とBERがどのような関係にあるかをシミュレーションを用いて
+検証する．表 \ref{tabCutoff1}にシミュレーション諸元を示す．
+
+\begin{table}[ht]
+    \begin{tabular}{|c|c|} \hline
+        1ブロック当たりのシンボル数 & 32 \\ \hline
+        マルチパス数 & 4 \\ \hline
+        変調方式 & QPSK \\ \hline
+        $E_bN_0$ & 0,10,20,30[dB] \\ \hline
+    \end{tabular}
+    \centering
+    \caption{直交度とBERの関係　シミュレーション諸元}
+    \label{tabCutoff1}
+\end{table}
+
+シミュレーション結果を図 \ref{figCutoffSim1}に示す．
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.95\linewidth]{chapter4/figure/CutoffSim1.eps}
+    \caption{直交度とBERの関係}
+    \label{figCutoffSim1}
+\end{figure}
+
+図 \ref{figCutoffSim1}を見てみると，それぞれの$E_bN_0$の条件において，
+ある値からBERが改善しなくなっている．このラインを各$E_bN_0$について色付きの点線で
+示している．このBERが打ち止めとなる点と$E_bN_0$の関係を表 \ref{tabCutoff2}にまとめた．
+
+\begin{table}[ht]
+    \begin{tabular}{|c|c|} \hline
+        $E_bN_0$ & 打ち止め点 \\ \hline
+        0 & 1 \\ \hline
+        10 & 0.1 \\ \hline
+        20 & 0.01 \\ \hline
+        30 & 0.001 \\ \hline
+    \end{tabular}
+    \centering
+    \caption{$E_bN_0$とBER打ち止め点の関係}
+    \label{tabCutoff2}
+\end{table}
+
+表 \ref{tabCutoff2}より，各$E_bN_0$と直交度が打ち止めとなる点の関係は，
+\begin{equation}
+    E_bN_0の打ち止め点 = 10*exp(-0.23E_bN_0)
+\end{equation}
+のように数式で表すことができる．これより，各$E_bN_0$の条件についての収束基準を，
+\begin{equation}
+    収束基準 = exp(-0.23E_bN_0)
+\end{equation}
+というように設けることとする．なお，(4.21)式の収束基準は，ある程度の余裕を持たせるために
+(4.20)式の結果を0.1倍したものを使用している．
+図 \ref{figCutoffSim1}の結果はマルチパス数が4の場合だったが，マルチパス数が変化した場合についても
+直交度とBERの関係がどうなるのか検証する必要がある．
+検証結果を図 \ref{figCutoffSim2}に示す．なお，諸元については$E_bN_0=10[dB]$とする以外は
+表 \ref{tabCutoff1}と同じ条件とする．
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.95\linewidth]{chapter4/figure/CutoffSim2.eps}
+    \caption{直交度とBERの関(マルチパス数変化時)}
+    \label{figCutoffSim2}
+\end{figure}
+
+図 {figCutoffSim2}からわかるように，各マルチパス数について，BERが改善しなくなる点が
+全ての条件でほぼ同じラインになっている．
+つまり，収束基準がマルチパス数に依存しないことがわかる．
+以上の検証結果から，収束基準は(4.21)式を用いることができると考えられる．
+
+さて，ここまでで得た結果から足切りアルゴリズムのシミュレーション諸元を表 \ref{tabCutoff3}に
+示す．
+
+\begin{table}[ht]
+    \begin{tabular}{|c|c|} \hline
+        1ブロック当たりのシンボル数 & 32 \\ \hline
+        マルチパス数 & 4 \\ \hline
+        変調方式 & QPSK \\ \hline
+        $E_bN_0$ & 0,10,20,30[dB] \\ \hline
+    \end{tabular}
+    \centering
+    \caption{足切りアルゴリズムシミュレーション諸元}
+    \label{tabCutoff3}
+\end{table}
+
 \subsubsection{シミュレーション結果}
+ここでは(4.3.1)節の検証結果を基に設定した，固有ベクトルの収束基準と通信品質基準を用いて足切りアルゴリズムの
+有効性について検証を行う．シミュレーション諸元は表 \ref{tabCutoff3}に示した通りである．
+
+まず，図 \ref{figCutoffSim3}に$E_bN_0$と無線機間反復回数の関係を示す．
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.95\linewidth]{chapter4/figure/CutoffSim3.eps}
+    \caption{足切りアルゴリズム($E_bN_0$対無線機間反復数)}
+    \label{figCutoffSim3}
+\end{figure}
+
+青のグラフが足切り処理有り，緑のグラフが足切り処理無しとなっている．
+グラフからわかるように，$E_bN_0$が小さい領域において反復回数を大きく削減できていることがわかる．
+$E_bN_0$が大きい領域については，すべての固有ベクトルを使用しても
+BERが通信品質基準より下回らないので，足切りが行われず，足切り処理を適用しない場合と同じ反復数が必要となる．
+
+足切りアルゴリズムによって無線機間反復数が削減されることは示したが，使用可能なチャネル数，つまり，
+設定した通信品質を満足するチャネル数が足切り処理を適用しない場合と適用した場合とで一致することを示す必要がある．
+図 \ref{figCutoffSim4}に$E_bN_0$と使用可能チャネル数の関係を示す．なお，図 \ref{figCutoffSim4}は
+図 \ref{figCutoffSim3}取得時のものであり，諸元も表 \ref{tabCutoff3}に示したものと同一である．．
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.95\linewidth]{chapter4/figure/CutoffSim4.eps}
+    \caption{足切りアルゴリズム($E_bN_0$対使用可能チャネル数)}
+    \label{figCutoffSim4}
+\end{figure}
+
+青のグラフが足切り処理無し，緑のグラフが足切り処理有りとなっている．
+$E_bN_0$が小さい領域では，使用可能チャネル数が少なく，$E_bN_0$が大きくなるにつれて
+使用可能チャネル数が多くなっていくのがわかる．これは，$E_bN_0$が小さいほど
+誤り率が高くなってしまうので，実質的な通信品質基準を満足するチャネルが利得の大きい，
+つまり固有値の大きいチャネルを使用した場合に限られるからである．
+また，足切り処理有りと無しの場合を比較したとき，使用チャネル数は変わらないという結果になった．
+つまり，図 \ref{figCutoffSim3}と図 \ref{figCutoffSim4}の結果から，足切りアルゴリズムを適用することで
+使用可能チャネル数を減らすことなく，$E_bN_0$が小さい領域において無線機間反復数を削減できること
+が確認できた．
+
 \subsection{送信電力制御を用いたBER理論値最小化}
+ここでは，利得の小さいチャネルの誤り率が高くなってしまう問題に対して，送信電力制御の
+適用によるBER最小化について検証を行う．
+
 \subsubsection{シミュレーション諸元}
+理論的な内容については(4.2.2)節で説明したので，ここではシミュレーションの諸元を示すのみとする．
+表 \ref{tabPcon1}に諸元を示す．
+
+\begin{table}[ht]
+    \begin{tabular}{|c|c|} \hline
+        1ブロック当たりのシンボル数 & 32 \\ \hline
+        マルチパス数 & 4 \\ \hline
+        変調方式 & QPSK \\ \hline
+        最小送信電力 & 0.01 \\ \hline
+    \end{tabular}
+    \centering
+    \caption{送信電力分配シミュレーション諸元}
+    \label{tabPcon1}
+\end{table}
+
+また，固有値・固有ベクトルについてはPPLではなく固有値分解によって獲得したものを使用する．
+つまり，各固有ベクトルは互いに完全に直交している．これは，PPLによる収束誤差による
+影響を考慮せず，純粋に送信電力分配の効用を評価するためである．
+
 \subsubsection{シミュレーション結果}
+図 \ref{figPconSim1}にシミュレーション結果を示す．
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.95\linewidth]{chapter4/figure/PconSim1.eps}
+    \caption{送信電力分配}
+    \label{figPconSim1}
+\end{figure}
+
+青のグラフが送信電力分配無し，緑のグラフが送信電力分配適用ありとなっている．
+グラフからわかる通り，送信電力分配適時の方がBERを小さく抑えることができている．
+$E_bN_0$が小さい領域では，送信電力分配を適用する場合としない場合で同じ結果となっているが，
+これは，雑音による影響が強すぎるためだと考えられる．
+
 \subsection{送信電力制御適用時の使用チャネル足切りアルゴリズム}
+ここでは，これまで検証した足切りアルゴリズムと送信電力制御を同時適用した場合について
+シミュレーションを用いて検証を行う．
+足切りアルゴリズムに送信電力制御を組み込む目的としては，足切りによって無線機間反復回数を
+削減しつつ，使用可能チャネルを最大化することにある．
+
 \subsubsection{シミュレーション諸元}
+シミュレーション諸元を表 \ref{tabComb1}に示す．
+
 \subsubsection{シミュレーション結果}
