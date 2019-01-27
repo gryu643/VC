@@ -64,7 +64,7 @@
 \begin{center}%センタリングはじめ
 {\Large \textbf{}}\\%\\:字下げ無し改行
 \vspace{3mm}
-{\Large \textbf{VectorCodingにおける伝搬路推定を必要としない\\固有符号推定アルゴリズム}} \\
+{\Large \textbf{ベクトル符号化における送信電力制御適用型 \\固有ベクトル足切りアルゴリズム}} \\
 \vspace{5cm}%\vspace{長さ}:縦方向空白(ページ先頭無効)
 \indent \\
 {\Large 仁部龍介} \\
@@ -82,6 +82,9 @@
 
 \frontmatter %ページ番号はローマ数字、章番号をつけない
 \clearpage %\clearpage(改ページ)
+
+\include{./chapter0/abstract}
+
 %\pagenumbering{roman}
 \tableofcontents %目次出力
 \rhead{}
@@ -90,7 +93,6 @@
 
 \newpage
 \rhead{\thepage}
-
 \include{./chapter1/ch1} %序論
 \include{./chapter2/ch2} %基本的概念の解説
 \include{./chapter3/ch3} %PPLアルゴリズム解説
