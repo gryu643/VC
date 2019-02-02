@@ -5,7 +5,7 @@
 
 \section{数学的基礎知識}
 ここでは，VCを理解するために必要な数学的基礎知識について解説する．
-また，送信電力制御に使用する最適化問題の解法，ディジタル通信技術の基礎についても言及する．
+また，送信電力分配に使用する最適化問題の解法，ディジタル通信技術の基礎についても言及する．
 
 \subsection{随伴行列(共役転置行列)}
 複素行列$\bm{A}$において，行列の要素の複素共役をとって転置したものを$\bm{A}$の随伴行列（共役転置行列）
@@ -403,14 +403,14 @@ S_{{\rm QPSK}}(t)&=&\mbox{Re}\left[Ae^{j(\omega_c t +\phi_m)} \right] \nonumber 
 QPSK変調の信号点配置および，変調器の回路図を図\ref{fig:qpskIQ}，図\ref{fig:qpskmod}に示す．
 信号点配置はグレイコードが用いられ，隣接する信号点のハミング距離が1となるように設定されている．
 %----------------------------画像をいれた----------------------------
-\begin{figure}[t]
+\begin{figure}[h]
   \begin{center}
     \includegraphics[width=0.6\linewidth]{chapter2/figure/QPSKIQ.eps}
     \caption{QPSK変調の信号点配置}
     \label{fig:qpskIQ}
   \end{center}
 \end{figure}
-\begin{figure}[t]
+\begin{figure}[h]
   \begin{center}
     \includegraphics[width=0.8\linewidth]{chapter2/figure/QPSKshift.eps}
     \caption{QPSK変調の回路図}
@@ -433,7 +433,7 @@ m_2(t)&=&-Ad_1(t)\sin\omega_ct\cos\omega_ct+Ad_2(t)\sin^2\omega_ct \nonumber \\
 \end{eqnarray}
 となる．$\hat{m}_1(t)$，$\hat{m}_2(t)$を並直列変換(parallel / serial conversion)することで，元の信号が復元される．
 %------------------------------仮画像------------------------------
-\begin{figure}[t]
+\begin{figure}[h]
   \begin{center}
     \includegraphics[width=0.6\linewidth]{chapter2/figure/douki.eps}
     \caption{QPSK変調の同期検波回路}
@@ -480,7 +480,7 @@ r(t)=\sum_{n=1}^{N}z_n(t)e^{j\pi f_ct}
 \theta_n(t)=2\pi\frac{vt\cos\phi_n}{\lambda}+\varphi_n
 \end{eqnarray}
 となる．ここで，$v/\lambda=f_D$は最大ドップラー周波数といわれるものであり，物理的には移動局の進行方向($\phi_n=0$)からの到来波周波数が$f_D[{\rm Hz}]$だけ高くなるのに対して，後方($\phi_n=\pi$)からの到来波は$f_D[{\rm Hz}]$だけ低くなることを表す．
-\begin{figure}[t]
+\begin{figure}[h]
   \begin{center}
     \includegraphics[width=0.6\linewidth]{chapter2/figure/multipaths.eps}
     \caption{マルチパス伝搬路モデル}
@@ -488,7 +488,7 @@ r(t)=\sum_{n=1}^{N}z_n(t)e^{j\pi f_ct}
   \end{center}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[h]
 	\begin{center}
 		\includegraphics[width=0.7\linewidth]{chapter2/figure/jushin.eps}
 		\caption{マルチパス伝搬路の受信モデル}
@@ -538,7 +538,7 @@ p(\theta)=\displaystyle \int_0^\infty p(r，\theta)dr=\frac{1}{2\pi} & (0\leq\th
 \end{array}
 \right.
 \end{eqnarray}
-\begin{figure}[ht]
+\begin{figure}[h]
 	\begin{center}
 		\includegraphics[width=0.8\linewidth]{chapter2/figure/hourakusen.eps}
 		\caption{包絡線と位相の確率密度関数}
