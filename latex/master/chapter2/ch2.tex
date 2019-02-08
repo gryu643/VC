@@ -1,6 +1,6 @@
 \chapter{基本的概念の解説}
 本章では，本論文を理解する上で必要となる基本概念についての説明を行う.VCを理解するため材料として
-エルミート行列の性質やべき乗法について説明する. \cite{strang} また，無線通信の理解に関してディジタル変復調，
+エルミート行列の性質やべき乗法について説明する~\cite{strang}． また，無線通信の理解に関してディジタル変復調，
 同期検波等について説明を行う.
 
 \section{数学的基礎知識}
@@ -272,7 +272,7 @@ $\bm{A}$の第1固有ベクトル$\bm{u_1}$の定数倍に近づいていくこ�
 
 固有値については(2.4)式より，
 \begin{eqnarray}
-    \bm{Au_1}&=&\lambda_i\bm{u_1} \nonumber \\
+    \bm{Au_1}&=&\lambda_1\bm{u_1} \nonumber \\
     \lambda_1&=&\frac{\left| \bm{Au_1} \right|}{\left| \bm{u_1} \right|}
 \end{eqnarray}
 とすることで求められる．
@@ -289,7 +289,7 @@ $\bm{A}$の第2固有値・固有ベクトルとなるという特徴がある�
 
 \section{最適化問題の解法}
 最適化問題は，与えられた制約条件の下で，目的関数と呼ばれる望ましさの尺度を表す関数が最小または最大となるような
-決定変数の値を見つける，という数学モデルとして定式化できる．~\cite{ibaragi}
+決定変数の値を見つける，という数学モデルとして定式化できる~\cite{ibaragi}．
 最適化問題は，まず目的関数が線形関数か非線形関数かで大きく二つに分けることができる．そこからさらに，
 制約条件の等号，不等号や決定変数が連続か非連続かによって細分化される．
 一般に非線形関数の最適化の方が線形関数の最適化よりも困難とされる．
@@ -319,7 +319,7 @@ $c_i:R^n \to R(i=1，\ldots，m)$はともに2回連続微分可能と仮定す�
 正則点という．
 
 次の定理に示される条件は，非線形最適化問題の最適解を特徴づける重要な条件であり，KKT
-(\emph{KKT: Karush Kuhn Tucker})条件と呼ばれる．\cite{ibaragi}
+(\emph{KKT: Karush Kuhn Tucker})条件と呼ばれる\cite{ibaragi}．
 
 点$x^*$が(2.11)の局所的最適解かつ正則点ならば，
 
@@ -349,7 +349,7 @@ $c_i:R^n \to R(i=1，\ldots，m)$はともに2回連続微分可能と仮定す�
 \end{equation}
 
 これと等式制約$g(\bm{x})=0$を連立させて解けば，$\bm{x}$と$\lambda$を定めることができる．
-この解法をラグランジュの未定乗数法と呼ぶ．~\cite{kanatani}
+この解法をラグランジュの未定乗数法と呼ぶ~\cite{kanatani}．
 ラグランジュの未定乗数法は線形最適化問題の解法として一般的である．
 また，制約条件に不等式制約が存在する場合を考えるとき，ラグランジュの未定乗数法を
 拡張した，2次計画法と呼ばれる解法が用いられる．
@@ -403,14 +403,14 @@ S_{{\rm QPSK}}(t)&=&\mbox{Re}\left[Ae^{j(\omega_c t +\phi_m)} \right] \nonumber 
 QPSK変調の信号点配置および，変調器の回路図を図\ref{fig:qpskIQ}，図\ref{fig:qpskmod}に示す．
 信号点配置はグレイコードが用いられ，隣接する信号点のハミング距離が1となるように設定されている．
 %----------------------------画像をいれた----------------------------
-\begin{figure}[h]
+\begin{figure}[t]
   \begin{center}
     \includegraphics[width=0.6\linewidth]{chapter2/figure/QPSKIQ.eps}
     \caption{QPSK変調の信号点配置}
     \label{fig:qpskIQ}
   \end{center}
 \end{figure}
-\begin{figure}[h]
+\begin{figure}[t]
   \begin{center}
     \includegraphics[width=0.8\linewidth]{chapter2/figure/QPSKshift.eps}
     \caption{QPSK変調の回路図}
@@ -433,7 +433,7 @@ m_2(t)&=&-Ad_1(t)\sin\omega_ct\cos\omega_ct+Ad_2(t)\sin^2\omega_ct \nonumber \\
 \end{eqnarray}
 となる．$\hat{m}_1(t)$，$\hat{m}_2(t)$を並直列変換(parallel / serial conversion)することで，元の信号が復元される．
 %------------------------------仮画像------------------------------
-\begin{figure}[h]
+\begin{figure}[t]
   \begin{center}
     \includegraphics[width=0.6\linewidth]{chapter2/figure/douki.eps}
     \caption{QPSK変調の同期検波回路}
@@ -443,7 +443,9 @@ m_2(t)&=&-Ad_1(t)\sin\omega_ct\cos\omega_ct+Ad_2(t)\sin^2\omega_ct \nonumber \\
 %------------------------------------------------------------------
 
 \subsection{信号の等価低域表現}
-対象システムの特性をコンピュータシミュレーションのような離散時間処理によって評価する場合，サンプリング定理を満足するなるべく小さなサンプリング周波数を用い，演算量を削減することが望ましい．そこで本研究では，信号を複素ベースバンドで表現し，等価低域表現によるシミュレーションを行っている．
+コンピュータ上でシミュレーションを行う場合，得られる結果の精度が変わらないのであれば，
+演算量は少ないほうが良い．無線通信のシミュレーションにおいては，信号を複素ベースバンドで表現する
+等価低域表現を用いることで，比較的少ない演算で結果を得ることが可能である．
 
 ここで，ベースバンド信号の帯域幅が$B[{\rm Hz}]$のQPSK変調信号を考える．搬送波の周波数が$f_c[{\rm Hz}]$である場合，信号の最高周波数が$f_c+B[{\rm Hz}]$となるため，標本化定理により，この信号は$2(f_c+B)[{\rm Hz}]$以上で標本化する必要がある．一方，式(\ref{eqqpsk})より，QPSK変調信号の複素数表現は，$\{Ad_1(t)+jAd_2(t)\}e^{j2\pi f_ct}$となる．複素数表現では，$f_c=0$として，複素ベースバンド信号で表すことができ，
 \begin{eqnarray}
@@ -480,7 +482,7 @@ r(t)=\sum_{n=1}^{N}z_n(t)e^{j\pi f_ct}
 \theta_n(t)=2\pi\frac{vt\cos\phi_n}{\lambda}+\varphi_n
 \end{eqnarray}
 となる．ここで，$v/\lambda=f_D$は最大ドップラー周波数といわれるものであり，物理的には移動局の進行方向($\phi_n=0$)からの到来波周波数が$f_D[{\rm Hz}]$だけ高くなるのに対して，後方($\phi_n=\pi$)からの到来波は$f_D[{\rm Hz}]$だけ低くなることを表す．
-\begin{figure}[h]
+\begin{figure}[t]
   \begin{center}
     \includegraphics[width=0.6\linewidth]{chapter2/figure/multipaths.eps}
     \caption{マルチパス伝搬路モデル}
@@ -488,7 +490,7 @@ r(t)=\sum_{n=1}^{N}z_n(t)e^{j\pi f_ct}
   \end{center}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[t]
 	\begin{center}
 		\includegraphics[width=0.7\linewidth]{chapter2/figure/jushin.eps}
 		\caption{マルチパス伝搬路の受信モデル}
@@ -538,7 +540,7 @@ p(\theta)=\displaystyle \int_0^\infty p(r，\theta)dr=\frac{1}{2\pi} & (0\leq\th
 \end{array}
 \right.
 \end{eqnarray}
-\begin{figure}[h]
+\begin{figure}[t]
 	\begin{center}
 		\includegraphics[width=0.8\linewidth]{chapter2/figure/hourakusen.eps}
 		\caption{包絡線と位相の確率密度関数}
